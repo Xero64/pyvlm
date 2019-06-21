@@ -1,0 +1,43 @@
+{
+    "name": "RhoFW",
+    "mach": 0.0,
+    "sref": 0.9375,
+    "cref": 0.400,
+    "bref": 3.749,
+    "xref": 0.3270,
+    "yref": 0.0,
+    "zref": 0.0,
+    "surfaces": [
+        {
+            "name": "Wing",
+            "angle": 0.0,
+            "mirror": true,
+            "numc": 2,
+            "cdist": "cosine",
+            "sections": [
+                {
+                    "xle": 0.0,
+                    "yle": 0.0,
+                    "zle": 0.0,
+                    "chord": 0.5,
+                    "angle": 0.0,
+                    "numb": 100,
+                    "bdist": "equal"
+                },
+                {
+                    "xle": 2.5,
+                    "yle": 5.0,
+                    "zle": 0.0,
+                    "chord": 0.5,
+                    "angle": 0.0
+                }
+            ]            
+        }
+    ],
+    "cases": [
+        {
+            "alpha": 3.0,
+            "beta": 0.0
+        }
+    ]
+}

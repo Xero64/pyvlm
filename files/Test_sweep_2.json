@@ -1,0 +1,43 @@
+{
+    "name": "Test Sweep 2",
+    "mach": 0.0,
+    "sref": 6.5,
+    "cref": 0.5,
+    "bref": 13.0,
+    "xref": 0.125,
+    "yref": 0.0,
+    "zref": 0.0,
+    "surfaces": [
+        {
+            "name": "Wing",
+            "angle": 0.0,
+            "mirror": true,
+            "numc": 2,
+            "cdist": "cosine",
+            "sections": [
+                {
+                    "xle": 0.0,
+                    "yle": 0.0,
+                    "zle": 0.0,
+                    "chord": 0.5,
+                    "angle": 0.0,
+                    "numb": 100,
+                    "bdist": "equal"
+                },
+                {
+                    "xle": 3.25,
+                    "yle": 6.5,
+                    "zle": 0.0,
+                    "chord": 0.5,
+                    "angle": 0.0
+                }
+            ]            
+        }
+    ],
+    "cases": [
+        {
+            "alpha": 3.0,
+            "beta": 0.0
+        }
+    ]
+}
