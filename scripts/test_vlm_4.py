@@ -90,6 +90,15 @@ axw = lres_opt.plot_trefftz_wash_distribution(ax=axw)
 al_opt = lopt.optimum_strip_twist(crit=1e-1)
 al_bll = lopt_bll.optimum_strip_twist(crit=1e-1)
 
+#%% Specified String Twist
+
+alspec = [8.3274, 8.5524, 8.7259, 8.8441, 8.9030, 8.8984, 8.8257, 8.6801, 8.4565, 8.1492, 7.7522,
+          7.2592, 6.6634, 5.9579, 5.1362, 4.1927, 3.1253, 1.9394, 0.6589, -0.6417, -1.6726]
+
+numal = len(alspec)
+
+yspec = [i*lsys.bref/2/(numal-1) for i in range(numal)]
+
 #%% Plots
 
 axl = None
@@ -113,4 +122,5 @@ axw = lopt.res.plot_trefftz_wash_distribution(ax=axw)
 axa = lopt.plot_strip_twist_distribution()
 axa.plot(lres_bll.strpy, al_bll, label='alpha Bell')
 axa.plot(lres_opt.strpy, al_opt, label='alpha Optimum')
+axa.plot(yspec, alspec, label='alpha Specified')
 leg = axa.legend()
