@@ -1,5 +1,5 @@
 {
-    "name": "RhoFW",
+    "name": "Test RhoFW Bell",
     "mach": 0.0,
     "sref": 0.9375,
     "cref": 0.2686,
@@ -12,7 +12,7 @@
             "name": "Wing",
             "angle": 0.0,
             "mirror": true,
-            "numc": 4,
+            "numc": 1,
             "cspace": "cosine",
             "sections": [
                 {
@@ -21,13 +21,13 @@
                     "zle": 0.0,
                     "chord": 0.40005,
                     "angle": 0.0,
-                    "numb": 50,
+                    "numb": 100,
                     "bspace": "semi-cosine"
                 },
                 {
-                    "xle": 0.83459,
-                    "yle": 1.87452,
-                    "zle": 0.08177,
+                    "xle": 0.0,
+                    "yle": 1.8745,
+                    "zle": 0.0,
                     "chord": 0.10008,
                     "angle": 0.0
                 }

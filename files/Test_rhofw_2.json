@@ -1,10 +1,10 @@
 {
-    "name": "Test Sweep 2",
+    "name": "Test RhoFW Elliptical",
     "mach": 0.0,
-    "sref": 6.5,
-    "cref": 0.5,
-    "bref": 13.0,
-    "xref": 0.125,
+    "sref": 0.7655,
+    "cref": 0.2686,
+    "bref": 3.0612,
+    "xref": 0.3270,
     "yref": 0.0,
     "zref": 0.0,
     "surfaces": [
@@ -12,23 +12,23 @@
             "name": "Wing",
             "angle": 0.0,
             "mirror": true,
-            "numc": 2,
-            "cdist": "cosine",
+            "numc": 1,
+            "cspace": "cosine",
             "sections": [
                 {
                     "xle": 0.0,
                     "yle": 0.0,
                     "zle": 0.0,
-                    "chord": 0.5,
+                    "chord": 0.40005,
                     "angle": 0.0,
-                    "numb": 100,
-                    "bdist": "equal"
+                    "numb": 20,
+                    "bspace": "equal"
                 },
                 {
-                    "xle": 3.25,
-                    "yle": 6.5,
+                    "xle": 0.83459,
+                    "yle": 1.87452,
                     "zle": 0.0,
-                    "chord": 0.5,
+                    "chord": 0.10008,
                     "angle": 0.0
                 }
             ]            

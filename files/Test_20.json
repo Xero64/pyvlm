@@ -13,7 +13,7 @@
             "angle": 0.0,
             "mirror": true,
             "numc": 2,
-            "cdist": "cosine",
+            "cspace": "cosine",
             "sections": [
                 {
                     "xle": 0.0,
@@ -22,7 +22,7 @@
                     "chord": 0.5,
                     "angle": 0.0,
                     "numb": 100,
-                    "bdist": "equal"
+                    "bspace": "equal"
                 },
                 {
                     "xle": 0.0,

@@ -33,9 +33,9 @@
             "sheets": [
                 {
                     "numc": 1,
-                    "cdist": "linear",
+                    "cspace": "linear",
                     "numb": 100,
-                    "bdist": "linear"
+                    "bspace": "linear"
                 }
             ]
         }

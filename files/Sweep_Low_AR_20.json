@@ -1,10 +1,10 @@
 {
-    "name": "RhoFW",
+    "name": "Sweep Low AR 20",
     "mach": 0.0,
-    "sref": 0.9375,
-    "cref": 0.2686,
-    "bref": 3.749,
-    "xref": 0.3270,
+    "sref": 6.5,
+    "cref": 0.5,
+    "bref": 13.0,
+    "xref": 0.125,
     "yref": 0.0,
     "zref": 0.0,
     "surfaces": [
@@ -12,23 +12,23 @@
             "name": "Wing",
             "angle": 0.0,
             "mirror": true,
-            "numc": 4,
+            "numc": 2,
             "cspace": "cosine",
             "sections": [
                 {
                     "xle": 0.0,
                     "yle": 0.0,
                     "zle": 0.0,
-                    "chord": 0.40005,
+                    "chord": 0.5,
                     "angle": 0.0,
-                    "numb": 50,
+                    "numb": 10,
                     "bspace": "semi-cosine"
                 },
                 {
-                    "xle": 0.83459,
-                    "yle": 1.87452,
-                    "zle": 0.08177,
-                    "chord": 0.10008,
+                    "xle": 3.25,
+                    "yle": 6.5,
+                    "zle": 0.0,
+                    "chord": 0.5,
                     "angle": 0.0
                 }
             ]            
