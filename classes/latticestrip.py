@@ -8,24 +8,32 @@ class LatticeStrip(object):
     pnt2 = None
     crd1 = None
     crd2 = None
+    bspc = None
     leni = None
     pnti = None
     pnls = None
     alpha = None
     msid = None
     sht = None
-    def __init__(self, lsid: int, pnt1: Point, pnt2: Point, crd1: float, crd2: float):
+    lent = None
+    dyt = None
+    dzt = None
+    dst = None
+    _crd = None
+    _area = None
+    def __init__(self, lsid: int, pnt1: Point, pnt2: Point, crd1: float, crd2: float, bspc: float=0.5):
         self.lsid = lsid
         self.pnt1 = pnt1
         self.pnt2 = pnt2
         self.crd1 = crd1
         self.crd2 = crd2
+        self.bspc = bspc
         self.update()
     def update(self):
         self.alpha = 0.0
         self.pnls = []
         self.leni = self.pnt2-self.pnt1
-        self.pnti = self.pnt1+0.5*self.leni
+        self.pnti = self.pnt1+self.bspc*self.leni
         self.lent = Vector(0.0, self.leni.y, self.leni.z)
         self.dyt = self.leni.y
         self.dzt = self.leni.z
@@ -56,6 +64,16 @@ class LatticeStrip(object):
     @property
     def nrmt(self):
         return self.sht.cord.dirz
+    @property
+    def crd(self):
+        if self._crd is None:
+            self._crd = (self.crd1+self.crd2)/2
+        return self._crd
+    @property
+    def area(self):
+        if self._area is None:
+            self._area = self.crd*self.dst
+        return self._area
     def __repr__(self):
         return '<LatticeStrip {:d}>'.format(self.lsid)
     def __str__(self):

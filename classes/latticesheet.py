@@ -8,7 +8,8 @@ from pygeom.geom3d import ihat, Point, Coordinate
 class LatticeSheet(object):
     sect1 = None
     sect2 = None
-    bdist = None
+    bspace = None
+    yspace = None
     levec = None
     cord = None
     nrml = None
@@ -20,14 +21,22 @@ class LatticeSheet(object):
         self.sect2 = sect2
         self.update()
     def update(self):
-        if self.sect1.bdist is not None:
-            self.bdist = self.sect1.bdist
-        elif self.sect2.bdist is not None:
-            bdist = [1.0-bd for bd in self.sect2.bdist]
-            bdist.reverse()
-            self.bdist = bdist
+        if self.sect1.bspace is not None:
+            self.bspace = self.sect1.bspace
+        elif self.sect2.bspace is not None:
+            bspace = [1.0-bd for bd in self.sect2.bspace]
+            bspace.reverse()
+            self.bspace = bspace
         else:
-            self.bdist = [0.0, 1.0]
+            self.bspace = [0.0, 1.0]
+        if self.sect1.yspace is not None:
+            self.yspace = self.sect1.yspace
+        elif self.sect2.yspace is not None:
+            yspace = [1.0-yd for yd in self.sect2.yspace]
+            yspace.reverse()
+            self.yspace = yspace
+        else:
+            self.yspace = [0.5]
         self.levec = self.sect2.pnt-self.sect1.pnt
         vecz = (ihat**self.levec).to_unit()
         vecy = (vecz**ihat).to_unit()
@@ -41,15 +50,17 @@ class LatticeSheet(object):
         crda = self.sect1.chord
         crdb = self.sect2.chord
         crdr = crdb-crda
-        lenb = len(self.bdist)
+        lenb = len(self.bspace)
         for i in range(lenb-1):
-            bd1 = self.bdist[i]
-            bd2 = self.bdist[i+1]
+            bd1 = self.bspace[i]
+            bd2 = self.bspace[i+1]
+            yd = self.yspace[i]
+            bspc = (yd-bd1)/(bd2-bd1)
             pnt1 = pnta+bd1*vecr
             pnt2 = pnta+bd2*vecr
             crd1 = crda+bd1*crdr
             crd2 = crda+bd2*crdr
-            strp = LatticeStrip(lsid, pnt1, pnt2, crd1, crd2)
+            strp = LatticeStrip(lsid, pnt1, pnt2, crd1, crd2, bspc=bspc)
             strp.sht = self
             self.strps.append(strp)
             lsid += 1

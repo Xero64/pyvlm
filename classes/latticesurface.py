@@ -6,9 +6,10 @@ from .latticepanel import LatticePanel
 class LatticeSurface(object):
     name = None
     sects = None
-    cdist = None
+    cspace = None
     bdsit = None
     strps = None
+    pnts = None
     pnls = None
     msht = None
     msect = None
@@ -32,12 +33,18 @@ class LatticeSurface(object):
         elif self.mirror and self.sects[0].pnt.y != 0.0:
             print(f'Warning: Cannot mirror {self.name}.')
             self.mirror = False
-    def set_chord_distribution(self, cdist: list):
-        self.cdist = cdist
+    def set_chord_distribution(self, cspace: list):
+        from pyvlm.tools import normalise_spacing
+        self.cspace = normalise_spacing(cspace)
     def set_chord_equal_distribution(self, numc: int):
-        self.cdist = [float(i)/numc for i in range(numc+1)]
+        from pyvlm.tools import equal_spacing
+        self.cspace = equal_spacing(numc)
     def set_chord_cosine_distribution(self, numc: int):
-        self.cdist = [0.5*(1.0-cos(i*pi/numc)) for i in range(numc+1)]
+        from pyvlm.tools import full_cosine_spacing
+        self.cspace = full_cosine_spacing(numc)
+    def set_chord_elliptical_distribution(self, numc: int):
+        from pyvlm.tools import full_elliptical_spacing
+        self.cspace = full_elliptical_spacing(numc)
     def mesh(self, lsid: int, lpid: int):
         from pygeom.geom3d import Point
         from numpy.matlib import empty
@@ -57,7 +64,7 @@ class LatticeSurface(object):
         crds = [strp.crd1 for strp in self.strps]
         crds.append(self.strps[-1].crd2)
         lenb = len(pnts)
-        lenc = len(self.cdist)
+        lenc = len(self.cspace)
         self.pnts = empty((lenb, lenc), dtype=Point)
         for i in range(lenb):
             minx = pnts[i].x
@@ -65,7 +72,7 @@ class LatticeSurface(object):
             z = pnts[i].z
             c = crds[i]
             for j in range(lenc):
-                cd = self.cdist[j]
+                cd = self.cspace[j]
                 x = minx+cd*c
                 self.pnts[i, j] = Point(x, y, z)
         self.pnls = empty((lenb-1, lenc-1), dtype=LatticePanel)
@@ -77,7 +84,7 @@ class LatticeSurface(object):
                     self.pnts[i, j+1],
                     self.pnts[i+1, j+1]
                 ]
-                pnl = LatticePanel(lpid, pnts)
+                pnl = LatticePanel(lpid, pnts, bspc=strp.bspc)
                 self.pnls[i, j] = pnl
                 lpid += 1
                 strp.add_panel(pnl)
@@ -91,6 +98,17 @@ class LatticeSurface(object):
         for sht in self.shts:
             sht.set_control_points_and_normals()
         return lsid, lpid
+    def point_xyz(self):
+        from numpy.matlib import zeros
+        x = zeros(self.pnts.shape)
+        y = zeros(self.pnts.shape)
+        z = zeros(self.pnts.shape)
+        for i in range(self.pnts.shape[0]):
+            for j in range(self.pnts.shape[1]):
+                x[i, j] = self.pnts[i, j].x
+                y[i, j] = self.pnts[i, j].y
+                z[i, j] = self.pnts[i, j].z
+        return x, y, z
     def return_panels(self):
         pnls = []
         shp = self.pnls.shape
@@ -121,11 +139,13 @@ def latticesurface_from_json(surfdata: dict, display: bool=False):
         sect = latticesecttion_from_json(sectdata)
         sects.append(sect)
     surf = LatticeSurface(name, sects, mirror)
-    if 'numc' in surfdata and 'cdist' in surfdata:
+    if 'numc' in surfdata and 'cspace' in surfdata:
         numc = surfdata['numc']
-        cdist = surfdata['cdist']
-        if cdist == 'equal':
+        cspace = surfdata['cspace']
+        if cspace == 'equal':
             surf.set_chord_equal_distribution(numc)
-        elif cdist == 'cosine':
+        elif cspace == 'cosine':
             surf.set_chord_cosine_distribution(numc)
+        elif cspace == 'elliptical':
+            surf.set_chord_elliptical_distribution(numc)
     return surf

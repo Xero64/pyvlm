@@ -82,6 +82,7 @@ class LatticeResult(object):
     def set_lift_distribution(self, l: list, rho: float, speed: float):
         if len(l) != len(self.sys.strps):
             raise Exception('The length of l must equal the number of strips.')
+        # nrml = [strpi.leni.y for strpi in self.sys.strps]
         self._phi = [li/rho/speed for li in l]
         self._pmat = matrix(self._phi, dtype=float).transpose()
     @property
@@ -186,14 +187,16 @@ class LatticeResult(object):
     @property
     def nffrc(self):
         if self._nffrc is None:
+            rho = self.rho
             tmp = self.sys.afg*self.gmat+self.afv
-            self._nffrc = [gam*tmp[i, 0] for i, gam in enumerate(self.gam)]
+            self._nffrc = [gam*tmp[i, 0]*rho for i, gam in enumerate(self.gam)]
         return self._nffrc
     @property
     def nfmom(self):
         if self._nfmom is None:
+            rho = self.rho
             tmp = self.sys.amg*self.gmat+self.amv
-            self._nfmom = [gam*tmp[i, 0] for i, gam in enumerate(self.gam)]
+            self._nfmom = [gam*tmp[i, 0]*rho for i, gam in enumerate(self.gam)]
         return self._nfmom
     @property
     def trlft(self):
@@ -329,6 +332,16 @@ class LatticeResult(object):
         ax.plot(self.strpy, self.trwsh, label=self.name)
         ax.legend()
         return ax
+    def plot_strip_wash_distribution(self, lsid: int, ax=None):
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        stwash = []
+        for i in range(self.sys.bvg.shape[0]):
+            stwash.append(self.sys.bvg[i, lsid])
+        ax.plot(self.strpy, stwash)
+        return ax
     def print_near_field_total_loads(self):
         print(f'Total Force in X = {self.nffrctot.x}')
         print(f'Total Force in Y = {self.nffrctot.y}')
@@ -338,7 +351,7 @@ class LatticeResult(object):
         print(f'Total Moment in Z = {self.nfmomtot.z}')
     def print_aerodynamic_coefficients(self):
         from . import cfrm, dfrm
-        if self._gam is not None:
+        if self.gam is not None:
             print('Cx = '+cfrm.format(self.Cx))
             print('Cy = '+cfrm.format(self.Cy))
             print('Cz = '+cfrm.format(self.Cz))
@@ -348,8 +361,30 @@ class LatticeResult(object):
             print('CL = '+cfrm.format(self.CL))
             print('CDi = '+dfrm.format(self.CDi))
             print('CY = '+cfrm.format(self.CY))
-        if self._phi is not None:
+        if self.phi is not None:
             print('CL_ff = '+cfrm.format(self.CL_ff))
             print('CDi_ff = '+dfrm.format(self.CDi_ff))
             print('CY_ff = '+cfrm.format(self.CY_ff))
-            print('e = '+cfrm.format(self.e))
+            print('e = {:.4f}'.format(self.e))
+    def print_strip_forces(self):
+        from math import atan
+        q = self.qfs
+        print()
+        print('   j      Yle    Chord     Area     c cl      ai      cl_norm  cl       cd')
+        frmstr = '{:5d}{:9.4f}{:9.4f}{:9.4f}{:9.4f}{:9.4f}{:9.4f}{:9.4f}{:9.4f}'
+        for strp in self.sys.strps:
+            j = strp.lsid
+            yle = strp.pnti.y
+            chord = strp.crd
+            area = strp.area
+            nrmfrc = Vector(0.0, 0.0, 0.0)
+            for pnl in strp.pnls:
+                nrmfrc += self.nffrc[pnl.lpid]/pnl.area*pnl.crd
+            c_cl = nrmfrc.z/q
+            ai = -self.trwsh[strp.lsid]
+            cl_norm = nrmfrc*self.ulc/q/chord
+            cl = nrmfrc*self.ulc/q/chord
+            cd = nrmfrc*self.udc/q/chord
+            cl_norm = nrmfrc*strp.nrmt/q/chord
+            print(frmstr.format(j, yle, chord, area, c_cl, ai, cl_norm, cl, cd))
+

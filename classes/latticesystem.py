@@ -2,6 +2,8 @@ from math import pi, atan2
 from numpy.matlib import zeros, empty
 from numpy.linalg import solve, inv
 from pygeom.geom3d import Point, Vector, ihat, jhat, zero_vector
+from matplotlib.pyplot import figure
+from mpl_toolkits.mplot3d import axes3d
 
 class LatticeSystem(object):
     name = None
@@ -236,6 +238,23 @@ class LatticeSystem(object):
         self._aic = None
         self._afs = None
         self._gam = None
+    def plot_surface(self, view=None):
+        # pltbox = PlotBox3D()
+        fig = figure(figsize=(12,8))
+        ax = fig.gca(projection='3d')
+        ax.set_proj_type('ortho')
+        ax.grid(False)
+        # ax.set_aspect('equal')
+        for srfc in self.srfcs:
+            x, y, z = srfc.point_xyz()
+            ax.plot_wireframe(x, y, z)
+            # pltbox.update_box(x, y, z)
+        if view == 'top':
+            ax.view_init(90.0, 0.0)
+        elif view == 'left':
+            ax.view_init(0.0, 0.0)
+        # pltbox.plot_box(ax)
+        set_axes_equal(ax)
     def __repr__(self):
         return '<LatticeSystem {:s}>'.format(self.name)
 
@@ -259,3 +278,84 @@ def latticesystem_from_json(jsonfilepath: str):
     zref = data['zref']
     sys.set_reference_point(xref, yref, zref)
     return sys
+
+class PlotBox3D(object):
+    xmin = None
+    ymin = None
+    zmin = None
+    xmax = None
+    ymax = None
+    zmax = None
+    def __init__(self):
+        pass
+    def update_box(self, x, y, z):
+        if self.xmin is None:
+            self.xmin = x.min()
+        else:
+            self.xmin = min(x.min(), self.xmin)
+        if self.xmax is None:
+            self.xmax = x.max()
+        else:
+            self.xmax = max(x.max(), self.xmax)
+        if self.ymin is None:
+            self.ymin = y.min()
+        else:
+            self.ymin = min(y.min(), self.ymin)
+        if self.ymax is None:
+            self.ymax = y.max()
+        else:
+            self.ymax = max(y.max(), self.ymax)
+        if self.zmin is None:
+            self.zmin = z.min()
+        else:
+            self.zmin = min(z.min(), self.zmin)
+        if self.zmax is None:
+            self.zmax = z.max()
+        else:
+            self.zmax = max(z.max(), self.zmax)
+    def plot_box(self, ax):
+        xrng = self.xmax-self.xmin
+        yrng = self.ymax-self.ymin
+        zrng = self.zmax-self.zmin
+        xctr = (self.xmax+self.xmin)/2
+        yctr = (self.ymax+self.ymin)/2
+        zctr = (self.zmax+self.zmin)/2
+        maxrng = max([xrng, yrng, zrng])
+        xmin = xctr-maxrng/2
+        ymin = yctr-maxrng/2
+        zmin = zctr-maxrng/2
+        xmax = xctr+maxrng/2
+        ymax = yctr+maxrng/2
+        zmax = zctr+maxrng/2
+        # x = [xmin, xmin, xmin, xmin, xmax, xmax, xmax, xmax]
+        # y = [ymin, ymin, ymax, ymax, ymin, ymin, ymax, ymax]
+        # z = [zmin, zmax, zmin, zmax, zmin, zmax, zmin, zmax]
+        # ax.scatter(x, y, z)
+        ax.set_xlim3d(xmin, xmax)
+        ax.set_ylim3d(ymin, ymax)
+        ax.set_zlim3d(zmin, zmax)
+
+def set_axes_radius(ax, origin, radius):
+    ax.set_xlim3d([origin[0] - radius, origin[0] + radius])
+    ax.set_ylim3d([origin[1] - radius, origin[1] + radius])
+    ax.set_zlim3d([origin[2] - radius, origin[2] + radius])
+
+def set_axes_equal(ax):
+    from numpy import array, mean, max, abs
+    '''Make axes of 3D plot have equal scale so that spheres appear as spheres,
+    cubes as cubes, etc..  This is one possible solution to Matplotlib's
+    ax.set_aspect('equal') and ax.axis('equal') not working for 3D.
+
+    Input
+      ax: a matplotlib axis, e.g., as output from plt.gca().
+    '''
+
+    limits = array([
+        ax.get_xlim3d(),
+        ax.get_ylim3d(),
+        ax.get_zlim3d(),
+    ])
+
+    origin = mean(limits, axis=1)
+    radius = 0.5 * max(abs(limits[:, 1] - limits[:, 0]))
+    set_axes_radius(ax, origin, radius)

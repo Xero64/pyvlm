@@ -4,6 +4,7 @@ from pygeom.geom3d import Point, Vector, Coordinate, ihat
 class LatticePanel(object):
     lpid = None
     pnts = None
+    bspc = None
     pntc = None
     pnti = None
     pnta = None
@@ -17,9 +18,12 @@ class LatticePanel(object):
     mpid = None
     strp = None
     sht = None
-    def __init__(self, lpid: int, pnts: list):
+    crd = None
+    area = None
+    def __init__(self, lpid: int, pnts: list, bspc: float=0.5):
         self.lpid = lpid
         self.pnts = pnts
+        self.bspc = bspc
         self.update()
     def update(self):
         pnt1 = self.pnts[0]
@@ -31,8 +35,12 @@ class LatticePanel(object):
         self.pnta = pnt1+0.25*veca
         self.pntb = pnt2+0.25*vecb
         self.leni = self.pntb-self.pnta
-        self.pnti = self.pnta+0.5*self.leni
+        self.pnti = self.pnta+self.bspc*self.leni
         self.th = atan2(self.leni.z, self.leni.y)
+        crda = veca.return_magnitude()
+        crdb = vecb.return_magnitude()
+        self.crd = crda+(crdb-crda)*self.bspc
+        self.area = self.leni.return_magnitude()*(veca.return_magnitude()+vecb.return_magnitude())/2
         # self.lent = Vector(0.0, self.leni.y, self.leni.z)
         # self.nrmt = Vector(0.0, -self.leni.z, self.leni.y).to_unit()
         # self.nrmt = ihat**self.
@@ -47,7 +55,7 @@ class LatticePanel(object):
         pnta = pnt1+0.75*veca
         pntb = pnt2+0.75*vecb
         lenc = pntb-pnta
-        pntc = pnta+0.5*lenc
+        pntc = pnta+self.bspc*lenc
         return pntc
     # def set_coordinate(self, cord: Coordinate):
     #     self.cord = cord

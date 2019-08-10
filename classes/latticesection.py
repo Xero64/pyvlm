@@ -1,4 +1,4 @@
-from math import cos, pi
+from math import asin, cos, pi
 from pygeom.geom3d import Point
 from pyvlm.tools.function import Function
 
@@ -6,22 +6,39 @@ class LatticeSection(object):
     pnt = None
     chord = None
     camber = None
-    bdist = None
+    bspace = None
+    yspace = None
     def __init__(self, pnt: Point, chord: float):
         self.pnt = pnt
         self.chord = chord
         self.update()
     def update(self):
         self.camber = Function([0.0, 1.0], [0.0, 0.0])
-    def set_span_distribution(self, cdist: list):
-        self.bdist = cdist
-    def set_span_sine_distribution(self, numb: int):
-        self.bdist = [cos(i*pi/2/numb) for i in range(numb+1)]
-        self.bdist.reverse()
-    def set_span_equal_distribution(self, numb: int):
-        self.bdist = [float(i)/numb for i in range(numb+1)]
-    def set_span_cosine_distribution(self, numb: int):
-        self.bdist = [0.5*(1.0-cos(i*pi/numb)) for i in range(numb+1)]
+    def set_span_equal_spacing(self, numb: int):
+        from pyvlm.tools import equal_spacing
+        spc = equal_spacing(2*numb)
+        self.bspace = spc[0::2]
+        self.yspace = spc[1::2]
+    def set_span_cosine_spacing(self, numb: int):
+        from pyvlm.tools import full_cosine_spacing
+        spc = full_cosine_spacing(2*numb)
+        self.bspace = spc[0::2]
+        self.yspace = spc[1::2]
+    def set_span_semi_cosine_spacing(self, numb: int):
+        from pyvlm.tools import semi_cosine_spacing
+        spc = semi_cosine_spacing(2*numb)
+        self.bspace = spc[0::2]
+        self.yspace = spc[1::2]
+    def set_span_elliptical_spacing(self, numb: int):
+        from pyvlm.tools import full_elliptical_spacing
+        spc = full_elliptical_spacing(2*numb)
+        self.bspace = spc[0::2]
+        self.yspace = spc[1::2]
+    def set_span_semi_elliptical_spacing(self, numb: int):
+        from pyvlm.tools import semi_elliptical_spacing
+        spc = semi_elliptical_spacing(2*numb)
+        self.bspace = spc[0::2]
+        self.yspace = spc[1::2]
     def set_camber(self, xc: list, zc: list):
         xmin = min(xc)
         xmax = max(xc)
@@ -49,13 +66,17 @@ def latticesecttion_from_json(sectdata: dict):
     sect = LatticeSection(pnt, crd)
     if 'airfoil' in sectdata:
         sect.airfoil = sectdata['airfoil']
-    if 'numb' in sectdata and 'bdist' in sectdata:
+    if 'numb' in sectdata and 'bspace' in sectdata:
         numb = sectdata['numb']
-        bdist = sectdata['bdist']
-        if bdist == 'sine':
-            sect.set_span_sine_distribution(numb)
-        elif bdist == 'equal':
-            sect.set_span_equal_distribution(numb)
-        elif bdist == 'cosine':
-            sect.set_span_cosine_distribution(numb)    
+        bspace = sectdata['bspace']
+        if bspace == 'equal':
+            sect.set_span_equal_spacing(numb)
+        elif bspace == 'cosine':
+            sect.set_span_cosine_spacing(numb)
+        elif bspace == 'elliptical':
+            sect.set_span_elliptical_spacing(numb)
+        elif bspace == 'semi-cosine':
+            sect.set_span_semi_cosine_spacing(numb)
+        elif bspace == 'semi-elliptical':
+            sect.set_span_semi_elliptical_spacing(numb)
     return sect
