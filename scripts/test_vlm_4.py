@@ -1,25 +1,34 @@
 #%% Import Dependencies
-
-from pyvlm import latticesystem_from_json, LatticeResult, LatticeOptimum
+from pyvlm import LatticeResult, LatticeOptimum
+from pyvlm.files import load_package_file
 from pyvlm.tools import bell_lift_distribution
 
 #%% Parameters
-V = 18.0 # m/s
-rho = 1.206 # kg/m**3
-q = rho*V**2/2 # Pa
-print(f'q = {q:.2f} Pa')
-
 m = 6.577089 # kg
 g = 9.80655 # m/s**2
 W = m*g # N
 print(f'W = {W:.2f} N')
 
+S = 0.9375 # m**2
+print(f'S = {S:.4f} m**2')
+
+CL = 0.6
+print(f'CL = {CL:.1f}')
+rho = 1.206 # kg/m**3
+print(f'rho = {rho:.3f} kg/m**3')
+# rho = 1.0
+V = (W/S/rho/CL*2)**0.5
+print(f'V = {V:.4f} m/s')
+
+q = rho*V**2/2 # Pa
+print(f'q = {q:.2f} Pa')
+
 #%% Low AR Wing
 
-jsonfilepath = r"packages\pyvlm\files\Test_rhofw.json"
-lsys = latticesystem_from_json(jsonfilepath)
-lsys_opt = latticesystem_from_json(jsonfilepath)
-lsys_bll = latticesystem_from_json(jsonfilepath)
+jsonfilename = "Test_rhofw.json"
+lsys = load_package_file(jsonfilename)
+lsys_opt = load_package_file(jsonfilename)
+lsys_bll = load_package_file(jsonfilename)
 
 print(f'bref = {lsys.bref:g}')
 print(f'cref = {lsys.cref:g}')
@@ -32,10 +41,6 @@ lres_org.set_conditions(speed=V, rho=rho)
 l = bell_lift_distribution(lres_org.strpy, lsys.bref, W)
 
 #%% Bell Shaped Lift Distribution
-
-CL = W/q/lsys.sref
-
-print(f'CL = {CL:.5f}')
 
 lopt_bll = LatticeOptimum('Bell', lsys_bll)
 lopt_bll.set_conditions(speed=V, rho=rho)
@@ -99,6 +104,22 @@ numal = len(alspec)
 
 yspec = [i*lsys.bref/2/(numal-1) for i in range(numal)]
 
+almirr = []
+ymirr = []
+
+for i in range(numal-1, 0, -1):
+    almirr.append(alspec[i])
+    ymirr.append(-yspec[i])
+
+alspec = almirr+alspec
+yspec = ymirr+yspec
+
+#%% Bell Downwash
+
+w = [W/rho/V/lsys_bll.bref*3/2*((2*yi/lsys_bll.bref)**2-0.5) for yi in yspec]
+
+print(min(w)/min(lres_bll.trwsh))
+
 #%% Plots
 
 axl = None
@@ -118,9 +139,63 @@ axw = lres_org.plot_trefftz_wash_distribution(ax=axw)
 axw = lres_bll.plot_trefftz_wash_distribution(ax=axw)
 axw = lres_opt.plot_trefftz_wash_distribution(ax=axw)
 axw = lopt.res.plot_trefftz_wash_distribution(ax=axw)
+axw.plot(yspec, w, label='Bell Wash')
+axw.legend()
 
 axa = lopt.plot_strip_twist_distribution()
 axa.plot(lres_bll.strpy, al_bll, label='alpha Bell')
 axa.plot(lres_opt.strpy, al_opt, label='alpha Optimum')
 axa.plot(yspec, alspec, label='alpha Specified')
 leg = axa.legend()
+
+#%% Induced Angle
+
+from math import atan2, degrees, radians, pi
+from matplotlib.pyplot import figure
+from pymath.function import Function
+
+alf = Function(yspec, alspec)
+als = alf.linear_interp(lres_bll.strpy)
+
+ali = [degrees(atan2(lres_bll.trwsh[i], V)) for i in range(len(lres_bll.trwsh))]
+al0 = [1.0-abs(yi)*2/lsys_bll.bref for yi in lres_bll.strpy]
+
+alp = [als[i]+ali[i]+al0[i] for i in range(len(lres_bll.strpy))]
+
+fig  = figure(figsize=(12, 8))
+ax = fig.gca()
+ax.grid(True)
+ax.plot(lres_bll.strpy, ali, label='Induced Angle')
+ax.plot(lres_bll.strpy, al0, label='Zero Lift Angle')
+ax.plot(lres_bll.strpy, als, label='Specified Angle')
+ax.plot(lres_bll.strpy, alp, label='Total Angle')
+leg = ax.legend()
+
+#%% Local Lift
+
+cmax = 0.40005
+cmin = 0.10008
+
+c = [cmax-abs(yi)*2/lsys_bll.bref*(cmax-cmin) for yi in lres_bll.strpy]
+
+cla = 2*pi*0.91
+
+l = [cla*c[i]*radians(alp[i])*q for i in range(len(lres_bll.strpy))]
+
+fig  = figure(figsize=(12, 8))
+ax = fig.gca()
+ax.grid(True)
+ax.plot(lres_bll.strpy, l, label='Lift Distribution')
+ax = lres_bll.plot_trefftz_lift_distribution(ax=ax)
+leg = ax.legend()
+
+
+#%% Plot Specified Twist
+
+fig  = figure(figsize=(12, 8))
+ax = fig.gca()
+ax.grid(True)
+ax.plot(yspec, alspec)
+ax.set_title('Wing Geometric Twist as a function of Span')
+ax.set_xlabel('Span Coordinate - y - [m]')
+ax.set_ylabel('Geometric Twist Angle - $\\alpha_g$ - [deg]')

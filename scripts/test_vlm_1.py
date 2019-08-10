@@ -1,8 +1,9 @@
 #%% Load lattice JSON File
-from pyvlm import latticesystem_from_json, LatticeResult
+from pyvlm import LatticeResult
+from pyvlm.files import load_package_file
 
-jsonfilepath = r"packages\pyvlm\files\Test.json"
-lsys = latticesystem_from_json(jsonfilepath)
+jsonfilename = "Straight_Wing_Cosine_20.json"
+lsys = load_package_file(jsonfilename)
 
 print(f'bref = {lsys.bref:g}')
 print(f'cref = {lsys.cref:g}')
@@ -18,6 +19,9 @@ lres_org.set_conditions(alpha=alpha)
 
 # lres_org.print_total_loads()
 lres_org.print_aerodynamic_coefficients()
+
+#%% Original Strip Forces
+lres_org.print_strip_forces()
 
 #%% Equivalent Elliptical Lift
 from pyvlm.tools import elliptical_lift_distribution
@@ -94,3 +98,15 @@ print(f'CDi_opt1 = {lres_opt1.CDi_ff:.7f}')
 print(f'CDi_opt2 = {lres_opt2.CDi_ff:.7f}')
 print('')
 print(f'Efficiency Improvement = {100.0*(1.0-lres_opt1.CDi_ff/lres_org.CDi_ff):.2f}%')
+
+#%% Plot Surfaces
+
+lsys.plot_surface(view='top')
+
+# #%% Pause
+
+# y = [pnt.y for pnt in lsys.srfcs[0].pnts[:, 0].transpose().tolist()[0]]
+
+# from matplotlib.pyplot import show
+# show()
+# pass

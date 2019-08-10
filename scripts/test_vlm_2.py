@@ -1,11 +1,11 @@
 #%% Import Dependencies
-
-from pyvlm import latticesystem_from_json, LatticeResult, LatticeOptimum
+from pyvlm import LatticeResult, LatticeOptimum
+from pyvlm.files import load_package_file
 
 #%% Low AR Wing
 
-jsonfilepath1 = r"packages\pyvlm\files\Test_sweep.json"
-lsys1 = latticesystem_from_json(jsonfilepath1)
+jsonfilename1 = "Sweep_Low_AR_100.json"
+lsys1 = load_package_file(jsonfilename1)
 
 print(f'bref 1 = {lsys1.bref:g}')
 print(f'cref 1 = {lsys1.cref:g}')
@@ -14,8 +14,8 @@ print(f'rref 1 = {lsys1.rref:.3f}')
 
 #%% High AR Wing
 
-jsonfilepath2 = r"packages\pyvlm\files\Test_sweep_2.json"
-lsys2 = latticesystem_from_json(jsonfilepath2)
+jsonfilename2 = "Sweep_High_AR_100.json"
+lsys2 = load_package_file(jsonfilename2)
 
 print(f'bref 2 = {lsys2.bref:g}')
 print(f'cref 2 = {lsys2.cref:g}')
