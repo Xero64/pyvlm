@@ -21,6 +21,8 @@ class Elliptical(object):
         self._speed = speed
     def set_density(self, rho: float):
         self._rho = rho
+    def set_ym(self, ym: list):
+        self._ym = ym
     @property
     def s(self):
         if self._s is None:
@@ -92,29 +94,28 @@ class Elliptical(object):
             yb = self.y[b]
             dy.append(yb-ya)
         return dy
-    def return_phi(self):
-        V = self.speed
-        rho = self.rho
-        dy = self.return_delta_y()
-        Li = self.return_lift_forces()
-        num = len(dy)
-        return [Li[i]/rho/V/dy[i] for i in range(num)]
     def lift_distribution(self):
         L = self.lift
         b = self.span
-        return [4*L*sin(thi)/(pi*b) for thi in self.th]
+        return [4*L*sin(th)/(pi*b) for th in self.th]
     def drag_distribution(self):
         L = self.lift
         b = self.span
         V = self.speed
         rho = self.rho
-        return [8*L**2*sin(thi)/(pi**2*V**2*b**3*rho) for thi in self.th]
+        return [8*L**2*sin(th)/(pi**2*V**2*b**3*rho) for th in self.th]
     def wash_distribution(self):
         L = self.lift
         b = self.span
         V = self.speed
         rho = self.rho
-        return [-2*L/(pi*V*b**2*rho) for thi in self.th]
+        return [0.0-2*L/(pi*V*b**2*rho) for th in self.th]
+    def trefftz_wash_distribution(self):
+        L = self.lift
+        b = self.span
+        V = self.speed
+        rho = self.rho
+        return [0.0-4*L/(pi*V*b**2*rho) for th in self.th]
     def shear_force_distribution(self):
         L = self.lift
         th = [thi if thi <= pi/2 else thi-pi for thi in self.th]
@@ -131,6 +132,12 @@ class Elliptical(object):
         L = self.lift
         b = self.span
         return L*b*(-4 + pi**2)/(16*pi)
+    def return_phi(self):
+        L = self.lift
+        b = self.span
+        V = self.speed
+        rho = self.rho
+        return [4*L*sin(th)/(pi*b)/rho/V for th in self.thm]
     def __str__(self):
         sf = self.root_shear_force()
         bm = self.root_bending_moment()
@@ -166,5 +173,13 @@ class Elliptical(object):
             ax = fig.gca()
             ax.grid(True)
         ax.plot(self.y, self.wash_distribution(), label='Elliptical Theory')
+        ax.legend()
+        return ax
+    def plot_trefftz_wash_distribution(self, ax=None):
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        ax.plot(self.y, self.trefftz_wash_distribution(), label='Elliptical Theory')
         ax.legend()
         return ax
