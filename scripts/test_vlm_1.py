@@ -1,73 +1,103 @@
-#%% Load lattice JSON File
-from pyvlm import LatticeResult
+#%% Load Dependencies
+from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm.files import load_package_file
 
-jsonfilename = "Straight_Wing_Cosine_20.json"
+#%% Create Lattice System
+jsonfilename = "Straight_Wing_Cosine_100.json"
 lsys = load_package_file(jsonfilename)
+print(lsys)
 
-print(f'bref = {lsys.bref:g}')
-print(f'cref = {lsys.cref:g}')
-print(f'sref = {lsys.sref:g}')
-print(f'rref = {lsys.rref:.3f}')
+#%% Original Strip Geometry
+lsys.print_strip_geometry()
+
+#%% Original Strip Geometry
+lsys.print_panel_geometry()
 
 #%% Original Case
 
 alpha = 3.0 # degrees
+beta = 0.0 # degrees
 
 lres_org = LatticeResult('Baseline', lsys)
-lres_org.set_conditions(alpha=alpha)
+lres_org.set_conditions(alpha=alpha, beta=beta)
+print(lres_org)
 
 # lres_org.print_total_loads()
-lres_org.print_aerodynamic_coefficients()
+# lres_org.print_aerodynamic_coefficients()
 
 #%% Original Strip Forces
 lres_org.print_strip_forces()
+
+#%% Original Strip Coefficients
+lres_org.print_strip_coefficients()
+
+#%% Original Panel Forces
+lres_org.print_panel_forces()
 
 #%% Equivalent Elliptical Lift
 from pyvlm.tools import elliptical_lift_distribution
 
 L = lres_org.CL*lres_org.qfs*lsys.sref
 
-lell = elliptical_lift_distribution(lres_org.strpy, lsys.bref, L)
+lell = elliptical_lift_distribution(lsys.strpy, lsys.bref, L)
 
 lres_ell = LatticeResult('Equivalent Elliptical', lsys)
 lres_ell.set_conditions(alpha=alpha)
 lres_ell.set_lift_distribution(lell, rho=1.0, speed=1.0)
+print(lres_ell)
 
 # lres_ell.print_total_loads()
-lres_ell.print_aerodynamic_coefficients()
+# lres_ell.print_aerodynamic_coefficients()
 
 #%% Calculate Unconstrained Optimum
 
-Lspec = lres_org.CL*lres_org.qfs*lsys.sref
+# Lspec = lres_org.CL*lres_org.qfs*lsys.sref
 
-phi1, lam1, Di1, L1, l1 = lsys.optimum_lift_distribution(Lspec)
+# phi1, lam1, Di1, L1, l1 = lsys.optimum_lift_distribution(Lspec)
 
-print(f'Di1 = {Di1}')
-print(f'L1 = {L1}')
-print(f'l1 = {l1}')
+# print(f'Di1 = {Di1}')
+# print(f'L1 = {L1}')
+# print(f'l1 = {l1}')
+
+lopt_opt1 = LatticeOptimum('Unconstrained Optimised', lsys)
+lopt_opt1.set_conditions()
+lopt_opt1.add_constraint('L', L)
+lopt_opt1.add_record('l', strplst='Mirrored')
+phi1, lam1 = lopt_opt1.optimum_lift_distribution()
+print(lopt_opt1)
 
 lres_opt1 = LatticeResult('Unconstrained Optimised', lsys)
 lres_opt1.set_conditions(alpha=alpha)
 lres_opt1.set_phi(phi1)
+print(lres_opt1)
 
 # lres_opt1.print_total_loads()
-lres_opt1.print_aerodynamic_coefficients()
+# lres_opt1.print_aerodynamic_coefficients()
 
 #%% Calculate Constrained Optimum
 
-phi2, lam2, Di2, L2, l2 = lsys.optimum_lift_distribution(Lspec, lspec=l1*3/4)
+lspec = lopt_opt1.record[0].evaluate(lopt_opt1.pmat)*3/4
 
-print(f'Di2 = {Di2}')
-print(f'L2 = {L2}')
-print(f'l2 = {l2}')
+# phi2, lam2, Di2, L2, l2 = lsys.optimum_lift_distribution(L, lspec=lspec)
+
+lopt_opt2 = LatticeOptimum('Constrained Optimised', lsys)
+lopt_opt2.set_conditions()
+lopt_opt2.add_constraint('L', L)
+lopt_opt2.add_constraint('l', lspec, strplst='Mirrored')
+phi2, lam2 = lopt_opt2.optimum_lift_distribution()
+print(lopt_opt2)
+
+# print(f'Di2 = {Di2}')
+# print(f'L2 = {L2}')
+# print(f'l2 = {l2}')
 
 lres_opt2 = LatticeResult('Constrained Optimised', lsys)
 lres_opt2.set_conditions(alpha=alpha)
 lres_opt2.set_phi(phi2)
+print(lres_opt2)
 
 # lres_opt2.print_total_loads()
-lres_opt2.print_aerodynamic_coefficients()
+# lres_opt2.print_aerodynamic_coefficients()
 
 #%% Plot Distribution
 
@@ -85,10 +115,10 @@ CDi_org_theory = lres_org.CL_ff**2/pi/lsys.ar/lres_org.e
 
 CDi_ell_theory = lres_org.CL_ff**2/pi/lsys.ar
 
-print(f'CL_org = {lres_org.CL_ff:.7f}')
-print(f'CL_ell = {lres_ell.CL_ff:.7f}')
-print(f'CL_opt1 = {lres_opt1.CL_ff:.7f}')
-print(f'CL_opt2 = {lres_opt2.CL_ff:.7f}')
+print(f'CL_org = {lres_org.CL_ff:.3f}')
+print(f'CL_ell = {lres_ell.CL_ff:.3f}')
+print(f'CL_opt1 = {lres_opt1.CL_ff:.3f}')
+print(f'CL_opt2 = {lres_opt2.CL_ff:.3f}')
 print('')
 print(f'CDi_org_theory = {CDi_org_theory:.7f}')
 print(f'CDi_org = {lres_org.CDi_ff:.7f}')
@@ -101,12 +131,26 @@ print(f'Efficiency Improvement = {100.0*(1.0-lres_opt1.CDi_ff/lres_org.CDi_ff):.
 
 #%% Plot Surfaces
 
-lsys.plot_surface(view='top')
+# from numpy import array
+# import ipyvolume as ipv
 
-# #%% Pause
+# x, y, z  = lsys.srfcs[0].point_xyz()
+# X = array(x)
+# Y = array(y)
+# Z = array(z)
 
-# y = [pnt.y for pnt in lsys.srfcs[0].pnts[:, 0].transpose().tolist()[0]]
+# ipv.figure()
+# ipv.plot_surface(X, Z, Y, color="orange")
+# ipv.plot_wireframe(X, Z, Y, color="red")
+# ipv.pylab.xyzlim(-5.0, 5.0)
+# ipv.show()
 
-# from matplotlib.pyplot import show
+# from ipyvolume import figure, plot_surface, show
+
+# x, y, z  = lsys.srfcs[0].point_xyz()
+# fig = figure()
+# plot_surface(x, y, z, color='orange')
 # show()
-# pass
+
+# lsys.plot_surface_ipv()
+# ax = lsys.plot_surface(view='top')

@@ -3,45 +3,30 @@ from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm.files import load_package_file
 
 #%% Low AR Wing
-
 jsonfilename = "Test.json"
 lsys = load_package_file(jsonfilename)
-lsys_new = load_package_file(jsonfilename)
+print(lsys)
 
-print(f'bref = {lsys.bref:g}')
-print(f'cref = {lsys.cref:g}')
-print(f'sref = {lsys.sref:g}')
-print(f'rref = {lsys.rref:.3f}')
+lsys_new = load_package_file(jsonfilename)
 
 lres_org = LatticeResult('Initial', lsys)
 lres_org.set_conditions(alpha=3.0)
+print(lres_org)
 
-Lspec = lres_org.CL*lres_org.qfs*lsys.sref
+Lspec = lres_org.CL_ff*lres_org.qfs*lsys.sref
 
 #%% Low AR Optimal Lift Distribution
 
 lopt = LatticeOptimum('Optimal', lsys_new)
 lopt.set_conditions()
 lopt.add_constraint('L', Lspec)
-
 phi, lam = lopt.optimum_lift_distribution()
-
-# print(phi)
-
-# phi, lam, Di, L, l = lsys.optimum_lift_distribution(Lspec)
-
-# print(phi)
-
-# print(f'phi1 = {phi1}')
-# print(f'lam1 = {lam1}')
-# print(f'Di = {Di}')
-# print(f'L = {L}')
-# print(f'l = {l}')
+print(lopt)
 
 lres_opt = LatticeResult('Optimal', lsys)
 lres_opt.set_conditions(alpha=3.0)
 lres_opt.set_phi(phi)
-lres_opt.print_aerodynamic_coefficients()
+print(lres_opt)
 
 #%% Plots
 
@@ -80,6 +65,32 @@ axw = lres_opt.plot_trefftz_wash_distribution(ax=axw)
 axw = lopt.res.plot_trefftz_wash_distribution(ax=axw)
 
 axa = lopt.plot_strip_twist_distribution()
-axa.plot(lres_opt.strpy, al1, label='al1')
-axa.plot(lres_opt.strpy, al2, label='al2')
+axa.plot(lsys.strpy, al1, label='al1')
+axa.plot(lsys.strpy, al2, label='al2')
 axa.legend()
+
+#%% New Results
+
+lres_0deg = LatticeResult('0deg Result', lsys_new)
+lres_0deg.set_conditions(alpha=0.0, speed=1.0, rho=1.0)
+print(lres_0deg)
+
+lres_6deg = LatticeResult('6deg Result', lsys_new)
+lres_6deg.set_conditions(alpha=6.0, speed=1.0, rho=1.0)
+print(lres_6deg)
+
+#%% New Plots
+
+axl = None
+axl = lres_0deg.plot_trefftz_lift_distribution(ax=axl)
+axl = lres_6deg.plot_trefftz_lift_distribution(ax=axl)
+
+axd = None
+axd = lres_0deg.plot_trefftz_drag_distribution(ax=axd)
+axd = lres_6deg.plot_trefftz_drag_distribution(ax=axd)
+
+axw = None
+axw = lres_0deg.plot_trefftz_wash_distribution(ax=axw)
+axw = lres_6deg.plot_trefftz_wash_distribution(ax=axw)
+
+#%%

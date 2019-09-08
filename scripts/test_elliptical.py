@@ -1,16 +1,12 @@
 #%% Import Dependencies
-from pyvlm import latticesystem_from_json, LatticeResult, LatticeOptimum
+from pyvlm import LatticeResult, LatticeOptimum
+from pyvlm.files import load_package_file
 from pyvlm.tools import Elliptical
 
 #%% Low AR Wing
-
-jsonfilepath1 = r"packages\pyvlm\files\Straight_Wing_Equal_20.json"
-lsys = latticesystem_from_json(jsonfilepath1)
-
-print(f'bref = {lsys.bref:g}')
-print(f'cref = {lsys.cref:g}')
-print(f'sref = {lsys.sref:g}')
-print(f'rref = {lsys.rref:.3f}')
+jsonfilename = "Straight_Wing_Cosine_100.json"
+lsys = load_package_file(jsonfilename)
+print(lsys)
 
 #%% Elliptical
 
@@ -20,22 +16,15 @@ y = [pnt.y for pnt in lsys.srfcs[0].pnts[:, 0].transpose().tolist()[0]]
 
 ell = Elliptical(lsys.bref, y)
 ell.set_lift(1.0)
-
-phi = ell.return_phi()
+ell.set_ym(lsys.strpy)
+l = ell.return_phi()
 
 #%% Low AR Wing Optimum
 
 lres = LatticeResult('Low AR Wing', lsys)
 lres.set_conditions()
-lres.set_phi(phi)
-lres.print_aerodynamic_coefficients()
-
-#%% Elliptical
-
-ell = Elliptical(lsys.bref, lres.strpy)
-ell.set_lift(1.0)
-
-print(ell)
+lres.set_lift_distribution(l, rho=1.0, speed=1.0)
+print(lres)
 
 #%% Plots
 
@@ -47,12 +36,27 @@ axd = None
 axd = lres.plot_trefftz_drag_distribution(ax=axd)
 axd = ell.plot_drag_distribution(ax=axd)
 
-axw = None
-axw = lres.plot_trefftz_wash_distribution(ax=axw)
-axw = ell.plot_wash_distribution(ax=axw)
+axw1 = None
+axw1 = lres.plot_trefftz_wash_distribution(ax=axw1)
+axw2 = None
+axw2 = ell.plot_trefftz_wash_distribution(ax=axw2)
 
 #%% Variables
 
-bvg = lsys.bvg.tolist()
+well = ell.trefftz_wash_distribution()
+wres = lres.trwsh
+
+from matplotlib.pyplot import figure
+
+fig = figure()
+ax = fig.gca()
+ax.grid(True)
+ax.plot([0.0], [0.0])
+ax.plot(ell.y, well, label='Theory')
+ax.plot(lsys.strpy, wres, label='Result')
+l = ax.legend()
+
+# # bvg = lsys.bvg.tolist()
+
 
 #%%

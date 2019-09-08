@@ -50,46 +50,26 @@ lres_bll.set_conditions(speed=V, rho=rho)
 lres_bll.set_lift_distribution(l, rho, V)
 print(lres_bll)
 
-#%% Optimal Lift Distribution
-
-lopt = LatticeOptimum('Optimal', lsys_opt)
-lopt.set_conditions(speed=V, rho=rho)
-lopt.add_constraint('L', W)
-lopt.add_constraint('l', 20.566097, strplst='Mirrored')
-# lopt.add_record('l', strplst='Mirrored')
-lopt.optimum_lift_distribution()
-print(lopt)
-
-lres_opt = LatticeResult('Optimal', lsys)
-lres_opt.set_conditions(speed=V, rho=rho)
-lres_opt.set_phi(lopt.phi)
-print(lres_opt)
-
 #%% Plots
 
 axp = None
 axp = lres_org.plot_phi_distribution(ax=axp)
 axp = lres_bll.plot_phi_distribution(ax=axp)
-axp = lres_opt.plot_phi_distribution(ax=axp)
 
 axl = None
 axl = lres_org.plot_trefftz_lift_distribution(ax=axl)
 axl = lres_bll.plot_trefftz_lift_distribution(ax=axl)
-axl = lres_opt.plot_trefftz_lift_distribution(ax=axl)
 
 axd = None
 axd = lres_org.plot_trefftz_drag_distribution(ax=axd)
 axd = lres_bll.plot_trefftz_drag_distribution(ax=axd)
-axd = lres_opt.plot_trefftz_drag_distribution(ax=axd)
 
 axw = None
 axw = lres_org.plot_trefftz_wash_distribution(ax=axw)
 axw = lres_bll.plot_trefftz_wash_distribution(ax=axw)
-axw = lres_opt.plot_trefftz_wash_distribution(ax=axw)
 
 #%% Optimal Strip Twist
 
-al_opt = lopt.optimum_strip_twist(crit=1e-1)
 al_bll = lopt_bll.optimum_strip_twist(crit=1e-1)
 
 #%% Specified String Twist
@@ -122,26 +102,19 @@ print(min(w)/min(lres_bll.trwsh))
 axl = None
 axl = lres_org.plot_trefftz_lift_distribution(ax=axl)
 axl = lres_bll.plot_trefftz_lift_distribution(ax=axl)
-axl = lres_opt.plot_trefftz_lift_distribution(ax=axl)
-axl = lopt.res.plot_trefftz_lift_distribution(ax=axl)
 
 axd = None
 axd = lres_org.plot_trefftz_drag_distribution(ax=axd)
 axd = lres_bll.plot_trefftz_drag_distribution(ax=axd)
-axd = lres_opt.plot_trefftz_drag_distribution(ax=axd)
-axd = lopt.res.plot_trefftz_drag_distribution(ax=axd)
 
 axw = None
 axw = lres_org.plot_trefftz_wash_distribution(ax=axw)
 axw = lres_bll.plot_trefftz_wash_distribution(ax=axw)
-axw = lres_opt.plot_trefftz_wash_distribution(ax=axw)
-axw = lopt.res.plot_trefftz_wash_distribution(ax=axw)
 axw.plot(yspec, w, label='Bell Wash')
 axw.legend()
 
-axa = lopt.plot_strip_twist_distribution()
+axa = lopt_bll.plot_strip_twist_distribution()
 axa.plot(lsys.strpy, al_bll, label='alpha Bell')
-axa.plot(lsys.strpy, al_opt, label='alpha Optimum')
 axa.plot(yspec, alspec, label='alpha Specified')
 leg = axa.legend()
 
@@ -195,3 +168,29 @@ ax.plot(yspec, alspec)
 ax.set_title('Wing Geometric Twist as a function of Span')
 ax.set_xlabel('Span Coordinate - y - [m]')
 _ = ax.set_ylabel('Geometric Twist Angle - $\\alpha_g$ - [deg]')
+
+#%% New Results
+
+lres_0deg = LatticeResult('0deg Result', lsys_bll)
+lres_0deg.set_conditions(alpha=0.0, speed=V, rho=rho)
+print(lres_0deg)
+
+lres_14deg = LatticeResult('10deg Result', lsys_bll)
+lres_14deg.set_conditions(alpha=14.0, speed=V, rho=rho)
+print(lres_14deg)
+
+#%% New Plots
+
+axl = None
+axl = lres_0deg.plot_trefftz_lift_distribution(ax=axl)
+axl = lres_14deg.plot_trefftz_lift_distribution(ax=axl)
+
+axd = None
+axd = lres_0deg.plot_trefftz_drag_distribution(ax=axd)
+axd = lres_14deg.plot_trefftz_drag_distribution(ax=axd)
+
+axw = None
+axw = lres_0deg.plot_trefftz_wash_distribution(ax=axw)
+axw = lres_14deg.plot_trefftz_wash_distribution(ax=axw)
+
+#%%
