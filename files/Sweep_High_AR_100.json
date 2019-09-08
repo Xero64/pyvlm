@@ -1,9 +1,9 @@
 {
     "name": "Sweep High AR 100",
     "mach": 0.0,
-    "sref": 5.0,
+    "sref": 6.5,
     "cref": 0.500,
-    "bref": 10.0,
+    "bref": 13.0,
     "xref": 0.125,
     "yref": 0.0,
     "zref": 0.0,
@@ -25,8 +25,8 @@
                     "bspace": "semi-cosine"
                 },
                 {
-                    "xle": 0.0,
-                    "yle": 5.0,
+                    "xle": 3.25,
+                    "yle": 6.5,
                     "zle": 0.0,
                     "chord": 0.5,
                     "angle": 0.0

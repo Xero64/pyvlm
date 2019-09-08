@@ -1,9 +1,9 @@
 {
     "name": "Sweep Low AR 100",
     "mach": 0.0,
-    "sref": 6.5,
+    "sref": 5.0,
     "cref": 0.5,
-    "bref": 13.0,
+    "bref": 10.0,
     "xref": 0.125,
     "yref": 0.0,
     "zref": 0.0,
@@ -12,7 +12,7 @@
             "name": "Wing",
             "angle": 0.0,
             "mirror": true,
-            "numc": 2,
+            "numc": 1,
             "cspace": "cosine",
             "sections": [
                 {
@@ -25,8 +25,8 @@
                     "bspace": "semi-cosine"
                 },
                 {
-                    "xle": 3.25,
-                    "yle": 6.5,
+                    "xle": 2.5,
+                    "yle": 5.0,
                     "zle": 0.0,
                     "chord": 0.5,
                     "angle": 0.0

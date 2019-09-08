@@ -1,5 +1,5 @@
 {
-    "name": "Straight Wing Equal 20",
+    "name": "Straight Wing Cosine 20",
     "mach": 0.0,
     "sref": 5.0,
     "cref": 0.5,
@@ -12,7 +12,7 @@
             "name": "Wing",
             "angle": 0.0,
             "mirror": true,
-            "numc": 2,
+            "numc": 1,
             "cspace": "cosine",
             "sections": [
                 {
