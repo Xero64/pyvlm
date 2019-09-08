@@ -7,6 +7,6 @@ from .latticepanel import LatticePanel
 from .latticeresult import LatticeResult
 from .latticeoptimum import LatticeOptimum
 
-cfrm = '{:.5f}'
-dfrm = '{:.7f}'
-efrm = '{:.4f}'
+cfrm = '.5f'
+dfrm = '.7f'
+efrm = '.4f'

@@ -99,11 +99,6 @@ class LatticeResult(object):
             self._gam = [self.gmat[i, 0] for i in range(self.gmat.shape[0])]
         return self._gam
     @property
-    def strpy(self):
-        if self._strpy is None:
-            self._strpy = [strp.pnti.y for strp in self.sys.strps]
-        return self._strpy
-    @property
     def pmat(self):
         if self._pmat is None:
             num = len(self.sys.strps)
@@ -298,12 +293,29 @@ class LatticeResult(object):
         if self._e is None:
             self._e = self.CL_ff**2/pi/self.sys.ar/self.CDi_ff
         return self._e
+    def plot_panel_near_field_velocities(self, ax=None, component=None):
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        py = [pnl.pnti.y for pnl in self.sys.pnls]
+        if component is None or component == 'x':
+            vx = [vel.x for vel in self.nfvel]
+            ax.plot(py, vx, label=self.name+' Velocity X')
+        if component is None or component == 'y':
+            vy = [vel.y for vel in self.nfvel]
+            ax.plot(py, vy, label=self.name+' Velocity Y')
+        if component is None or component == 'z':
+            vz = [vel.z for vel in self.nfvel]
+            ax.plot(py, vz, label=self.name+' Velocity Z')
+        ax.legend()
+        return ax
     def plot_phi_distribution(self, ax=None):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        ax.plot(self.strpy, self.phi, label=self.name)
+        ax.plot(self.sys.strpy, self.phi, label=self.name)
         ax.legend()
         return ax
     def plot_trefftz_lift_distribution(self, ax=None):
@@ -312,7 +324,7 @@ class LatticeResult(object):
             ax = fig.gca()
             ax.grid(True)
         trlft = [self.trlft[i]/strp.dyt for i, strp in enumerate(self.sys.strps)]
-        ax.plot(self.strpy, trlft, label=self.name)
+        ax.plot(self.sys.strpy, trlft, label=self.name)
         ax.legend()
         return ax
     def plot_trefftz_drag_distribution(self, ax=None):
@@ -321,7 +333,7 @@ class LatticeResult(object):
             ax = fig.gca()
             ax.grid(True)
         trdrg = [self.trdrg[i]/strp.dst for i, strp in enumerate(self.sys.strps)]
-        ax.plot(self.strpy, trdrg, label=self.name)
+        ax.plot(self.sys.strpy, trdrg, label=self.name)
         ax.legend()
         return ax
     def plot_trefftz_wash_distribution(self, ax=None):
@@ -329,7 +341,7 @@ class LatticeResult(object):
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        ax.plot(self.strpy, self.trwsh, label=self.name)
+        ax.plot(self.sys.strpy, self.trwsh, label=self.name)
         ax.legend()
         return ax
     def plot_strip_wash_distribution(self, lsid: int, ax=None):
@@ -340,7 +352,7 @@ class LatticeResult(object):
         stwash = []
         for i in range(self.sys.bvg.shape[0]):
             stwash.append(self.sys.bvg[i, lsid])
-        ax.plot(self.strpy, stwash)
+        ax.plot(self.sys.strpy, stwash)
         return ax
     def print_near_field_total_loads(self):
         print(f'Total Force in X = {self.nffrctot.x}')
@@ -350,41 +362,218 @@ class LatticeResult(object):
         print(f'Total Moment in Y = {self.nfmomtot.y}')
         print(f'Total Moment in Z = {self.nfmomtot.z}')
     def print_aerodynamic_coefficients(self):
-        from . import cfrm, dfrm
+        from . import cfrm, dfrm, efrm
         if self.gam is not None:
-            print('Cx = '+cfrm.format(self.Cx))
-            print('Cy = '+cfrm.format(self.Cy))
-            print('Cz = '+cfrm.format(self.Cz))
-            print('Cl = '+cfrm.format(self.Cl))
-            print('Cm = '+cfrm.format(self.Cm))
-            print('Cn = '+cfrm.format(self.Cn))
-            print('CL = '+cfrm.format(self.CL))
-            print('CDi = '+dfrm.format(self.CDi))
-            print('CY = '+cfrm.format(self.CY))
+            print('Cx = '+self.Cx.__format__(cfrm))
+            print('Cy = '+self.Cy.__format__(cfrm))
+            print('Cz = '+self.Cz.__format__(cfrm))
+            print('Cl = '+self.Cl.__format__(cfrm))
+            print('Cm = '+self.Cm.__format__(cfrm))
+            print('Cn = '+self.Cn.__format__(cfrm))
+            print('CL = '+self.CL.__format__(cfrm))
+            print('CDi = '+self.CDi.__format__(dfrm))
+            print('CY = '+self.CY.__format__(cfrm))
         if self.phi is not None:
-            print('CL_ff = '+cfrm.format(self.CL_ff))
-            print('CDi_ff = '+dfrm.format(self.CDi_ff))
-            print('CY_ff = '+cfrm.format(self.CY_ff))
-            print('e = {:.4f}'.format(self.e))
+            print('CL_ff = '+self.CL_ff.__format__(cfrm))
+            print('CDi_ff = '+self.CDi_ff.__format__(dfrm))
+            print('CY_ff = '+self.CY_ff.__format__(cfrm))
+            print('e = '+self.e.__format__(efrm))
     def print_strip_forces(self):
+        from py2md.classes import MDTable
         from math import atan
+        table = MDTable()
+        table.add_column('#', 'd')
+        table.add_column('Yle', '.4f')
+        table.add_column('Chord', '.4f')
+        table.add_column('Area', '.4f')
+        table.add_column('c cl', '.4f')
+        table.add_column('ai', '.4f')
+        table.add_column('cl_norm', '.4f')
+        table.add_column('cl', '.4f')
+        table.add_column('cd', '.4f')
         q = self.qfs
-        print()
-        print('   j      Yle    Chord     Area     c cl      ai      cl_norm  cl       cd')
-        frmstr = '{:5d}{:9.4f}{:9.4f}{:9.4f}{:9.4f}{:9.4f}{:9.4f}{:9.4f}{:9.4f}'
         for strp in self.sys.strps:
             j = strp.lsid
             yle = strp.pnti.y
-            chord = strp.crd
+            chord = strp.chord
             area = strp.area
             nrmfrc = Vector(0.0, 0.0, 0.0)
             for pnl in strp.pnls:
                 nrmfrc += self.nffrc[pnl.lpid]/pnl.area*pnl.crd
             c_cl = nrmfrc.z/q
             ai = -self.trwsh[strp.lsid]
-            cl_norm = nrmfrc*self.ulc/q/chord
-            cl = nrmfrc*self.ulc/q/chord
-            cd = nrmfrc*self.udc/q/chord
-            cl_norm = nrmfrc*strp.nrmt/q/chord
-            print(frmstr.format(j, yle, chord, area, c_cl, ai, cl_norm, cl, cd))
+            cd = self.trdrg[strp.lsid]/q/area
+            # cx = nrmfrc*self.udc/q/chord
+            cy = nrmfrc*self.uyc/q/chord
+            cz = nrmfrc*self.ulc/q/chord
+            cf = Vector(0.0, cy, cz)
+            cl_norm = cf*strp.nrmt
+            cl = cl_norm
+            # cd = nrmfrc*self.udc/q/chord
+            # cd = cx
+            table.add_row([j, yle, chord, area, c_cl, ai, cl_norm, cl, cd])
+            # print(frmstr.format(j, yle, chord, area, c_cl, ai, cl_norm, cl, cd))
+        print(table)
+    def print_strip_coefficients(self):
+        from py2md.classes import MDTable
+        from math import atan
+        table = MDTable()
+        table.add_column('#', 'd')
+        table.add_column('Chord', '.5f')
+        table.add_column('Area', '.5f')
+        table.add_column('cn', '.5f')
+        table.add_column('ca', '.5f')
+        table.add_column('cl', '.5f')
+        table.add_column('cd', '.5f')
+        table.add_column('dw', '.5f')
+        table.add_column('cm le', '.5f')
+        table.add_column('cm qc', '.5f')
+        q = self.qfs
+        for strp in self.sys.strps:
+            j = strp.lsid
+            chord = strp.chord
+            area = strp.area
+            force = Vector(0.0, 0.0, 0.0)
+            momle = Vector(0.0, 0.0, 0.0)
+            for pnl in strp.pnls:
+                force += self.nffrc[pnl.lpid]
+                momle += self.nfmom[pnl.lpid]
+                rref = pnl.pnti-strp.pnti
+                momle += rref**self.nffrc[pnl.lpid]
+            cn = force*strp.nrmt/q/area
+            ca = force.x/q/area
+            cl = self.trlft[strp.lsid]/q/area
+            cd = self.trdrg[strp.lsid]/q/area
+            dw = -self.trwsh[strp.lsid]
+            cmle = momle.y/q/area/chord
+            rqc = Vector(-chord/4, 0.0, 0.0)
+            momqc = momle+rqc**force
+            cmqc = momqc.y/q/area/chord
+            table.add_row([j, chord, area, cn, ca, cl, cd, dw, cmle, cmqc])
+        print(table)
+    def print_panel_forces(self):
+        from py2md.classes import MDTable
+        from math import atan
+        table = MDTable()
+        table.add_column('# P', 'd')
+        table.add_column('# S', 'd')
+        table.add_column('X', '.5f')
+        table.add_column('Y', '.5f')
+        table.add_column('Z', '.5f')
+        table.add_column('DX', '.5f')
+        table.add_column('Slope', '.5f')
+        table.add_column('dCp', '.5f')
+        q = self.qfs
+        for pnl in self.sys.pnls:
+            j = pnl.lpid
+            k = pnl.strp.lsid
+            x = pnl.pnti.x
+            y = pnl.pnti.y
+            z = pnl.pnti.z
+            area = pnl.area
+            frc = self.nffrc[pnl.lpid]
+            nfrc = frc*pnl.nrml
+            cp = nfrc/area/q
+            chord = pnl.crd
+            alc = pnl.alc
+            alc = 0.0
+            table.add_row([j, k, x, y, z, chord, alc, cp])
+        print(table)
+    def print_panel_near_field_results(self):
+        from py2md.classes import MDTable
+        from math import atan
+        table = MDTable()
+        table.add_column('# P', 'd')
+        table.add_column('# S', 'd')
+        table.add_column('Gamma', '.1f')
+        table.add_column('Vx', '.1f')
+        table.add_column('Vy', '.1f')
+        table.add_column('Vz', '.1f')
+        table.add_column('lx', '.4f')
+        table.add_column('ly', '.4f')
+        table.add_column('lz', '.4f')
+        table.add_column('Fx', '.2f')
+        table.add_column('Fy', '.2f')
+        table.add_column('Fz', '.2f')
+        for pnl in self.sys.pnls:
+            j = pnl.lpid
+            k = pnl.strp.lsid
+            gam = self.gam[j]
+            Vx = self.nfvel[j].x
+            Vy = self.nfvel[j].y
+            Vz = self.nfvel[j].z
+            lx = pnl.leni.x
+            ly = pnl.leni.y
+            lz = pnl.leni.z
+            Fx = self.nffrc[j].x
+            Fy = self.nffrc[j].y
+            Fz = self.nffrc[j].z
+            table.add_row([j, k, gam, Vx, Vy, Vz, lx, ly, lz, Fx, Fy, Fz])
+        print(table)
+    def __str__(self):
+        from py2md.classes import MDTable
+        from . import cfrm, dfrm, efrm
+        outstr = '# Lattice Result '+self.name+'\n'
+        table = MDTable()
+        table.add_column('Alpha (deg)', 'g', data=[self.alpha])
+        table.add_column('Beta (deg)', 'g', data=[self.beta])
+        table.add_column('Speed', 'g', data=[self.speed])
+        table.add_column('Rho', 'g', data=[self.rho])
+        outstr += table._repr_markdown_()
+        if self.gam is not None:
+            table = MDTable()
+            table.add_column('Cx', cfrm, data=[self.Cx])
+            table.add_column('Cy', cfrm, data=[self.Cy])
+            table.add_column('Cz', cfrm, data=[self.Cz])
+            table.add_column('Cl', cfrm, data=[self.Cl])
+            table.add_column('Cm', cfrm, data=[self.Cm])
+            table.add_column('Cn', cfrm, data=[self.Cn])
+            outstr += table._repr_markdown_()
+            table = MDTable()
+            table.add_column('CL', cfrm, data=[self.CL])
+            table.add_column('CDi', dfrm, data=[self.CDi])
+            table.add_column('CY', cfrm, data=[self.CY])
+            outstr += table._repr_markdown_()
+        if self.phi is not None:
+            table = MDTable()
+            table.add_column('CL_ff', cfrm, data=[self.CL_ff])
+            table.add_column('CDi_ff', dfrm, data=[self.CDi_ff])
+            table.add_column('CY_ff', cfrm, data=[self.CY_ff])
+            table.add_column('e', efrm, data=[self.e])
+            outstr += table._repr_markdown_()
+        return outstr
+    def __repr__(self):
+        return f'<LatticeResult: {self.name}>'
+    def _repr_markdown_(self):
+        return self.__str__()
 
+class PanelResult(object):
+    pnl = None
+    gam = None
+    vel = None
+    frc = None
+    mom = None
+    def __init__(self, pnl):
+        self.pnl = pnl
+    def set_gam(self, gam: float):
+        self.gam = gam
+    def set_velocity(self, vel: Vector):
+        self.vel = vel
+    def set_force(self, frc: Vector):
+        self.frc = frc
+    def set_moment(self, mom: Vector):
+        self.mom = mom
+
+class StripResult(object):
+    strp = None
+    phi = None
+    nfwsh = None
+    nflft = None
+    nfdrg = None
+    nfmom = None
+    pnlres = None
+    def __init__(self, strp):
+        self.strp = strp
+        self.pnlres = []
+    def add_panel_result(self, pnlres):
+        self.pnlres.append(pnlres)

@@ -2,8 +2,6 @@ from math import pi, atan2
 from numpy.matlib import zeros, empty
 from numpy.linalg import solve, inv
 from pygeom.geom3d import Point, Vector, ihat, jhat, zero_vector
-from matplotlib.pyplot import figure
-from mpl_toolkits.mplot3d import axes3d
 
 class LatticeSystem(object):
     name = None
@@ -30,6 +28,7 @@ class LatticeSystem(object):
     _byg = None
     _bmg = None
     _ar = None
+    _strpy = None
     def __init__(self, name: str, srfcs: list):
         self.name = name
         self.srfcs = srfcs
@@ -191,42 +190,47 @@ class LatticeSystem(object):
             for i, strp in enumerate(self.strps):
                 self._bmg[i, 0] = strp.pnti.y*self.blg[i, 0]-strp.pnti.z*self.byg[i, 0]
         return self._bmg
-    def optimum_lift_distribution(self, Lspec: float, lspec: float=None):
+    @property
+    def strpy(self):
+        if self._strpy is None:
+            self._strpy = [strp.pnti.y for strp in self.strps]
+        return self._strpy
+    # def optimum_lift_distribution(self, Lspec: float, lspec: float=None):
         # from IPython.display import display
         # from pyhtml import HTMLMatrix
-        nump = len(self.strps)
-        numc = 1
-        if lspec is not None:
-            numc += 2
-        amat = zeros((nump+numc, nump+numc))
-        bmat = zeros((nump+numc, 1))
-        amat[0:nump, 0:nump] = self.bdg + self.bdg.transpose()
-        amat[0:nump, nump] = self.blg
-        amat[nump, 0:nump] = self.blg.transpose()
-        bmat[nump, 0] = Lspec
-        bmg1 = self.bmg.copy()
-        bmg2 = self.bmg.copy()
-        hlfp = int(nump/2)
-        for i in range(hlfp):
-            bmg1[i, 0] = 0.0
-        for i in range(hlfp, nump):
-            bmg2[i, 0] = 0.0
-        if lspec is not None:
-            amat[0:nump, nump+1] = bmg1
-            amat[nump+1, 0:nump] = bmg1.transpose()
-            bmat[nump+1, 0] = lspec
-            amat[0:nump, nump+2] = bmg2
-            amat[nump+2, 0:nump] = bmg2.transpose()
-            bmat[nump+2, 0] = -1.0*lspec
-        xmat = solve(amat, bmat)
-        phi = [xmat[i, 0] for i in range(nump)]
-        lam = [xmat[nump+j, 0] for j in range(numc)]
-        Di = (xmat[0:nump, 0].transpose()*self.bdg*xmat[0:nump, 0])[0, 0]
-        L = (xmat[0:nump, 0].transpose()*self.blg)[0, 0]
-        l = (xmat[0:nump, 0].transpose()*bmg1)[0, 0]
+        # nump = len(self.strps)
+        # numc = 1
+        # if lspec is not None:
+        #     numc += 2
+        # amat = zeros((nump+numc, nump+numc))
+        # bmat = zeros((nump+numc, 1))
+        # amat[0:nump, 0:nump] = self.bdg + self.bdg.transpose()
+        # amat[0:nump, nump] = self.blg
+        # amat[nump, 0:nump] = self.blg.transpose()
+        # bmat[nump, 0] = Lspec
+        # bmg1 = self.bmg.copy()
+        # bmg2 = self.bmg.copy()
+        # hlfp = int(nump/2)
+        # for i in range(hlfp):
+        #     bmg1[i, 0] = 0.0
+        # for i in range(hlfp, nump):
+        #     bmg2[i, 0] = 0.0
+        # if lspec is not None:
+        #     amat[0:nump, nump+1] = bmg1
+        #     amat[nump+1, 0:nump] = bmg1.transpose()
+        #     bmat[nump+1, 0] = lspec
+        #     amat[0:nump, nump+2] = bmg2
+        #     amat[nump+2, 0:nump] = bmg2.transpose()
+        #     bmat[nump+2, 0] = -1.0*lspec
+        # xmat = solve(amat, bmat)
+        # phi = [xmat[i, 0] for i in range(nump)]
+        # lam = [xmat[nump+j, 0] for j in range(numc)]
+        # Di = (xmat[0:nump, 0].transpose()*self.bdg*xmat[0:nump, 0])[0, 0]
+        # L = (xmat[0:nump, 0].transpose()*self.blg)[0, 0]
+        # l = (xmat[0:nump, 0].transpose()*bmg1)[0, 0]
         # amat = HTMLMatrix(amat)
         # display(amat)
-        return phi, lam, Di, L, l
+        # return phi, lam, Di, L, l
     @property
     def ar(self):
         if self._ar is None:
@@ -234,11 +238,21 @@ class LatticeSystem(object):
         return self._ar
     def set_strip_alpha(self, alpha: list):
         for i, strp in enumerate(self.strps):
-            strp.alpha = alpha[i]
+            strp._ang = alpha[i]
         self._aic = None
         self._afs = None
         self._gam = None
+    def plot_surface_ipv(self):
+        from ipyvolume import figure, plot_wireframe, show
+        fig = figure()
+        for srfc in self.srfcs:
+            x, y, z = srfc.point_xyz()
+            _ = plot_wireframe(x, y, z)
+        show()
+        return fig
     def plot_surface(self, view=None):
+        from matplotlib.pyplot import figure
+        from mpl_toolkits.mplot3d import axes3d
         # pltbox = PlotBox3D()
         fig = figure(figsize=(12,8))
         ax = fig.gca(projection='3d')
@@ -255,8 +269,68 @@ class LatticeSystem(object):
             ax.view_init(0.0, 0.0)
         # pltbox.plot_box(ax)
         set_axes_equal(ax)
+        fig.tight_layout()
+    def print_strip_geometry(self):
+        from py2md.classes import MDTable
+        table = MDTable()
+        table.add_column('#', 'd')
+        table.add_column('Xle', '.5f')
+        table.add_column('Yle', '.5f')
+        table.add_column('Zle', '.5f')
+        table.add_column('Chord', '.4f')
+        table.add_column('Width', '.5f')
+        table.add_column('Area', '.6f')
+        table.add_column('Dihed', '.4f')
+        table.add_column('Incid', '.4f')
+        for strp in self.strps:
+            j = strp.lsid
+            xle = strp.pnti.x
+            yle = strp.pnti.y
+            zle = strp.pnti.z
+            chord = strp.avechord
+            width = strp.dst
+            area = strp.area
+            dihed = strp.dihedral
+            angle = strp.angle
+            table.add_row([j, xle, yle, zle, chord, width, area, dihed, angle])
+        print(table)
+    def print_panel_geometry(self):
+        from py2md.classes import MDTable
+        table = MDTable()
+        table.add_column('#', 'd')
+        table.add_column('X', '.5f')
+        table.add_column('Y', '.5f')
+        table.add_column('Z', '.5f')
+        table.add_column('DX', '.5f')
+        for pnl in self.pnls:
+            j = pnl.lpid
+            x = pnl.pnti.x
+            y = pnl.pnti.y
+            z = pnl.pnti.z
+            dx = pnl.crd
+            table.add_row([j, x, y, z, dx])
+        print(table)
     def __repr__(self):
-        return '<LatticeSystem {:s}>'.format(self.name)
+        return '<LatticeSystem: {:s}>'.format(self.name)
+    def __str__(self):
+        from py2md.classes import MDTable
+        outstr = '# Lattice System '+self.name+'\n'
+        table = MDTable()
+        table.add_column('Name', 's', data=[self.name])
+        table.add_column('Sref', 'g', data=[self.sref])
+        table.add_column('cref', 'g', data=[self.cref])
+        table.add_column('bref', 'g', data=[self.bref])
+        table.add_column('xref', '.3f', data=[self.rref.x])
+        table.add_column('yref', '.3f', data=[self.rref.y])
+        table.add_column('zref', '.3f', data=[self.rref.z])
+        outstr += table._repr_markdown_()
+        table = MDTable()
+        table.add_column('# Strips', 'd', data=[len(self.strps)])
+        table.add_column('# Panels', 'd', data=[len(self.pnls)])
+        outstr += table._repr_markdown_()
+        return outstr
+    def _repr_markdown_(self):
+        return self.__str__()
 
 def latticesystem_from_json(jsonfilepath: str):
     from .latticesurface import latticesurface_from_json

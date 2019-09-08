@@ -7,6 +7,7 @@ class LatticeSurface(object):
     name = None
     sects = None
     cspace = None
+    xspace = None
     bdsit = None
     strps = None
     pnts = None
@@ -41,7 +42,15 @@ class LatticeSurface(object):
         self.cspace = equal_spacing(numc)
     def set_chord_cosine_distribution(self, numc: int):
         from pyvlm.tools import full_cosine_spacing
-        self.cspace = full_cosine_spacing(numc)
+        if numc > 1:
+            spc = full_cosine_spacing(4*numc+2)
+            self.cspace = spc[1::4]
+            self.cspace[0] = spc[0]
+            self.cspace[-1] = spc[-1]
+            self.xspace = spc[2::4]
+        else:
+            self.cspace = [0.0, 1.0]
+            self.xspace = [0.25]
     def set_chord_elliptical_distribution(self, numc: int):
         from pyvlm.tools import full_elliptical_spacing
         self.cspace = full_elliptical_spacing(numc)
@@ -84,7 +93,8 @@ class LatticeSurface(object):
                     self.pnts[i, j+1],
                     self.pnts[i+1, j+1]
                 ]
-                pnl = LatticePanel(lpid, pnts, bspc=strp.bspc)
+                cspc = (self.xspace[j]-self.cspace[j])/(self.cspace[j+1]-self.cspace[j])
+                pnl = LatticePanel(lpid, pnts, cspc=cspc, bspc=strp.bspc)
                 self.pnls[i, j] = pnl
                 lpid += 1
                 strp.add_panel(pnl)
@@ -132,7 +142,10 @@ class LatticeSurface(object):
 def latticesurface_from_json(surfdata: dict, display: bool=False):
     from .latticesection import latticesecttion_from_json
     name = surfdata['name']
-    mirror = surfdata['mirror']
+    if 'mirror' in surfdata:
+        mirror = surfdata['mirror']
+    else:
+        mirror = False
     if display: print(f'Loading Surface: {name:s}')
     sects = []
     for sectdata in surfdata['sections']:

@@ -129,6 +129,8 @@ class LatticeOptimum(object):
         if len(l) != len(self.sys.strps):
             raise Exception('The length of l must equal the number of strips.')
         self._phi = [li/rho/speed for li in l]
+        self.speed = speed
+        self.rho = rho
     def return_induced_drag(self):
         return (self.pmat.transpose()*self.bdg*self.pmat)[0, 0]
     def print_report(self):
@@ -179,7 +181,7 @@ class LatticeOptimum(object):
 
         da = dal.transpose().tolist()[0]
 
-        al = [strp.alpha for i, strp in enumerate(self.sys.strps)]
+        al = [strp.angle for i, strp in enumerate(self.sys.strps)]
         alc = [al[i]+da[i] for i in range(nums)]
 
         self.sys.set_strip_alpha(alc)
@@ -204,7 +206,7 @@ class LatticeOptimum(object):
             nrmdal = norm(dal)
         self.res = LatticeResult(self.name, self.sys)
         self.res.set_conditions(speed=self.speed, rho=self.rho)
-        al = [strp.alpha for i, strp in enumerate(self.sys.strps)]
+        al = [strp.angle for i, strp in enumerate(self.sys.strps)]
         return al
     def plot_strip_twist_distribution(self, ax=None):
         if ax is None:
@@ -212,13 +214,38 @@ class LatticeOptimum(object):
             ax = fig.gca()
             ax.grid(True)
         y = [strp.pnti.y for i, strp in enumerate(self.sys.strps)]
-        al = [strp.alpha for i, strp in enumerate(self.sys.strps)]
+        al = [strp.angle for i, strp in enumerate(self.sys.strps)]
         ax.plot(y, al, label=f'{self.name} Strip Twist')
         ax.legend()
         return ax
     def __repr__(self):
         return '<LatticeOptimum {:s}>'.format(self.name)
-            
+    def __str__(self):
+        from py2md.classes import MDTable
+        outstr = '# '+self.name+'\n'
+        table = MDTable()
+        table.add_column('Speed [m/s]', 'g', data=[self.speed])
+        table.add_column('Rho [kg/m**3]', 'g', data=[self.rho])
+        outstr += table._repr_markdown_()
+        if self._phi is not None:
+            table = MDTable()
+            table.add_column('Label', 's')
+            table.add_column('Type', 's')
+            table.add_column('Value', 'g')
+            table.add_row(['Di', 'Objective', self.return_induced_drag()])
+            if self.constr is not None:
+                for constr in self.constr:
+                    val = constr.evaluate(self.pmat)
+                    table.add_row([constr.param, 'Constraint', val])
+            if self.record is not None:
+                for record in self.record:
+                    val = record.evaluate(self.pmat)
+                    table.add_row([record.param, 'Record', val])
+            outstr += table._repr_markdown_()
+        return outstr
+    def _repr_markdown_(self):
+        return self.__str__()
+
 class Constraint(object):
     opt = None
     param = None

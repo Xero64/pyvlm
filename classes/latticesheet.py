@@ -10,6 +10,7 @@ class LatticeSheet(object):
     sect2 = None
     bspace = None
     yspace = None
+    mirror = None
     levec = None
     cord = None
     nrml = None
@@ -21,22 +22,11 @@ class LatticeSheet(object):
         self.sect2 = sect2
         self.update()
     def update(self):
-        if self.sect1.bspace is not None:
-            self.bspace = self.sect1.bspace
-        elif self.sect2.bspace is not None:
-            bspace = [1.0-bd for bd in self.sect2.bspace]
-            bspace.reverse()
-            self.bspace = bspace
+        if self.sect1.mirror or self.sect2.mirror:
+            self.mirror = True
         else:
-            self.bspace = [0.0, 1.0]
-        if self.sect1.yspace is not None:
-            self.yspace = self.sect1.yspace
-        elif self.sect2.yspace is not None:
-            yspace = [1.0-yd for yd in self.sect2.yspace]
-            yspace.reverse()
-            self.yspace = yspace
-        else:
-            self.yspace = [0.5]
+            self.mirror = False
+        self.bspace, self.yspace = inherit_spacing(self)
         self.levec = self.sect2.pnt-self.sect1.pnt
         vecz = (ihat**self.levec).to_unit()
         vecy = (vecz**ihat).to_unit()
@@ -50,6 +40,9 @@ class LatticeSheet(object):
         crda = self.sect1.chord
         crdb = self.sect2.chord
         crdr = crdb-crda
+        anga = self.sect1.angle
+        angb = self.sect2.angle
+        angr = angb-anga
         lenb = len(self.bspace)
         for i in range(lenb-1):
             bd1 = self.bspace[i]
@@ -61,6 +54,9 @@ class LatticeSheet(object):
             crd1 = crda+bd1*crdr
             crd2 = crda+bd2*crdr
             strp = LatticeStrip(lsid, pnt1, pnt2, crd1, crd2, bspc=bspc)
+            ang1 = anga+bd1*angr
+            ang2 = anga+bd2*angr
+            strp.set_angles(ang1, ang2)
             strp.sht = self
             self.strps.append(strp)
             lsid += 1
@@ -76,3 +72,54 @@ class LatticeSheet(object):
             pnl.set_camber_angle(0.0)
     def __repr__(self):
         return '<LatticeSheet>'
+
+def inherit_spacing(sht: LatticeSheet):
+    if sht.mirror:
+        if sht.sect2.bspace is None:
+            bspace = [0.0, 1.0]
+        else:
+            bspace = [1.0-bd for bd in sht.sect2.bspace]
+            bspace.reverse()
+        if sht.sect2.yspace is None:
+            yspace = [0.5]
+        else:
+            yspace = [1.0-yd for yd in sht.sect2.yspace]
+            yspace.reverse()
+    else:
+        if sht.sect1.bspace is None:
+            bspace = [0.0, 1.0]
+        else:
+            bspace = sht.sect1.bspace
+        if sht.sect1.yspace is None:
+            yspace = [0.5]
+        else:
+            yspace = sht.sect1.yspace
+    # if sht.sect1.bspace is not None:
+    #     if sht.sect1.mirror:
+    #         if sht.sect2.bspace is not None:
+    #             bspace = [1.0-bd for bd in sht.sect2.bspace]
+    #             bspace.reverse()
+    #         else:
+    #             bspace = [0.0, 1.0]
+    #     else:
+    #         bspace = sht.sect1.bspace
+    # elif sht.sect2.bspace is not None:
+    #     bspace = [1.0-bd for bd in sht.sect2.bspace]
+    #     bspace.reverse()
+    # else:
+    #     bspace = [0.0, 1.0]
+    # if sht.sect1.yspace is not None:
+    #     if sht.sect1.mirror:
+    #         if sht.sect2.yspace is None:
+    #             yspace = [1.0-yd for yd in sht.sect2.yspace]
+    #             yspace.reverse()
+    #         else:
+    #             yspace = [0.5]
+    #     else:
+    #         yspace = sht.sect1.yspace
+    # elif sht.sect2.yspace is not None:
+    #     yspace = [1.0-yd for yd in sht.sect2.yspace]
+    #     yspace.reverse()
+    # else:
+    #     yspace = [0.5]
+    return bspace, yspace
