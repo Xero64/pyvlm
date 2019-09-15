@@ -12,7 +12,7 @@
             "name": "Wing",
             "angle": 0.0,
             "mirror": true,
-            "numc": 1,
+            "numc": 3,
             "cspace": "cosine",
             "sections": [
                 {

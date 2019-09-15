@@ -12,7 +12,7 @@
             "name": "Wing",
             "angle": 0.0,
             "mirror": true,
-            "numc": 2,
+            "numc": 5,
             "cspace": "cosine",
             "sections": [
                 {
@@ -21,15 +21,17 @@
                     "zle": 0.0,
                     "chord": 0.5,
                     "angle": 0.0,
-                    "numb": 50,
-                    "bspace": "semi-cosine"
+                    "numb": 25,
+                    "bspace": "semi-cosine",
+                    "airfoil": "NACA 0000"
                 },
                 {
                     "xle": 0.0,
                     "yle": 5.0,
                     "zle": 0.0,
                     "chord": 0.5,
-                    "angle": 0.0
+                    "angle": 0.0,
+                    "airfoil": "NACA 0000"
                 }
             ]
         }
