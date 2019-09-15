@@ -1,6 +1,5 @@
 from math import pi, atan2, degrees
 from pygeom.geom3d import Point, Vector, ihat
-from .latticepanel import LatticePanel
 
 class LatticeStrip(object):
     lsid = None
@@ -11,6 +10,7 @@ class LatticeStrip(object):
     ang1 = None
     ang2 = None
     bspc = None
+    bfrc = None
     leni = None
     pnti = None
     pnls = None
@@ -23,8 +23,7 @@ class LatticeStrip(object):
     _crd = None
     _ang = None
     _area = None
-    _avecrd = None
-    def __init__(self, lsid: int, pnt1: Point, pnt2: Point, crd1: float, crd2: float, bspc: float=0.5):
+    def __init__(self, lsid: int, pnt1: Point, pnt2: Point, crd1: float, crd2: float, bspc: tuple):
         self.lsid = lsid
         self.pnt1 = pnt1
         self.pnt2 = pnt2
@@ -33,9 +32,10 @@ class LatticeStrip(object):
         self.bspc = bspc
         self.update()
     def update(self):
+        self.bfrc = (self.bspc[1]-self.bspc[0])/(self.bspc[2]-self.bspc[0])
         self.pnls = []
         self.leni = self.pnt2-self.pnt1
-        self.pnti = self.pnt1+self.bspc*self.leni
+        self.pnti = self.pnt1+self.bfrc*self.leni
         self.lent = Vector(0.0, self.leni.y, self.leni.z)
         self.dyt = self.leni.y
         self.dzt = self.leni.z
@@ -44,9 +44,7 @@ class LatticeStrip(object):
         self.ang1 = ang1
         self.ang2 = ang2
     def add_panel(self, pnl):
-        pnl.strp = self
         self.pnls.append(pnl)
-        self.sht.add_panel(pnl)
     def set_mirror(self, mstrp):
         self.msid = mstrp.lsid
         for i in range(len(self.pnls)):
@@ -79,17 +77,12 @@ class LatticeStrip(object):
     @property
     def chord(self):
         if self._crd is None:
-            self._crd = self.crd1+(self.crd2-self.crd1)*self.bspc
+            self._crd = (self.crd1+self.crd2)/2
         return self._crd
-    @property
-    def avechord(self):
-        if self._avecrd is None:
-            self._avecrd = (self.crd1+self.crd2)/2
-        return self._avecrd
     @property
     def angle(self):
         if self._ang is None:
-            self._ang = self.ang1+(self.ang2-self.ang1)*self.bspc
+            self._ang = self.ang1+(self.ang2-self.ang1)*self.bfrc
         return self._ang
     @property
     def area(self):

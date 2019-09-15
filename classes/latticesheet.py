@@ -26,7 +26,7 @@ class LatticeSheet(object):
             self.mirror = True
         else:
             self.mirror = False
-        self.bspace, self.yspace = inherit_spacing(self)
+        self.bspace = inherit_spacing(self)
         self.levec = self.sect2.pnt-self.sect1.pnt
         vecz = (ihat**self.levec).to_unit()
         vecy = (vecz**ihat).to_unit()
@@ -44,26 +44,22 @@ class LatticeSheet(object):
         angb = self.sect2.angle
         angr = angb-anga
         lenb = len(self.bspace)
-        for i in range(lenb-1):
-            bd1 = self.bspace[i]
-            bd2 = self.bspace[i+1]
-            yd = self.yspace[i]
-            bspc = (yd-bd1)/(bd2-bd1)
-            pnt1 = pnta+bd1*vecr
-            pnt2 = pnta+bd2*vecr
-            crd1 = crda+bd1*crdr
-            crd2 = crda+bd2*crdr
-            strp = LatticeStrip(lsid, pnt1, pnt2, crd1, crd2, bspc=bspc)
-            ang1 = anga+bd1*angr
-            ang2 = anga+bd2*angr
+        for i in range(lenb):
+            bspc = self.bspace[i]
+            bsp1 = bspc[0]
+            bsp2 = bspc[2]
+            pnt1 = pnta+bsp1*vecr
+            pnt2 = pnta+bsp2*vecr
+            crd1 = crda+bsp1*crdr
+            crd2 = crda+bsp2*crdr
+            strp = LatticeStrip(lsid, pnt1, pnt2, crd1, crd2, bspc)
+            ang1 = anga+bsp1*angr
+            ang2 = anga+bsp2*angr
             strp.set_angles(ang1, ang2)
             strp.sht = self
             self.strps.append(strp)
             lsid += 1
         return lsid
-    def add_panel(self, pnl: LatticePanel):
-        pnl.sht = self
-        self.pnls.append(pnl)
     def set_control_points_and_normals(self):
         for pnl in self.pnls:
             pntc = pnl.return_panel_point()
@@ -76,24 +72,21 @@ class LatticeSheet(object):
 def inherit_spacing(sht: LatticeSheet):
     if sht.mirror:
         if sht.sect2.bspace is None:
-            bspace = [0.0, 1.0]
+            bspace = [(0.0, 0.5, 1.0)]
         else:
-            bspace = [1.0-bd for bd in sht.sect2.bspace]
+            lenb = len(sht.sect2.bspace)
+            bspace = []
+            for i in range(lenb):
+                blst = []
+                for j in range(2, -1, -1):
+                    blst.append(1.0-sht.sect2.bspace[i][j])
+                bspace.append(tuple(blst))
             bspace.reverse()
-        if sht.sect2.yspace is None:
-            yspace = [0.5]
-        else:
-            yspace = [1.0-yd for yd in sht.sect2.yspace]
-            yspace.reverse()
     else:
         if sht.sect1.bspace is None:
-            bspace = [0.0, 1.0]
+            bspace = [(0.0, 0.5, 1.0)]
         else:
             bspace = sht.sect1.bspace
-        if sht.sect1.yspace is None:
-            yspace = [0.5]
-        else:
-            yspace = sht.sect1.yspace
     # if sht.sect1.bspace is not None:
     #     if sht.sect1.mirror:
     #         if sht.sect2.bspace is not None:
@@ -122,4 +115,4 @@ def inherit_spacing(sht: LatticeSheet):
     #     yspace.reverse()
     # else:
     #     yspace = [0.5]
-    return bspace, yspace
+    return bspace

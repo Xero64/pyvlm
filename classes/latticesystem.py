@@ -270,6 +270,7 @@ class LatticeSystem(object):
         # pltbox.plot_box(ax)
         set_axes_equal(ax)
         fig.tight_layout()
+        return ax
     def print_strip_geometry(self):
         from py2md.classes import MDTable
         table = MDTable()
@@ -287,7 +288,7 @@ class LatticeSystem(object):
             xle = strp.pnti.x
             yle = strp.pnti.y
             zle = strp.pnti.z
-            chord = strp.avechord
+            chord = strp.chord
             width = strp.dst
             area = strp.area
             dihed = strp.dihedral

@@ -453,7 +453,7 @@ class LatticeResult(object):
         print(table)
     def print_panel_forces(self):
         from py2md.classes import MDTable
-        from math import atan
+        from math import atan, tan, radians
         table = MDTable()
         table.add_column('# P', 'd')
         table.add_column('# S', 'd')
@@ -475,8 +475,7 @@ class LatticeResult(object):
             nfrc = frc*pnl.nrml
             cp = nfrc/area/q
             chord = pnl.crd
-            alc = pnl.alc
-            alc = 0.0
+            alc = tan(radians(pnl.alpha))
             table.add_row([j, k, x, y, z, chord, alc, cp])
         print(table)
     def print_panel_near_field_results(self):
