@@ -13,6 +13,7 @@ class LatticeResult(object):
     speed = None
     _vfs = None
     _qfs = None
+    _ofs = None
     _udc = None
     _ulc = None
     _uyc = None
@@ -53,22 +54,29 @@ class LatticeResult(object):
         for attr in self.__dict__:
             if attr[0] == '_':
                 self.__dict__[attr] = None
-    def set_conditions(self, alpha: float=0.0, beta: float=0.0, speed: float=1.0, rho: float=1.0):
+    def set_conditions(self, alpha: float=0.0, beta: float=0.0,
+                       speed: float=1.0, rho: float=1.0,
+                       omx: float=0.0, omy: float=0.0, omz: float=0.0):
         self.alpha = alpha
         self.beta = beta
         self.speed = speed
         self.rho = rho
-    def set_freestream_velocity(self, vfs: Vector):
-        self.vfs = vfs
-        self.udc = self.vfs.to_unit()
-        self.ulc = (self.udc**jhat).to_unit()
-        self.uyc = (self.udc**self.ulc).to_unit()
+        self.omx = omx
+        self.omy = omy
+        self.omz = omz
+    def set_freestream_velocity(self, vfs: Vector, ofs: Vector):
+        self._vfs = vfs
+        self._ofs = ofs
+        self._udc = self.vfs.to_unit()
+        self._ulc = (self.udc**jhat).to_unit()
+        self._uyc = (self.udc**self.ulc).to_unit()
         num = len(self.sys.pnls)
         self.avv = empty((num, 1), dtype=Vector)
         self.afv = empty((num, 1), dtype=Vector)
         self.amv = empty((num, 1), dtype=Vector)
         for i, pnl in enumerate(self.sys.pnls):
-            self.avv[i, 0] = self.vfs
+            rpi = pnl.pnti-self.sys.rref
+            self.avv[i, 0] = self.vfs+rpi*self.ofs
             self.afv[i, 0] = self.avv[i, 0]**pnl.leni
             self.amv[i, 0] = (pnl.pnti-self.sys.rref)**self.afv[i, 0]
     def set_gam(self, gam: list):
@@ -88,10 +96,15 @@ class LatticeResult(object):
     @property
     def gmat(self):
         if self._gmat is None:
-            gamx = self.sys.gam[:, 0]
-            gamy = self.sys.gam[:, 1]
-            gamz = self.sys.gam[:, 2]
-            self._gmat = gamx*self.vfs.x+gamy*self.vfs.y+gamz*self.vfs.z
+            vfsx, vfsy, vfsz = self.vfs.x, self.vfs.y, self.vfs.z
+            ofsx, ofsy, ofsz = self.ofs.x, self.ofs.y, self.ofs.z
+            gvx = self.sys.gam[:, 0]
+            gvy = self.sys.gam[:, 1]
+            gvz = self.sys.gam[:, 2]
+            gox = self.sys.gam[:, 3]
+            goy = self.sys.gam[:, 4]
+            goz = self.sys.gam[:, 5]
+            self._gmat = gvx*vfsx+gvy*vfsy+gvz*vfsz+gox*ofsx+goy*ofsy+goz*ofsz
         return self._gmat
     @property
     def gam(self):
@@ -130,6 +143,11 @@ class LatticeResult(object):
             self._vfs = Vector(cosal*cosbt, -sinbt, sinal*cosbt)*self.speed
         return self._vfs
     @property
+    def ofs(self):
+        if self._ofs is None:
+            self._ofs = Vector(self.omx, self.omy, self.omz)
+        return self._ofs
+    @property
     def qfs(self):
         if self._qfs is None:
             self._qfs = self.rho*self.speed**2/2
@@ -155,7 +173,8 @@ class LatticeResult(object):
             num = len(self.sys.pnls)
             self._avv = empty((num, 1), dtype=Vector)
             for i in range(num):
-                self._avv[i, 0] = self.vfs
+                rpi = self.sys.pnls[i].pnti-self.sys.rref
+                self._avv[i, 0] = self.vfs+self.ofs**rpi
         return self._avv
     @property
     def afv(self):
@@ -323,8 +342,35 @@ class LatticeResult(object):
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        trlft = [self.trlft[i]/strp.dyt for i, strp in enumerate(self.sys.strps)]
-        ax.plot(self.sys.strpy, trlft, label=self.name)
+        for srfc in self.sys.srfcs:
+            y = []
+            l = []
+            for strp in srfc.strps:
+                lsid = strp.lsid
+                if strp.dyt != 0.0:
+                    y.append(strp.pnti.y)
+                    l.append(self.trlft[lsid]/strp.dyt)
+            if len(l) > 0:
+                label = self.name+' for '+srfc.name
+                ax.plot(y, l, label=label)
+        ax.legend()
+        return ax
+    def plot_trefftz_yforce_distribution(self, ax=None):
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        for srfc in self.sys.srfcs:
+            z = []
+            f = []
+            for strp in srfc.strps:
+                lsid = strp.lsid
+                if strp.dzt != 0.0:
+                    z.append(strp.pnti.z)
+                    f.append(self.trfrc[lsid]/strp.dzt)
+            if len(f) > 0:
+                label = self.name+' for '+srfc.name
+                ax.plot(f, z, label=label)
         ax.legend()
         return ax
     def plot_trefftz_drag_distribution(self, ax=None):

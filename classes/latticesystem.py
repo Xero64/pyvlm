@@ -142,11 +142,16 @@ class LatticeSystem(object):
     def afs(self):
         if self._afs is None:
             num = len(self.pnls)
-            self._afs = zeros((num, 3))
+            self._afs = zeros((num, 6))
             for i, pnl in enumerate(self.pnls):
-                self._afs[i, 0] = pnl.nrml.x
-                self._afs[i, 1] = pnl.nrml.y
-                self._afs[i, 2] = pnl.nrml.z
+                rpx, rpy, rpz = pnl.pntc.x, pnl.pntc.y, pnl.pntc.z
+                nmx, nmy, nmz = pnl.nrml.x, pnl.nrml.y, pnl.nrml.z
+                self._afs[i, 0] = nmx
+                self._afs[i, 1] = nmy
+                self._afs[i, 2] = nmz
+                self._afs[i, 3] = nmz*rpy - nmy*rpz
+                self._afs[i, 4] = nmx*rpz - nmz*rpx
+                self._afs[i, 5] = nmy*rpx - nmx*rpy
         return self._afs
     @property
     def bvg(self):
