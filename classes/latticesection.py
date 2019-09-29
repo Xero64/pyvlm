@@ -1,6 +1,7 @@
 from math import asin, cos, pi
 from pygeom.geom3d import Point, ihat
 from pyvlm.tools.camber import FlatPlate
+from .latticecontrol import LatticeControl, latticecontrol_from_json
 
 class LatticeSection(object):
     pnt = None
@@ -10,6 +11,7 @@ class LatticeSection(object):
     bspace = None
     yspace = None
     mirror = None
+    ctrls = None
     def __init__(self, pnt: Point, chord: float, angle: float):
         self.pnt = pnt
         self.chord = chord
@@ -18,6 +20,7 @@ class LatticeSection(object):
     def update(self):
         self.mirror = False
         self.camber = FlatPlate()
+        self.ctrls = {}
     def set_span_equal_spacing(self, numb: int):
         from pyvlm.tools import equal_spacing
         bsp = equal_spacing(2*numb)
@@ -41,6 +44,8 @@ class LatticeSection(object):
                 from ..tools.camber import NACA6Series
                 self.camber = NACA6Series(code)
                 self.airfoil = airfoil
+    def add_control(self, ctrl: LatticeControl):
+        self.ctrls[ctrl.name] = ctrl
     def return_mirror(self):
         pnt = Point(self.pnt.x, -self.pnt.y, self.pnt.z)
         chord = self.chord
@@ -50,6 +55,7 @@ class LatticeSection(object):
         sect.bspace = self.bspace
         sect.yspace = self.yspace
         sect.mirror = True
+        sect.ctrls = self.ctrls
         return sect
     def return_point(self, percrd: float):
         return self.pnt+self.chord*percrd*ihat
@@ -80,4 +86,8 @@ def latticesecttion_from_json(sectdata: dict):
             sect.set_span_cosine_spacing(numb)
         elif bspace == 'semi-cosine':
             sect.set_span_semi_cosine_spacing(numb)
+    if 'controls' in sectdata:
+        for name in sectdata['controls']:
+            ctrl = latticecontrol_from_json(name, sectdata['controls'][name])
+            sect.add_control(ctrl)
     return sect

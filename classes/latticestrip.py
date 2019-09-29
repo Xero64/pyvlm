@@ -77,7 +77,7 @@ class LatticeStrip(object):
     @property
     def chord(self):
         if self._crd is None:
-            self._crd = (self.crd1+self.crd2)/2
+            self._crd = self.crd1+(self.crd2-self.crd1)*self.bfrc
         return self._crd
     @property
     def angle(self):

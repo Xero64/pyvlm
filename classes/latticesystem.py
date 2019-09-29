@@ -1,3 +1,4 @@
+from time import time
 from math import pi, atan2
 from numpy.matlib import zeros, empty
 from numpy.linalg import solve, inv
@@ -14,6 +15,7 @@ class LatticeSystem(object):
     cref = None
     sref = None
     rref = None
+    ctrls = None
     _gam = None
     _avg = None
     _afg = None
@@ -48,6 +50,7 @@ class LatticeSystem(object):
         self.mstrp = []
         self.pnls = []
         self.mpnl = []
+        self.ctrls = {}
         for srfc in self.srfcs:
             for strp in srfc.strps:
                 self.strps.append(strp)
@@ -68,6 +71,13 @@ class LatticeSystem(object):
                     pnlind = pnldct[pnl.mpid]
                 self.mpnl.append(pnlind)
                 ipnl += 1
+        ind = 6
+        for srfc in self.srfcs:
+            for sht in srfc.shts:
+                for control in sht.ctrls:
+                    if control not in self.ctrls:
+                        self.ctrls[control] = (ind, ind+1, ind+2, ind+3, ind+4, ind+5)
+                        ind += 6
     def reset(self):
         for attr in self.__dict__:
             if attr[0] == '_':
@@ -87,47 +97,72 @@ class LatticeSystem(object):
     @property
     def avg(self):
         if self._avg is None:
+            print('Building Induced Velocity Matrix.')
+            start = time()
             num = len(self.pnls)
             self._avg = empty((num, num), dtype=Vector)
             for i, pnli in enumerate(self.pnls):
                 for j, pnlj in enumerate(self.pnls):
                     self._avg[i, j] = pnlj.velocity(pnli.pnti)
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Induced Velocity Matrix in {elapsed:.3f} seconds.')
         return self._avg
     @property
     def afg(self):
         if self._afg is None:
+            print('Building Induced Force Matrix.')
+            start = time()
             num = len(self.pnls)
             self._afg = empty((num, num), dtype=Vector)
             for i, pnl in enumerate(self.pnls):
                 for j in range(num):
                     self._afg[i, j] = self.avg[i, j]**pnl.leni
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Induced Force Matrix in {elapsed:.3f} seconds.')
         return self._afg
     @property
     def amg(self):
         if self._amg is None:
+            print('Building Induced Moment Matrix.')
+            start = time()
             num = len(self.pnls)
             self._amg = empty((num, num), dtype=Vector)
             for i, pnl in enumerate(self.pnls):
                 for j in range(num):
                     self._amg[i, j] = (pnl.pnti-self.rref)**self.afg[i, j]
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Induced Moment Matrix in {elapsed:.3f} seconds.')
         return self._amg
     @property
     def avc(self):
         if self._avc is None:
+            print('Building Control Velocity Matrix.')
+            start = time()
             num = len(self.pnls)
             self._avc = empty((num, num), dtype=Vector)
             for i, pnli in enumerate(self.pnls):
                 for j, pnlj in enumerate(self.pnls):
                     self._avc[i, j] = pnlj.velocity(pnli.pntc)
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Control Velocity Matrix in {elapsed:.3f} seconds.')
         return self._avc
     @property
     def aic(self):
         if self._aic is None:
+            print('Building AIC Matrix.')
+            start = time()
             num = len(self.pnls)
             self._aic = zeros((num, num))
             for i, pnl in enumerate(self.pnls):
                 for j in range(num):
                     self._aic[i, j] = self.avc[i, j]*pnl.nrml
+            finish = time()
+            elapsed = finish-start
+            print(f'Built AIC Matrix in {elapsed:.3f} seconds.')
         return self._aic
     @property
     def adc(self):
@@ -141,8 +176,11 @@ class LatticeSystem(object):
     @property
     def afs(self):
         if self._afs is None:
+            print('Building Freestream and Control Matrix.')
+            start = time()
             num = len(self.pnls)
-            self._afs = zeros((num, 6))
+            numc = len(self.ctrls)
+            self._afs = zeros((num, 6+6*numc))
             for i, pnl in enumerate(self.pnls):
                 rpx, rpy, rpz = pnl.pntc.x, pnl.pntc.y, pnl.pntc.z
                 nmx, nmy, nmz = pnl.nrml.x, pnl.nrml.y, pnl.nrml.z
@@ -152,90 +190,97 @@ class LatticeSystem(object):
                 self._afs[i, 3] = nmz*rpy - nmy*rpz
                 self._afs[i, 4] = nmx*rpz - nmz*rpx
                 self._afs[i, 5] = nmy*rpx - nmx*rpy
+            for srfc in self.srfcs:
+                for sht in srfc.shts:
+                    for control in sht.ctrls:
+                        ctrl = sht.ctrls[control]
+                        ctup = self.ctrls[control]
+                        for pnl in ctrl.pnls:
+                            lpid = pnl.lpid
+                            dndlp = pnl.dndl(ctrl.posgain, ctrl.uhvec)
+                            self._afs[lpid, ctup[0]] = dndlp.x
+                            self._afs[lpid, ctup[1]] = dndlp.y
+                            self._afs[lpid, ctup[2]] = dndlp.z
+                            dndln = pnl.dndl(ctrl.neggain, ctrl.uhvec)
+                            self._afs[lpid, ctup[3]] = dndln.x
+                            self._afs[lpid, ctup[4]] = dndln.y
+                            self._afs[lpid, ctup[5]] = dndln.z
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Freestream and Control Matrix in {elapsed:.3f} seconds.')
         return self._afs
     @property
     def bvg(self):
         if self._bvg is None:
+            print('Building Trefftz Induced Velocity Matrix.')
+            start = time()
             num = len(self.strps)
             self._bvg = zeros((num, num))
             for i, strpi in enumerate(self.strps):
                 for j, strpj in enumerate(self.strps):
                     self._bvg[i, j] = strpj.trefftz_velocity(strpi.pnti)*strpi.nrmt
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Trefftz Induced Velocity Matrix in {elapsed:.3f} seconds.')
         return self._bvg
     @property
     def bdg(self):
         if self._bdg is None:
+            print('Building Trefftz Induced Drag Matrix.')
+            start = time()
             num = len(self.strps)
             self._bdg = zeros((num, num))
             for i, strp in enumerate(self.strps):
                 for j in range(num):
                     self._bdg[i, j] = -strp.dst*self.bvg[i, j]/2
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Trefftz Induced Drag Matrix in {elapsed:.3f} seconds.')
         return self._bdg
     @property
     def blg(self):
         if self._blg is None:
+            print('Building Trefftz Induced Lift Matrix.')
+            start = time()
             num = len(self.strps)
             self._blg = zeros((num, 1))
             for i, strp in enumerate(self.strps):
                 self._blg[i, 0] = strp.lent.y
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Trefftz Induced Lift Matrix in {elapsed:.3f} seconds.')
         return self._blg
     @property
     def byg(self):
         if self._byg is None:
+            print('Building Trefftz Induced Y-Force Matrix.')
+            start = time()
             num = len(self.strps)
             self._byg = zeros((num, 1))
             for i, strp in enumerate(self.strps):
                 self._byg[i, 0] = -strp.lent.z
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Trefftz Induced Y-Force Matrix in {elapsed:.3f} seconds.')
         return self._byg
     @property
     def bmg(self):
         if self._bmg is None:
+            print('Building Trefftz Induced X-Moment Matrix.')
+            start = time()
             num = len(self.strps)
             self._bmg = zeros((num, 1))
             for i, strp in enumerate(self.strps):
                 self._bmg[i, 0] = strp.pnti.y*self.blg[i, 0]-strp.pnti.z*self.byg[i, 0]
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Trefftz Induced X-Moment Matrix in {elapsed:.3f} seconds.')
         return self._bmg
     @property
     def strpy(self):
         if self._strpy is None:
             self._strpy = [strp.pnti.y for strp in self.strps]
         return self._strpy
-    # def optimum_lift_distribution(self, Lspec: float, lspec: float=None):
-        # from IPython.display import display
-        # from pyhtml import HTMLMatrix
-        # nump = len(self.strps)
-        # numc = 1
-        # if lspec is not None:
-        #     numc += 2
-        # amat = zeros((nump+numc, nump+numc))
-        # bmat = zeros((nump+numc, 1))
-        # amat[0:nump, 0:nump] = self.bdg + self.bdg.transpose()
-        # amat[0:nump, nump] = self.blg
-        # amat[nump, 0:nump] = self.blg.transpose()
-        # bmat[nump, 0] = Lspec
-        # bmg1 = self.bmg.copy()
-        # bmg2 = self.bmg.copy()
-        # hlfp = int(nump/2)
-        # for i in range(hlfp):
-        #     bmg1[i, 0] = 0.0
-        # for i in range(hlfp, nump):
-        #     bmg2[i, 0] = 0.0
-        # if lspec is not None:
-        #     amat[0:nump, nump+1] = bmg1
-        #     amat[nump+1, 0:nump] = bmg1.transpose()
-        #     bmat[nump+1, 0] = lspec
-        #     amat[0:nump, nump+2] = bmg2
-        #     amat[nump+2, 0:nump] = bmg2.transpose()
-        #     bmat[nump+2, 0] = -1.0*lspec
-        # xmat = solve(amat, bmat)
-        # phi = [xmat[i, 0] for i in range(nump)]
-        # lam = [xmat[nump+j, 0] for j in range(numc)]
-        # Di = (xmat[0:nump, 0].transpose()*self.bdg*xmat[0:nump, 0])[0, 0]
-        # L = (xmat[0:nump, 0].transpose()*self.blg)[0, 0]
-        # l = (xmat[0:nump, 0].transpose()*bmg1)[0, 0]
-        # amat = HTMLMatrix(amat)
-        # display(amat)
-        # return phi, lam, Di, L, l
     @property
     def ar(self):
         if self._ar is None:
@@ -276,7 +321,7 @@ class LatticeSystem(object):
         set_axes_equal(ax)
         fig.tight_layout()
         return ax
-    def print_strip_geometry(self):
+    def print_strip_geometry(self, filepath: str=''):
         from py2md.classes import MDTable
         table = MDTable()
         table.add_column('#', 'd')
@@ -299,8 +344,12 @@ class LatticeSystem(object):
             dihed = strp.dihedral
             angle = strp.angle
             table.add_row([j, xle, yle, zle, chord, width, area, dihed, angle])
-        print(table)
-    def print_panel_geometry(self):
+        if filepath != '':
+            with open(filepath, 'wt') as resfile:
+                resfile.write(table._repr_markdown_())
+        else:
+            print(table._repr_markdown_())
+    def print_panel_geometry(self, filepath: str=''):
         from py2md.classes import MDTable
         table = MDTable()
         table.add_column('#', 'd')
@@ -310,12 +359,16 @@ class LatticeSystem(object):
         table.add_column('DX', '.5f')
         for pnl in self.pnls:
             j = pnl.lpid
-            x = pnl.pnti.x
-            y = pnl.pnti.y
-            z = pnl.pnti.z
+            x = pnl.pntg.x
+            y = pnl.pntg.y
+            z = pnl.pntg.z
             dx = pnl.crd
             table.add_row([j, x, y, z, dx])
-        print(table)
+        if filepath != '':
+            with open(filepath, 'wt') as resfile:
+                resfile.write(table._repr_markdown_())
+        else:
+            print(table._repr_markdown_())
     def __repr__(self):
         return '<LatticeSystem: {:s}>'.format(self.name)
     def __str__(self):

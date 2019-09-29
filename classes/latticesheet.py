@@ -17,6 +17,7 @@ class LatticeSheet(object):
     strps = None
     pnls = None
     mind = None
+    ctrls = None
     def __init__(self, sect1: LatticeSection, sect2: LatticeSection):
         self.sect1 = sect1
         self.sect2 = sect2
@@ -27,6 +28,7 @@ class LatticeSheet(object):
         else:
             self.mirror = False
         self.bspace = inherit_spacing(self)
+        self.ctrls = inherit_controls(self)
         self.levec = self.sect2.pnt-self.sect1.pnt
         vecz = (ihat**self.levec).to_unit()
         vecy = (vecz**ihat).to_unit()
@@ -60,12 +62,24 @@ class LatticeSheet(object):
             self.strps.append(strp)
             lsid += 1
         return lsid
-    def set_control_points_and_normals(self):
-        for pnl in self.pnls:
-            pntc = pnl.return_panel_point()
-            # pnl.set_coordinate(self.cord)
-            pnl.set_control_point(pntc)
-            pnl.set_camber_angle(0.0)
+    def inherit_panels(self):
+        self.pnls = []
+        for strp in self.strps:
+            for pnl in strp.pnls:
+                self.pnls.append(pnl)
+    def set_control_panels(self):
+        # print(f'# Sheet Panels = {len(self.pnls):d}')
+        for control in self.ctrls:
+            # print(f'Setting {control:s} panels!')
+            ctrl = self.ctrls[control]
+            for pnl in self.pnls:
+                if pnl.cspc[3] >= ctrl.xhinge:
+                    ctrl.add_panel(pnl)
+    # def set_control_points_and_normals(self):
+    #     for pnl in self.pnls:
+    #         pntc = pnl.return_panel_point()
+    #         pnl.set_control_point(pntc)
+    #         pnl.set_camber_angle(0.0)
     def __repr__(self):
         return '<LatticeSheet>'
 
@@ -87,32 +101,29 @@ def inherit_spacing(sht: LatticeSheet):
             bspace = [(0.0, 0.5, 1.0)]
         else:
             bspace = sht.sect1.bspace
-    # if sht.sect1.bspace is not None:
-    #     if sht.sect1.mirror:
-    #         if sht.sect2.bspace is not None:
-    #             bspace = [1.0-bd for bd in sht.sect2.bspace]
-    #             bspace.reverse()
-    #         else:
-    #             bspace = [0.0, 1.0]
-    #     else:
-    #         bspace = sht.sect1.bspace
-    # elif sht.sect2.bspace is not None:
-    #     bspace = [1.0-bd for bd in sht.sect2.bspace]
-    #     bspace.reverse()
-    # else:
-    #     bspace = [0.0, 1.0]
-    # if sht.sect1.yspace is not None:
-    #     if sht.sect1.mirror:
-    #         if sht.sect2.yspace is None:
-    #             yspace = [1.0-yd for yd in sht.sect2.yspace]
-    #             yspace.reverse()
-    #         else:
-    #             yspace = [0.5]
-    #     else:
-    #         yspace = sht.sect1.yspace
-    # elif sht.sect2.yspace is not None:
-    #     yspace = [1.0-yd for yd in sht.sect2.yspace]
-    #     yspace.reverse()
-    # else:
-    #     yspace = [0.5]
     return bspace
+
+def inherit_controls(sht: LatticeSheet):
+    ctrls = {}
+    if sht.mirror:
+        for control in sht.sect2.ctrls:
+            ctrl = sht.sect2.ctrls[control]
+            newctrl = ctrl.duplicate(mirror=True)
+            ctrls[control] = newctrl
+    else:
+        for control in sht.sect1.ctrls:
+            ctrl = sht.sect1.ctrls[control]
+            newctrl = ctrl.duplicate(mirror=False)
+            ctrls[control] = newctrl
+    for control in ctrls:
+        ctrl = ctrls[control]
+        if ctrl.uhvec.return_magnitude() == 0.0:
+            pnt1 = sht.sect1.pnt
+            crd1 = sht.sect1.chord
+            pnta = pnt1+crd1*ihat*ctrl.xhinge
+            pnt2 = sht.sect2.pnt
+            crd2 = sht.sect2.chord
+            pntb = pnt2+crd2*ihat*ctrl.xhinge
+            hvec = pntb-pnta
+            ctrl.set_hinge_vector(hvec)
+    return ctrls

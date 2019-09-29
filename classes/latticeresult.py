@@ -1,4 +1,4 @@
-from pygeom.geom3d import Vector, jhat
+from pygeom.geom3d import Coordinate, Vector, jhat
 from numpy.matlib import zeros, empty, matrix
 from math import pi, radians, cos, sin
 from matplotlib.pyplot import figure
@@ -7,16 +7,22 @@ from .latticesystem import LatticeSystem
 class LatticeResult(object):
     name = None
     sys = None
-    rho = None
+    ctrls = None
+    speed = None
     alpha = None
     beta = None
-    speed = None
+    pbo2V = None
+    qco2V = None
+    rbo2V = None
+    _saxis = None
+    _waxis = None
+    _rho = None
     _vfs = None
     _qfs = None
     _ofs = None
-    _udc = None
-    _ulc = None
-    _uyc = None
+    # _udc = None
+    # _ulc = None
+    # _uyc = None
     _gam = None
     _gmat = None
     _avv = None
@@ -50,26 +56,59 @@ class LatticeResult(object):
     def __init__(self, name: str, sys: LatticeSystem):
         self.name = name
         self.sys = sys
+        self.ctrls = {}
     def reset(self):
         for attr in self.__dict__:
             if attr[0] == '_':
                 self.__dict__[attr] = None
-    def set_conditions(self, alpha: float=0.0, beta: float=0.0,
-                       speed: float=1.0, rho: float=1.0,
-                       omx: float=0.0, omy: float=0.0, omz: float=0.0):
+    def set_density(self, rho: float=1.0):
+        self._rho = rho
+    @property
+    def rho(self):
+        if self._rho is None:
+            self._rho = 1.0
+        return self._rho
+    def set_state(self, speed: float=1.0, alpha: float=0.0, beta: float=0.0,
+                  pbo2V: float=0.0, qco2V: float=0.0, rbo2V: float=0.0):
+        self.speed = speed
         self.alpha = alpha
         self.beta = beta
-        self.speed = speed
-        self.rho = rho
-        self.omx = omx
-        self.omy = omy
-        self.omz = omz
+        self.pbo2V = pbo2V
+        self.qco2V = qco2V
+        self.rbo2V = rbo2V
+    @property
+    def saxis(self):
+        if self._saxis is None:
+            pnt = self.sys.rref
+            alrad = radians(self.alpha)
+            cosal = cos(alrad)
+            sinal = sin(alrad)
+            dirx = Vector(cosal, 0.0, sinal)
+            diry = Vector(0.0, 1.0, 0.0)
+            dirz = Vector(-sinal, 0.0, cosal)
+            self._saxis = Coordinate(pnt, dirx, diry, dirz)
+        return self._saxis      
+    @property
+    def waxis(self):
+        if self._waxis is None:
+            pnt = self.sys.rref
+            alrad = radians(self.alpha)
+            cosal = cos(alrad)
+            sinal = sin(alrad)
+            btrad = radians(self.beta)
+            cosbt = cos(btrad)
+            sinbt = sin(btrad)
+            dirx = Vector(cosbt*cosal, -sinbt, cosbt*sinal)
+            diry = Vector(sinbt*cosal, cosbt, sinbt*sinal)
+            dirz = Vector(-sinal, 0.0, cosal)
+            self._waxis = Coordinate(pnt, dirx, diry, dirz)
+        return self._waxis
+    def set_controls(self, **kwargs):
+        for control in kwargs:
+            self.ctrls[control] = kwargs[control]
     def set_freestream_velocity(self, vfs: Vector, ofs: Vector):
         self._vfs = vfs
         self._ofs = ofs
-        self._udc = self.vfs.to_unit()
-        self._ulc = (self.udc**jhat).to_unit()
-        self._uyc = (self.udc**self.ulc).to_unit()
         num = len(self.sys.pnls)
         self.avv = empty((num, 1), dtype=Vector)
         self.afv = empty((num, 1), dtype=Vector)
@@ -105,6 +144,20 @@ class LatticeResult(object):
             goy = self.sys.gam[:, 4]
             goz = self.sys.gam[:, 5]
             self._gmat = gvx*vfsx+gvy*vfsy+gvz*vfsz+gox*ofsx+goy*ofsy+goz*ofsz
+            for control in self.ctrls:
+                if control in self.sys.ctrls:
+                    ctrl = self.ctrls[control]
+                    ctrlrad = radians(ctrl)
+                    index = self.sys.ctrls[control]
+                    if ctrl >= 0.0:
+                        gcx = self.sys.gam[:, index[0]]
+                        gcy = self.sys.gam[:, index[1]]
+                        gcz = self.sys.gam[:, index[2]]
+                    else:
+                        gcx = self.sys.gam[:, index[3]]
+                        gcy = self.sys.gam[:, index[4]]
+                        gcz = self.sys.gam[:, index[5]]
+                    self._gmat += (gcx*vfsx+gcy*vfsy+gcz*vfsz)*ctrlrad
         return self._gmat
     @property
     def gam(self):
@@ -134,39 +187,41 @@ class LatticeResult(object):
                 self.beta = 0.0
             if self.speed is None:
                 self.speed = 1.0
-            alrad = radians(self.alpha)
-            btrad = radians(self.beta)
-            cosal = cos(alrad)
-            sinal = sin(alrad)
-            cosbt = cos(btrad)
-            sinbt = sin(btrad)
-            self._vfs = Vector(cosal*cosbt, -sinbt, sinal*cosbt)*self.speed
+            self._vfs = self.waxis.dirx*self.speed
         return self._vfs
     @property
     def ofs(self):
         if self._ofs is None:
-            self._ofs = Vector(self.omx, self.omy, self.omz)
+            p = self.pbo2V*2*self.speed/self.sys.bref
+            q = self.qco2V*2*self.speed/self.sys.cref
+            r = self.rbo2V*2*self.speed/self.sys.bref
+            rotvl = Vector(p, q, r)
+            rotvg = self.saxis.vector_to_global(rotvl)
+            omx = -rotvg.x
+            omy = rotvg.y
+            omz = -rotvg.z
+            self._ofs = Vector(omx, omy, omz)
         return self._ofs
     @property
     def qfs(self):
         if self._qfs is None:
             self._qfs = self.rho*self.speed**2/2
         return self._qfs
-    @property
-    def udc(self):
-        if self._udc is None:
-            self._udc = self.vfs.to_unit()
-        return self._udc
-    @property
-    def ulc(self):
-        if self._ulc is None:
-            self._ulc = (self.udc**jhat).to_unit()
-        return self._ulc
-    @property
-    def uyc(self):
-        if self._uyc is None:
-            self._uyc = (self.ulc**self.udc).to_unit()
-        return self._uyc
+    # @property
+    # def udc(self):
+    #     if self._udc is None:
+    #         self._udc = self.vfs.to_unit()
+    #     return self._udc
+    # @property
+    # def ulc(self):
+    #     if self._ulc is None:
+    #         self._ulc = (self.udc**jhat).to_unit()
+    #     return self._ulc
+    # @property
+    # def uyc(self):
+    #     if self._uyc is None:
+    #         self._uyc = (self.ulc**self.udc).to_unit()
+    #     return self._uyc
     @property
     def avv(self):
         if self._avv is None:
@@ -265,17 +320,17 @@ class LatticeResult(object):
     @property
     def CL(self):
         if self._CL is None:
-            self._CL = self.ulc*self.nffrctot/self.qfs/self.sys.sref
+            self._CL = self.saxis.dirz*self.nffrctot/self.qfs/self.sys.sref
         return self._CL
     @property
     def CDi(self):
         if self._CDi is None:
-            self._CDi = self.udc*self.nffrctot/self.qfs/self.sys.sref
+            self._CDi = self.saxis.dirx*self.nffrctot/self.qfs/self.sys.sref
         return self._CDi
     @property
     def CY(self):
         if self._CY is None:
-            self._CY = self.uyc*self.nffrctot/self.qfs/self.sys.sref
+            self._CY = self.saxis.diry*self.nffrctot/self.qfs/self.sys.sref
         return self._CY
     @property
     def Cl(self):
@@ -424,7 +479,7 @@ class LatticeResult(object):
             print('CDi_ff = '+self.CDi_ff.__format__(dfrm))
             print('CY_ff = '+self.CY_ff.__format__(cfrm))
             print('e = '+self.e.__format__(efrm))
-    def print_strip_forces(self):
+    def print_strip_forces(self, filepath: str=''):
         from py2md.classes import MDTable
         from math import atan
         table = MDTable()
@@ -447,11 +502,11 @@ class LatticeResult(object):
             for pnl in strp.pnls:
                 nrmfrc += self.nffrc[pnl.lpid]/pnl.area*pnl.crd
             c_cl = nrmfrc.z/q
-            ai = -self.trwsh[strp.lsid]
+            ai = -self.trwsh[strp.lsid]/self.speed
             cd = self.trdrg[strp.lsid]/q/area
             # cx = nrmfrc*self.udc/q/chord
-            cy = nrmfrc*self.uyc/q/chord
-            cz = nrmfrc*self.ulc/q/chord
+            cy = nrmfrc*self.saxis.diry/q/chord
+            cz = nrmfrc*self.saxis.dirz/q/chord
             cf = Vector(0.0, cy, cz)
             cl_norm = cf*strp.nrmt
             cl = cl_norm
@@ -459,15 +514,21 @@ class LatticeResult(object):
             # cd = cx
             table.add_row([j, yle, chord, area, c_cl, ai, cl_norm, cl, cd])
             # print(frmstr.format(j, yle, chord, area, c_cl, ai, cl_norm, cl, cd))
-        print(table)
-    def print_strip_coefficients(self):
+        if filepath != '':
+            with open(filepath, 'wt') as resfile:
+                resfile.write(table._repr_markdown_())
+        else:
+            print(table._repr_markdown_())
+    def print_strip_coefficients(self, filepath: str=''):
         from py2md.classes import MDTable
         from math import atan
         table = MDTable()
         table.add_column('#', 'd')
-        table.add_column('Chord', '.5f')
-        table.add_column('Area', '.5f')
+        table.add_column('Chord', '.4f')
+        table.add_column('Area', '.6f')
+        # Strip Normal Load
         table.add_column('cn', '.5f')
+        # String Axial Load
         table.add_column('ca', '.5f')
         table.add_column('cl', '.5f')
         table.add_column('cd', '.5f')
@@ -488,16 +549,22 @@ class LatticeResult(object):
                 momle += rref**self.nffrc[pnl.lpid]
             cn = force*strp.nrmt/q/area
             ca = force.x/q/area
-            cl = self.trlft[strp.lsid]/q/area
-            cd = self.trdrg[strp.lsid]/q/area
-            dw = -self.trwsh[strp.lsid]
+            cl = force*self.saxis.dirz/q/area
+            # cl = self.trlft[strp.lsid]/q/area
+            cd = force*self.saxis.dirx/q/area
+            # cd = self.trdrg[strp.lsid]/q/area
+            dw = -self.trwsh[strp.lsid]/self.speed
             cmle = momle.y/q/area/chord
             rqc = Vector(-chord/4, 0.0, 0.0)
             momqc = momle+rqc**force
             cmqc = momqc.y/q/area/chord
             table.add_row([j, chord, area, cn, ca, cl, cd, dw, cmle, cmqc])
-        print(table)
-    def print_panel_forces(self):
+        if filepath != '':
+            with open(filepath, 'wt') as resfile:
+                resfile.write(table._repr_markdown_())
+        else:
+            print(table._repr_markdown_())
+    def print_panel_forces(self, filepath: str=''):
         from py2md.classes import MDTable
         from math import atan, tan, radians
         table = MDTable()
@@ -513,9 +580,9 @@ class LatticeResult(object):
         for pnl in self.sys.pnls:
             j = pnl.lpid
             k = pnl.strp.lsid
-            x = pnl.pnti.x
-            y = pnl.pnti.y
-            z = pnl.pnti.z
+            x = pnl.pntg.x
+            y = pnl.pntg.y
+            z = pnl.pntg.z
             area = pnl.area
             frc = self.nffrc[pnl.lpid]
             nfrc = frc*pnl.nrml
@@ -523,8 +590,12 @@ class LatticeResult(object):
             chord = pnl.crd
             alc = tan(radians(pnl.alpha))
             table.add_row([j, k, x, y, z, chord, alc, cp])
-        print(table)
-    def print_panel_near_field_results(self):
+        if filepath != '':
+            with open(filepath, 'wt') as resfile:
+                resfile.write(table._repr_markdown_())
+        else:
+            print(table._repr_markdown_())
+    def print_panel_near_field_results(self, filepath: str=''):
         from py2md.classes import MDTable
         from math import atan
         table = MDTable()
@@ -554,7 +625,11 @@ class LatticeResult(object):
             Fy = self.nffrc[j].y
             Fz = self.nffrc[j].z
             table.add_row([j, k, gam, Vx, Vy, Vz, lx, ly, lz, Fx, Fy, Fz])
-        print(table)
+        if filepath != '':
+            with open(filepath, 'wt') as resfile:
+                resfile.write(table._repr_markdown_())
+        else:
+            print(table._repr_markdown_())
     def __str__(self):
         from py2md.classes import MDTable
         from . import cfrm, dfrm, efrm
@@ -565,6 +640,18 @@ class LatticeResult(object):
         table.add_column('Speed', 'g', data=[self.speed])
         table.add_column('Rho', 'g', data=[self.rho])
         outstr += table._repr_markdown_()
+        table = MDTable()
+        table.add_column('pb/2V (rad)', 'g', data=[self.pbo2V])
+        table.add_column('qc/2V (rad)', 'g', data=[self.qco2V])
+        table.add_column('rb/2V (rad)', 'g', data=[self.rbo2V])
+        outstr += table._repr_markdown_()
+        table = MDTable()
+        if len(self.ctrls) > 0:
+            for control in self.ctrls:
+                ctrl = self.ctrls[control]
+                control = control.capitalize()
+                table.add_column(f'{control} (deg)', 'g', data=[ctrl])
+            outstr += table._repr_markdown_()
         if self.gam is not None:
             table = MDTable()
             table.add_column('Cx', cfrm, data=[self.Cx])
@@ -592,33 +679,33 @@ class LatticeResult(object):
     def _repr_markdown_(self):
         return self.__str__()
 
-class PanelResult(object):
-    pnl = None
-    gam = None
-    vel = None
-    frc = None
-    mom = None
-    def __init__(self, pnl):
-        self.pnl = pnl
-    def set_gam(self, gam: float):
-        self.gam = gam
-    def set_velocity(self, vel: Vector):
-        self.vel = vel
-    def set_force(self, frc: Vector):
-        self.frc = frc
-    def set_moment(self, mom: Vector):
-        self.mom = mom
+# class PanelResult(object):
+#     pnl = None
+#     gam = None
+#     vel = None
+#     frc = None
+#     mom = None
+#     def __init__(self, pnl):
+#         self.pnl = pnl
+#     def set_gam(self, gam: float):
+#         self.gam = gam
+#     def set_velocity(self, vel: Vector):
+#         self.vel = vel
+#     def set_force(self, frc: Vector):
+#         self.frc = frc
+#     def set_moment(self, mom: Vector):
+#         self.mom = mom
 
-class StripResult(object):
-    strp = None
-    phi = None
-    nfwsh = None
-    nflft = None
-    nfdrg = None
-    nfmom = None
-    pnlres = None
-    def __init__(self, strp):
-        self.strp = strp
-        self.pnlres = []
-    def add_panel_result(self, pnlres):
-        self.pnlres.append(pnlres)
+# class StripResult(object):
+#     strp = None
+#     phi = None
+#     nfwsh = None
+#     nflft = None
+#     nfdrg = None
+#     nfmom = None
+#     pnlres = None
+#     def __init__(self, strp):
+#         self.strp = strp
+#         self.pnlres = []
+#     def add_panel_result(self, pnlres):
+#         self.pnlres.append(pnlres)

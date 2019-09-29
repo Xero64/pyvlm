@@ -10,6 +10,7 @@ class LatticePanel(object):
     cfr2 = None
     pntc = None
     pnti = None
+    pntg = None
     pnta = None
     pntb = None
     leni = None
@@ -37,11 +38,12 @@ class LatticePanel(object):
         self.pnta = pnt1+self.cfra*veca
         self.pntb = pnt2+self.cfra*vecb
         self.leni = self.pntb-self.pnta
-        self.pnti = self.pnta+0.5*self.leni
+        self.pntg = self.pnta+0.5*self.leni
+        self.pnti = self.pnta+self.strp.bfrc*self.leni
         self.th = atan2(self.leni.z, self.leni.y)
         crda = veca.return_magnitude()
         crdb = vecb.return_magnitude()
-        self.crd = crda+(crdb-crda)*0.5
+        self.crd = crda+(crdb-crda)*self.strp.bfrc
         self.area = self.leni.return_magnitude()*(veca.return_magnitude()+vecb.return_magnitude())/2
         al1 = self.sht.sect1.camber.return_camber_angle(self.cspc[3])
         al2 = self.sht.sect2.camber.return_camber_angle(self.cspc[3])
@@ -83,6 +85,8 @@ class LatticePanel(object):
         alc = radians(self.alpha)
         th = self.th
         return Vector(cos(alc - als), -sin(th)*sin(alc - als), sin(alc - als)*cos(th))
+    def dndl(self, gain: float, hvec: Vector):
+        return gain*(hvec**self.nrml)
     def velocity(self, pnt: Point):
         r = pnt
         ra = self.pnta
@@ -98,13 +102,19 @@ class LatticePanel(object):
             if axb.return_magnitude() != 0.0:
                 den = am*bm+a*b
                 vel += axb/den*(1/am+1/bm)
+        adx = a*x
         axx = a**x
+        # adx = a.x
+        # axx = Vector(0.0, a.z, -a.y)
         if axx.return_magnitude() != 0.0:
-            den = am-a*x
+            den = am-adx
             vel += axx/den/am
+        bdx = b*x
         bxx = b**x
+        # bdx = b.x
+        # bxx = Vector(0.0, b.z, -b.y)
         if bxx.return_magnitude() != 0.0:
-            den = bm-b*x
+            den = bm-bdx
             vel -= bxx/den/bm
         vel = vel/(4*pi)
         return vel

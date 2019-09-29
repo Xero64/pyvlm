@@ -6,6 +6,7 @@ from .latticestrip import LatticeStrip
 from .latticepanel import LatticePanel
 from .latticeresult import LatticeResult
 from .latticeoptimum import LatticeOptimum
+from .latticecontrol import LatticeControl
 
 cfrm = '.5f'
 dfrm = '.7f'

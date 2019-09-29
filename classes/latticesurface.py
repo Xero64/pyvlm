@@ -103,7 +103,9 @@ class LatticeSurface(object):
                 mstrp = self.strps[i]
                 strp.set_mirror(mstrp)
         for sht in self.shts:
-            sht.set_control_points_and_normals()
+            sht.inherit_panels()
+            sht.set_control_panels()
+            # sht.set_control_points_and_normals()
         return lsid, lpid
     def point_xyz(self):
         from numpy.matlib import zeros
