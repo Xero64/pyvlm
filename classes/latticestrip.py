@@ -87,7 +87,8 @@ class LatticeStrip(object):
     @property
     def area(self):
         if self._area is None:
-            self._area = self.dst*(self.crd1+self.crd2)/2
+            # self._area = self.dst*(self.crd1+self.crd2)/2
+            self._area = self.dst*self.chord
         return self._area
     def __repr__(self):
         return '<LatticeStrip {:d}>'.format(self.lsid)

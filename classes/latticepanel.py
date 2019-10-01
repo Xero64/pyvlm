@@ -41,10 +41,12 @@ class LatticePanel(object):
         self.pntg = self.pnta+0.5*self.leni
         self.pnti = self.pnta+self.strp.bfrc*self.leni
         self.th = atan2(self.leni.z, self.leni.y)
+        self.width = (self.leni.y**2+self.leni.z**2)**0.5
         crda = veca.return_magnitude()
         crdb = vecb.return_magnitude()
         self.crd = crda+(crdb-crda)*self.strp.bfrc
-        self.area = self.leni.return_magnitude()*(veca.return_magnitude()+vecb.return_magnitude())/2
+        self.area = self.strp.dst*self.crd
+        # self.area = self.leni.return_magnitude()*(veca.return_magnitude()+vecb.return_magnitude())/2
         al1 = self.sht.sect1.camber.return_camber_angle(self.cspc[3])
         al2 = self.sht.sect2.camber.return_camber_angle(self.cspc[3])
         self.alpha = self.strp.bspc[1]*(al2-al1)+al1

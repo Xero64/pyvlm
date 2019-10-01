@@ -544,7 +544,7 @@ class LatticeResult(object):
             momle = Vector(0.0, 0.0, 0.0)
             for pnl in strp.pnls:
                 force += self.nffrc[pnl.lpid]
-                momle += self.nfmom[pnl.lpid]
+                # momle += self.nfmom[pnl.lpid]
                 rref = pnl.pnti-strp.pnti
                 momle += rref**self.nffrc[pnl.lpid]
             cn = force*strp.nrmt/q/area
@@ -555,9 +555,11 @@ class LatticeResult(object):
             # cd = self.trdrg[strp.lsid]/q/area
             dw = -self.trwsh[strp.lsid]/self.speed
             cmle = momle.y/q/area/chord
+            # cmle = momle.y/q/area/self.sys.cref
             rqc = Vector(-chord/4, 0.0, 0.0)
             momqc = momle+rqc**force
             cmqc = momqc.y/q/area/chord
+            # cmqc = momqc.y/q/area/self.sys.cref
             table.add_row([j, chord, area, cn, ca, cl, cd, dw, cmle, cmqc])
         if filepath != '':
             with open(filepath, 'wt') as resfile:
