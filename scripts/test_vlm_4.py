@@ -32,10 +32,11 @@ lsys_bll = load_package_file(jsonfilename)
 print(lsys)
 
 lres_org = LatticeResult('Initial', lsys)
-lres_org.set_conditions(speed=V, rho=rho)
+lres_org.set_state(speed=V)
+lres_org.set_density(rho=rho)
 print(lres_org)
 
-l = bell_lift_distribution(lsys.strpy, lsys.bref, W)
+l = bell_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, W)
 
 #%% Bell Shaped Lift Distribution
 
@@ -46,7 +47,8 @@ lopt_bll.add_record('l', strplst='Mirrored')
 print(lopt_bll)
 
 lres_bll = LatticeResult('Bell', lsys)
-lres_bll.set_conditions(speed=V, rho=rho)
+lres_bll.set_state(speed=V)
+lres_bll.set_density(rho=rho)
 lres_bll.set_lift_distribution(l, rho, V)
 print(lres_bll)
 
@@ -61,7 +63,8 @@ lopt.optimum_lift_distribution()
 print(lopt)
 
 lres_opt = LatticeResult('Optimal', lsys)
-lres_opt.set_conditions(speed=V, rho=rho)
+lres_opt.set_state(speed=V)
+lres_opt.set_density(rho=rho)
 lres_opt.set_phi(lopt.phi)
 print(lres_opt)
 
@@ -115,7 +118,7 @@ yspec = ymirr+yspec
 
 w = [W/rho/V/lsys_bll.bref*3/2*((2*yi/lsys_bll.bref)**2-0.5) for yi in yspec]
 
-print(min(w)/min(lres_bll.trwsh))
+print(min(w)/min(lres_bll.trres.trwsh))
 
 #%% Plots
 
@@ -140,8 +143,8 @@ axw.plot(yspec, w, label='Bell Wash')
 axw.legend()
 
 axa = lopt.plot_strip_twist_distribution()
-axa.plot(lsys.strpy, al_bll, label='alpha Bell')
-axa.plot(lsys.strpy, al_opt, label='alpha Optimum')
+axa.plot(lsys.srfcs[0].strpy, al_bll, label='alpha Bell')
+axa.plot(lsys.srfcs[0].strpy, al_opt, label='alpha Optimum')
 axa.plot(yspec, alspec, label='alpha Specified')
 leg = axa.legend()
 
@@ -152,20 +155,20 @@ from matplotlib.pyplot import figure
 from pymath.function import Function
 
 alf = Function(yspec, alspec)
-als = alf.linear_interp(lsys.strpy)
+als = alf.linear_interp(lsys.srfcs[0].strpy)
 
-ali = [degrees(atan2(lres_bll.trwsh[i], V)) for i in range(len(lres_bll.trwsh))]
-al0 = [1.0-abs(yi)*2/lsys_bll.bref for yi in lsys.strpy]
+ali = [degrees(atan2(lres_bll.trres.trwsh[i], V)) for i in range(len(lres_bll.trres.trwsh))]
+al0 = [1.0-abs(yi)*2/lsys_bll.bref for yi in lsys.srfcs[0].strpy]
 
-alp = [als[i]+ali[i]+al0[i] for i in range(len(lsys.strpy))]
+alp = [als[i]+ali[i]+al0[i] for i in range(len(lsys.srfcs[0].strpy))]
 
 fig  = figure(figsize=(12, 8))
 ax = fig.gca()
 ax.grid(True)
-ax.plot(lsys.strpy, ali, label='Induced Angle')
-ax.plot(lsys.strpy, al0, label='Zero Lift Angle')
-ax.plot(lsys.strpy, als, label='Specified Angle')
-ax.plot(lsys.strpy, alp, label='Total Angle')
+ax.plot(lsys.srfcs[0].strpy, ali, label='Induced Angle')
+ax.plot(lsys.srfcs[0].strpy, al0, label='Zero Lift Angle')
+ax.plot(lsys.srfcs[0].strpy, als, label='Specified Angle')
+ax.plot(lsys.srfcs[0].strpy, alp, label='Total Angle')
 leg = ax.legend()
 
 #%% Local Lift
@@ -173,16 +176,16 @@ leg = ax.legend()
 cmax = 0.40005
 cmin = 0.10008
 
-c = [cmax-abs(yi)*2/lsys_bll.bref*(cmax-cmin) for yi in lsys.strpy]
+c = [cmax-abs(yi)*2/lsys_bll.bref*(cmax-cmin) for yi in lsys.srfcs[0].strpy]
 
 cla = 2*pi*0.91
 
-l = [cla*c[i]*radians(alp[i])*q for i in range(len(lsys.strpy))]
+l = [cla*c[i]*radians(alp[i])*q for i in range(len(lsys.srfcs[0].strpy))]
 
 fig  = figure(figsize=(12, 8))
 ax = fig.gca()
 ax.grid(True)
-ax.plot(lsys.strpy, l, label='Lift Distribution')
+ax.plot(lsys.srfcs[0].strpy, l, label='Lift Distribution')
 ax = lres_bll.plot_trefftz_lift_distribution(ax=ax)
 leg = ax.legend()
 

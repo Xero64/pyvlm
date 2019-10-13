@@ -21,7 +21,7 @@ phi1, lam1 = lopt1.optimum_lift_distribution()
 print(lopt1)
 
 lres1 = LatticeResult('Low AR Wing', lsys1)
-lres1.set_conditions()
+lres1.set_state()
 lres1.set_phi(phi1)
 print(lres1)
 
@@ -37,7 +37,7 @@ phi2, lam2 = lopt2.optimum_lift_distribution()
 print(lopt2)
 
 lres2 = LatticeResult('High AR Wing Constrained', lsys2)
-lres2.set_conditions()
+lres2.set_state()
 lres2.set_phi(phi2)
 print(lres2)
 

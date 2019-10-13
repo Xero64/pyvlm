@@ -9,7 +9,7 @@ lsys = load_package_file(jsonfilename)
 print(lsys)
 
 #%% Create Elliptical Distribution
-lell = elliptical_lift_distribution(lsys.strpy, lsys.bref, 10000.0)
+lell = elliptical_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, 10000.0)
 
 # #%% Create Elliptical Result
 # lres_ell = LatticeResult('Equivalent Elliptical', lsys)

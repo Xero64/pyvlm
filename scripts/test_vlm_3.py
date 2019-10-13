@@ -10,10 +10,10 @@ print(lsys)
 lsys_new = load_package_file(jsonfilename)
 
 lres_org = LatticeResult('Initial', lsys)
-lres_org.set_conditions(alpha=3.0)
+lres_org.set_state(alpha=3.0)
 print(lres_org)
 
-Lspec = lres_org.CL_ff*lres_org.qfs*lsys.sref
+Lspec = lres_org.trres.CL*lres_org.qfs*lsys.sref
 
 #%% Low AR Optimal Lift Distribution
 
@@ -24,7 +24,7 @@ phi, lam = lopt.optimum_lift_distribution()
 print(lopt)
 
 lres_opt = LatticeResult('Optimal', lsys)
-lres_opt.set_conditions(alpha=3.0)
+lres_opt.set_state(alpha=3.0)
 lres_opt.set_phi(phi)
 print(lres_opt)
 
@@ -65,18 +65,18 @@ axw = lres_opt.plot_trefftz_wash_distribution(ax=axw)
 axw = lopt.res.plot_trefftz_wash_distribution(ax=axw)
 
 axa = lopt.plot_strip_twist_distribution()
-axa.plot(lsys.strpy, al1, label='al1')
-axa.plot(lsys.strpy, al2, label='al2')
+axa.plot(lsys.srfcs[0].strpy, al1, label='al1')
+axa.plot(lsys.srfcs[0].strpy, al2, label='al2')
 axa.legend()
 
 #%% New Results
 
 lres_0deg = LatticeResult('0deg Result', lsys_new)
-lres_0deg.set_conditions(alpha=0.0, speed=1.0, rho=1.0)
+lres_0deg.set_state(alpha=0.0, speed=1.0)
 print(lres_0deg)
 
 lres_6deg = LatticeResult('6deg Result', lsys_new)
-lres_6deg.set_conditions(alpha=6.0, speed=1.0, rho=1.0)
+lres_6deg.set_state(alpha=6.0, speed=1.0)
 print(lres_6deg)
 
 #%% New Plots

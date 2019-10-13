@@ -19,7 +19,7 @@ alpha = 3.0 # degrees
 beta = 0.0 # degrees
 
 lres_org = LatticeResult('Baseline', lsys)
-lres_org.set_conditions(alpha=alpha, beta=beta)
+lres_org.set_state(alpha=alpha, beta=beta)
 print(lres_org)
 
 # lres_org.print_total_loads()
@@ -37,12 +37,12 @@ lres_org.print_panel_forces()
 #%% Equivalent Elliptical Lift
 from pyvlm.tools import elliptical_lift_distribution
 
-L = lres_org.CL*lres_org.qfs*lsys.sref
+L = lres_org.nfres.CL*lres_org.qfs*lsys.sref
 
-lell = elliptical_lift_distribution(lsys.strpy, lsys.bref, L)
+lell = elliptical_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, L)
 
 lres_ell = LatticeResult('Equivalent Elliptical', lsys)
-lres_ell.set_conditions(alpha=alpha)
+lres_ell.set_state(alpha=alpha)
 lres_ell.set_lift_distribution(lell, rho=1.0, speed=1.0)
 print(lres_ell)
 
@@ -67,7 +67,7 @@ phi1, lam1 = lopt_opt1.optimum_lift_distribution()
 print(lopt_opt1)
 
 lres_opt1 = LatticeResult('Unconstrained Optimised', lsys)
-lres_opt1.set_conditions(alpha=alpha)
+lres_opt1.set_state(alpha=alpha)
 lres_opt1.set_phi(phi1)
 print(lres_opt1)
 
@@ -92,7 +92,7 @@ print(lopt_opt2)
 # print(f'l2 = {l2}')
 
 lres_opt2 = LatticeResult('Constrained Optimised', lsys)
-lres_opt2.set_conditions(alpha=alpha)
+lres_opt2.set_state(alpha=alpha)
 lres_opt2.set_phi(phi2)
 print(lres_opt2)
 
@@ -111,46 +111,20 @@ axl = lres_opt2.plot_trefftz_lift_distribution(ax=axl)
 
 from math import pi
 
-CDi_org_theory = lres_org.CL_ff**2/pi/lsys.ar/lres_org.e
+CDi_org_theory = lres_org.trres.CL**2/pi/lsys.ar/lres_org.trres.e
 
-CDi_ell_theory = lres_org.CL_ff**2/pi/lsys.ar
+CDi_ell_theory = lres_org.trres.CL**2/pi/lsys.ar
 
-print(f'CL_org = {lres_org.CL_ff:.3f}')
-print(f'CL_ell = {lres_ell.CL_ff:.3f}')
-print(f'CL_opt1 = {lres_opt1.CL_ff:.3f}')
-print(f'CL_opt2 = {lres_opt2.CL_ff:.3f}')
+print(f'CL_org = {lres_org.trres.CL:.3f}')
+print(f'CL_ell = {lres_ell.trres.CL:.3f}')
+print(f'CL_opt1 = {lres_opt1.trres.CL:.3f}')
+print(f'CL_opt2 = {lres_opt2.trres.CL:.3f}')
 print('')
 print(f'CDi_org_theory = {CDi_org_theory:.7f}')
-print(f'CDi_org = {lres_org.CDi_ff:.7f}')
+print(f'CDi_org = {lres_org.trres.CDi:.7f}')
 print(f'CDi_ell_theory = {CDi_ell_theory:.7f}')
-print(f'CDi_ell = {lres_ell.CDi_ff:.7f}')
-print(f'CDi_opt1 = {lres_opt1.CDi_ff:.7f}')
-print(f'CDi_opt2 = {lres_opt2.CDi_ff:.7f}')
+print(f'CDi_ell = {lres_ell.trres.CDi:.7f}')
+print(f'CDi_opt1 = {lres_opt1.trres.CDi:.7f}')
+print(f'CDi_opt2 = {lres_opt2.trres.CDi:.7f}')
 print('')
-print(f'Efficiency Improvement = {100.0*(1.0-lres_opt1.CDi_ff/lres_org.CDi_ff):.2f}%')
-
-#%% Plot Surfaces
-
-# from numpy import array
-# import ipyvolume as ipv
-
-# x, y, z  = lsys.srfcs[0].point_xyz()
-# X = array(x)
-# Y = array(y)
-# Z = array(z)
-
-# ipv.figure()
-# ipv.plot_surface(X, Z, Y, color="orange")
-# ipv.plot_wireframe(X, Z, Y, color="red")
-# ipv.pylab.xyzlim(-5.0, 5.0)
-# ipv.show()
-
-# from ipyvolume import figure, plot_surface, show
-
-# x, y, z  = lsys.srfcs[0].point_xyz()
-# fig = figure()
-# plot_surface(x, y, z, color='orange')
-# show()
-
-# lsys.plot_surface_ipv()
-# ax = lsys.plot_surface(view='top')
+print(f'Efficiency Improvement = {100.0*(1.0-lres_opt1.trres.CDi/lres_org.trres.CDi):.2f}%')

@@ -20,9 +20,10 @@ print(lsys2)
 
 #%% Low AR Wing Optimum
 lres1 = LatticeResult('Low AR Wing Elliptical', lsys1)
-lres1.set_conditions(rho=rho, speed=V)
+lres1.set_state(speed=V)
+lres1.set_density(rho=rho)
 
-l1 = elliptical_lift_distribution(lsys1.strpy, lsys1.bref, L)
+l1 = elliptical_lift_distribution(lsys1.srfcs[0].strpy, lsys1.bref, L)
 lres1.set_lift_distribution(l1, rho=rho, speed=V)
 print(lres1)
 
@@ -34,8 +35,9 @@ print(lopt1)
 
 #%% High AR Wing Constrained Optimum
 lres2 = LatticeResult('High AR Wing Bell', lsys2)
-lres2.set_conditions(rho=rho, speed=V)
-l2 = bell_lift_distribution(lsys2.strpy, lsys2.bref, L)
+lres2.set_state(speed=V)
+lres2.set_density(rho=rho)
+l2 = bell_lift_distribution(lsys2.srfcs[0].strpy, lsys2.bref, L)
 lres2.set_lift_distribution(l2, rho=rho, speed=V)
 print(lres2)
 
