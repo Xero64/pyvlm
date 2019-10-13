@@ -189,23 +189,27 @@ class LatticeOptimum(object):
         return dal
     def optimum_strip_twist(self, crit=1e-1):
         self.res = LatticeResult(self.name, self.sys)
-        self.res.set_conditions(speed=self.speed, rho=self.rho)
+        self.res.set_state(speed=self.speed)
+        self.res.set_density(rho=self.rho)
         dal = self.optimum_strip_twist_iteration()
         nrmdal = norm(dal)
         iteration = 0
         self.res = LatticeResult(self.name, self.sys)
-        self.res.set_conditions(speed=self.speed, rho=self.rho)
+        self.res.set_state(speed=self.speed)
+        self.res.set_density(rho=self.rho)
         dal = self.optimum_strip_twist_iteration()
         nrmdal = norm(dal)
         while nrmdal > crit:
             iteration += 1
             print(f'Iteration {iteration} - Convergence {nrmdal}')
             self.res = LatticeResult(self.name, self.sys)
-            self.res.set_conditions(speed=self.speed, rho=self.rho)
+            self.res.set_state(speed=self.speed)
+            self.res.set_density(rho=self.rho)
             dal = self.optimum_strip_twist_iteration()
             nrmdal = norm(dal)
         self.res = LatticeResult(self.name, self.sys)
-        self.res.set_conditions(speed=self.speed, rho=self.rho)
+        self.res.set_state(speed=self.speed)
+        self.res.set_density(rho=self.rho)
         al = [strp.angle for i, strp in enumerate(self.sys.strps)]
         return al
     def plot_strip_twist_distribution(self, ax=None):

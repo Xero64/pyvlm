@@ -135,6 +135,12 @@ class LatticeSurface(object):
             print(f'{i:d}')
             print(f'{sht.sect1.pnt:.5f}\t{sht.sect1.chord:.5f}')
             print(f'{sht.sect2.pnt:.5f}\t{sht.sect2.chord:.5f}')
+    @property
+    def strpy(self):
+        return [strp.pnti.y for strp in self.strps]
+    @property
+    def strpi(self):
+        return [strp.lsid for strp in self.strps]        
     def __repr__(self):
         return '<LatticeSurface {:s}>'.format(self.name)
 
