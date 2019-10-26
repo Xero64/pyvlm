@@ -123,7 +123,7 @@ class LatticeSystem(object):
                 i = pnli.lpid
                 for pnlj in self.pnls:
                     j = pnlj.lpid
-                    self._avg[i, j] = pnlj.velocity(pnli.pnti)
+                    self._avg[i, j] = pnlj.induced_velocity(pnli.pnti)
             finish = time()
             elapsed = finish-start
             print(f'Built Induced Velocity Matrix in {elapsed:.3f} seconds.')
@@ -138,7 +138,7 @@ class LatticeSystem(object):
             for pnl in self.pnls:
                 i = pnl.lpid
                 for j in range(num):
-                    self._afg[i, j] = pnl.force(self.avg[i, j])
+                    self._afg[i, j] = pnl.induced_force(self.avg[i, j])
                     # self._afg[i, j] = self.avg[i, j]**pnl.leni
             finish = time()
             elapsed = finish-start

@@ -236,9 +236,12 @@ class LatticeResult(object):
         if self._avv is None:
             num = len(self.sys.pnls)
             self._avv = empty((num, 1), dtype=Vector)
-            for i in range(num):
-                rpi = self.sys.pnls[i].pnti-self.sys.rref
-                self._avv[i, 0] = self.vfs+self.ofs**rpi
+            for i, pnl in enumerate(self.sys.pnls):
+                if pnl.noload:
+                    self._avv[i, 0] = Vector(0.0, 0.0, 0.0)
+                else:
+                    rpi = self.sys.pnls[i].pnti-self.sys.rref
+                    self._avv[i, 0] = self.vfs+self.ofs**rpi
         return self._avv
     @property
     def afv(self):
@@ -246,7 +249,7 @@ class LatticeResult(object):
             num = len(self.sys.pnls)
             self._afv = empty((num, 1), dtype=Vector)
             for i, pnl in enumerate(self.sys.pnls):
-                self._afv[i, 0] = pnl.force(self.avv[i, 0])
+                self._afv[i, 0] = pnl.induced_force(self.avv[i, 0])
                 # self._afv[i, 0] = self.avv[i, 0]**pnl.leni
         return self._afv
     @property
@@ -620,11 +623,11 @@ class LatticeResult(object):
             letter = control[0]
             outstr += f'\n## {control.capitalize()} Derivatives\n'
             table = MDTable()
-            table.add_column(f'CL{letter:s}', sfrm)
-            table.add_column(f'CY{letter:s}', sfrm)
-            table.add_column(f'Cl{letter:s}', sfrm)
-            table.add_column(f'Cm{letter:s}', sfrm)
-            table.add_column(f'Cn{letter:s}', sfrm)
+            table.add_column(f'CLd{letter:s}', sfrm)
+            table.add_column(f'CYd{letter:s}', sfrm)
+            table.add_column(f'Cld{letter:s}', sfrm)
+            table.add_column(f'Cmd{letter:s}', sfrm)
+            table.add_column(f'Cnd{letter:s}', sfrm)
             if self.ctrls[control] >= 0.0:
                 ctresp = self.ctresp[control]
                 table.add_row([ctresp.CL, ctresp.CY, ctresp.Cl, ctresp.Cm, ctresp.Cn])

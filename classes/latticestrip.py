@@ -61,12 +61,17 @@ class LatticeStrip(object):
         rb = Point(0.0, self.pnt2.y, self.pnt2.z)
         a = r-ra
         b = r-rb
-        am = a.return_magnitude()
-        bm = b.return_magnitude()
-        x = ihat
-        axx = a**x
-        bxx = b**x
-        vel = (axx/am**2-bxx/bm**2)/2/pi
+        # am = a.return_magnitude()
+        # bm = b.return_magnitude()
+        # x = ihat
+        # axx = a**x
+        # bxx = b**x
+        axx = Vector(0.0, a.z, -a.y)
+        bxx = Vector(0.0, b.z, -b.y)
+        am2 = a*a
+        bm2 = b*b
+        # vel = (axx/am**2-bxx/bm**2)/2/pi
+        vel = (axx/am2-bxx/bm2)/2/pi
         return vel
     def trefftz_lift(self):
         if self.noload:

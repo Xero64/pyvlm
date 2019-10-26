@@ -100,34 +100,39 @@ class LatticePanel(object):
         b = r-rb
         am = a.return_magnitude()
         bm = b.return_magnitude()
-        x = ihat
+        # x = ihat
         vel = Vector(0.0, 0.0, 0.0)
         if pnt != self.pnti:
             axb = a**b
             if axb.return_magnitude() != 0.0:
                 den = am*bm+a*b
                 vel += axb/den*(1/am+1/bm)
-        adx = a*x
-        axx = a**x
-        # adx = a.x
-        # axx = Vector(0.0, a.z, -a.y)
+        # adx = a*x
+        # axx = a**x
+        adx = a.x
+        axx = Vector(0.0, a.z, -a.y)
         if axx.return_magnitude() != 0.0:
             den = am-adx
             vel += axx/den/am
-        bdx = b*x
-        bxx = b**x
-        # bdx = b.x
-        # bxx = Vector(0.0, b.z, -b.y)
+        # bdx = b*x
+        # bxx = b**x
+        bdx = b.x
+        bxx = Vector(0.0, b.z, -b.y)
         if bxx.return_magnitude() != 0.0:
             den = bm-bdx
             vel -= bxx/den/bm
         vel = vel/(4*pi)
         return vel
-    def force(self, vel: Vector):
+    def induced_force(self, vel: Vector):
         if self.noload:
             return Vector(0.0, 0.0, 0.0)
         else:
             return vel**self.leni
+    def induced_velocity(self, pnt: Point):
+        if self.noload:
+            return Vector(0.0, 0.0, 0.0)
+        else:
+            return self.velocity(pnt)
     def __repr__(self):
         return '<LatticePanel {:d}>'.format(self.lpid)
     def __str__(self):
