@@ -87,6 +87,9 @@ class LatticePanel(object):
         alc = radians(self.alpha)
         th = self.th
         return Vector(cos(alc - als), -sin(th)*sin(alc - als), sin(alc - als)*cos(th))
+    @property
+    def noload(self):
+        return self.strp.noload
     def dndl(self, gain: float, hvec: Vector):
         return gain*(hvec**self.nrml)
     def velocity(self, pnt: Point):
@@ -120,6 +123,11 @@ class LatticePanel(object):
             vel -= bxx/den/bm
         vel = vel/(4*pi)
         return vel
+    def force(self, vel: Vector):
+        if self.noload:
+            return Vector(0.0, 0.0, 0.0)
+        else:
+            return vel**self.leni
     def __repr__(self):
         return '<LatticePanel {:d}>'.format(self.lpid)
     def __str__(self):

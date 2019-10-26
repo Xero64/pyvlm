@@ -68,6 +68,21 @@ class LatticeStrip(object):
         bxx = b**x
         vel = (axx/am**2-bxx/bm**2)/2/pi
         return vel
+    def trefftz_lift(self):
+        if self.noload:
+            return 0.0
+        else:
+            return self.lent.y
+    def trefftz_yfrc(self):
+        if self.noload:
+            return 0.0
+        else:
+            return -self.lent.z
+    def trefftz_drag(self, vel: float):
+        if self.noload:
+            return 0.0
+        else:
+            return -self.dst*vel/2
     @property
     def nrmt(self):
         return self.sht.cord.dirz
@@ -90,6 +105,9 @@ class LatticeStrip(object):
             # self._area = self.dst*(self.crd1+self.crd2)/2
             self._area = self.dst*self.chord
         return self._area
+    @property
+    def noload(self):
+        return self.sht.noload
     def __repr__(self):
         return '<LatticeStrip {:d}>'.format(self.lsid)
     def __str__(self):

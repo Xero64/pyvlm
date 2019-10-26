@@ -138,7 +138,8 @@ class LatticeSystem(object):
             for pnl in self.pnls:
                 i = pnl.lpid
                 for j in range(num):
-                    self._afg[i, j] = self.avg[i, j]**pnl.leni
+                    self._afg[i, j] = pnl.force(self.avg[i, j])
+                    # self._afg[i, j] = self.avg[i, j]**pnl.leni
             finish = time()
             elapsed = finish-start
             print(f'Built Induced Force Matrix in {elapsed:.3f} seconds.')
@@ -270,7 +271,8 @@ class LatticeSystem(object):
             for strp in self.strps:
                 i = strp.lsid
                 for j in range(num):
-                    self._bdg[i, j] = -strp.dst*self.bvg[i, j]/2
+                    self._bdg[i, j] = strp.trefftz_drag(self.bvg[i, j])
+                    # self._bdg[i, j] = -strp.dst*self.bvg[i, j]/2
             finish = time()
             elapsed = finish-start
             print(f'Built Trefftz Induced Drag Matrix in {elapsed:.3f} seconds.')
@@ -284,7 +286,8 @@ class LatticeSystem(object):
             self._blg = zeros((num, 1))
             for strp in self.strps:
                 i = strp.lsid
-                self._blg[i, 0] = strp.lent.y
+                self._blg[i, 0] = strp.trefftz_lift()
+                # self._blg[i, 0] = strp.lent.y
             finish = time()
             elapsed = finish-start
             print(f'Built Trefftz Induced Lift Matrix in {elapsed:.3f} seconds.')
@@ -298,7 +301,8 @@ class LatticeSystem(object):
             self._byg = zeros((num, 1))
             for strp in self.strps:
                 i = strp.lsid
-                self._byg[i, 0] = -strp.lent.z
+                self._byg[i, 0] = strp.trefftz_yfrc()
+                # self._byg[i, 0] = -strp.lent.z
             finish = time()
             elapsed = finish-start
             print(f'Built Trefftz Induced Y-Force Matrix in {elapsed:.3f} seconds.')
@@ -325,7 +329,10 @@ class LatticeSystem(object):
     def set_strip_alpha(self, alpha: list):
         for i, strp in enumerate(self.strps):
             strp._ang = alpha[i]
-        self.reset()
+        self._aic = None
+        self._afs = None
+        self._gam = None
+        # self.reset()
     def print_strip_geometry(self, filepath: str=''):
         from py2md.classes import MDTable
         table = MDTable()

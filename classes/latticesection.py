@@ -11,6 +11,7 @@ class LatticeSection(object):
     bspace = None
     yspace = None
     mirror = None
+    noload = None
     ctrls = None
     def __init__(self, pnt: Point, chord: float, angle: float):
         self.pnt = pnt
@@ -18,6 +19,7 @@ class LatticeSection(object):
         self.angle = angle
         self.update()
     def update(self):
+        self.noload = False
         self.mirror = False
         self.camber = FlatPlate()
         self.ctrls = {}
@@ -44,6 +46,8 @@ class LatticeSection(object):
                 from ..tools.camber import NACA6Series
                 self.camber = NACA6Series(code)
                 self.airfoil = airfoil
+    def set_noload(self, noload: bool):
+        self.noload = noload
     def add_control(self, ctrl: LatticeControl):
         self.ctrls[ctrl.name] = ctrl
     def return_mirror(self):
@@ -75,6 +79,8 @@ def latticesecttion_from_json(sectdata: dict):
         ang = 0.0
     pnt = Point(xle, yle, zle)
     sect = LatticeSection(pnt, crd, ang)
+    if 'noload' in sectdata:
+        sect.set_noload(sectdata['noload'])
     if 'airfoil' in sectdata:
         sect.set_airfoil(sectdata['airfoil'])
     if 'numb' in sectdata and 'bspace' in sectdata:

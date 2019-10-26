@@ -246,7 +246,8 @@ class LatticeResult(object):
             num = len(self.sys.pnls)
             self._afv = empty((num, 1), dtype=Vector)
             for i, pnl in enumerate(self.sys.pnls):
-                self._afv[i, 0] = self.avv[i, 0]**pnl.leni
+                self._afv[i, 0] = pnl.force(self.avv[i, 0])
+                # self._afv[i, 0] = self.avv[i, 0]**pnl.leni
         return self._afv
     @property
     def amv(self):
