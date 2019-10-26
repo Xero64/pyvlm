@@ -102,18 +102,18 @@ class Bell(object):
         b = self.span
         V = self.speed
         rho = self.rho
-        return [4*L*(2*s**2-1)/(pi*V*b**2*rho) for s in self.s]
+        return [8*L*(2*s**2-1)/(pi*V*b**2*rho) for s in self.s]
     def trefftz_wash_distribution(self):
         L = self.lift
         b = self.span
         V = self.speed
         rho = self.rho
-        return [8*L*(2*s**2-1)/(pi*V*b**2*rho) for s in self.s]
+        return [4*L*(2*s**2-1)/(pi*V*b**2*rho) for s in self.s]
     def shear_force_distribution(self):
         L = self.lift
         th = [thi if thi <= pi/2 else thi-pi for thi in self.th]
         return [L*(3*thi - 2*sin(2*thi) + sin(4*thi)/4)/(3*pi) for thi in th]
-    def bending_moment(self):
+    def bending_moment_distribution(self):
         L = self.lift
         b = self.span
         th = [thi if thi <= pi/2 else thi-pi for thi in self.th]
@@ -148,7 +148,7 @@ class Bell(object):
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        ax.plot(self.y, self.lift_distribution(), label='Elliptical Theory')
+        ax.plot(self.y, self.lift_distribution(), label='Bell Theory')
         ax.legend()
         return ax
     def plot_drag_distribution(self, ax=None):
@@ -156,7 +156,7 @@ class Bell(object):
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        ax.plot(self.y, self.drag_distribution(), label='Elliptical Theory')
+        ax.plot(self.y, self.drag_distribution(), label='Bell Theory')
         ax.legend()
         return ax
     def plot_wash_distribution(self, ax=None):
@@ -164,7 +164,23 @@ class Bell(object):
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        ax.plot(self.y, self.wash_distribution(), label='Elliptical Theory')
+        ax.plot(self.y, self.wash_distribution(), label='Bell Theory')
+        ax.legend()
+        return ax
+    def plot_shear_force_distribution(self, ax=None):
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        ax.plot(self.y, self.shear_force_distribution(), label='Bell Theory')
+        ax.legend()
+        return ax
+    def plot_bending_moment_distribution(self, ax=None):
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        ax.plot(self.y, self.bending_moment_distribution(), label='Bell Theory')
         ax.legend()
         return ax
     def plot_trefftz_wash_distribution(self, ax=None):
@@ -172,6 +188,6 @@ class Bell(object):
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        ax.plot(self.y, self.trefftz_wash_distribution(), label='Elliptical Theory')
+        ax.plot(self.y, self.trefftz_wash_distribution(), label='Bell Theory')
         ax.legend()
         return ax
