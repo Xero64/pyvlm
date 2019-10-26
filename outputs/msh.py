@@ -1,7 +1,7 @@
 from pyvlm.classes import LatticeResult
 
 def latticeresult_to_msh(lres: LatticeResult, mshfilepath: str):
-    # Add point ids
+    # Add point IDs
     pnts = []
     pntid = 1
     pntids = []
@@ -103,13 +103,10 @@ def latticeresult_to_msh(lres: LatticeResult, mshfilepath: str):
         mshfile.write('{:d}\n'.format(lenpnl))
         frmstr = '{:d} {:f}\n'
         for pnl in lres.sys.pnls:
-            gamma = lres.gam[pnl.lpid]
+            gamma = lres.nfres.gamma[pnl.lpid, 0]
             mshfile.write(frmstr.format(pnl.lpid+1, gamma))
         mshfile.write('$EndElementData\n')
-        # optstr += 'View[{:d}].CustomMax = 1;\n'.format(view)
-        # optstr += 'View[{:d}].CustomMin = 0;\n'.format(view)
         optstr += 'View[{:d}].Light = 0;\n'.format(view)
-        # optstr += 'View[{:d}].RangeType = 2;\n'.format(view)
         optstr += 'View[{:d}].SaturateValues = 1;\n'.format(view)
         optstr += 'View[{:d}].Visible = 0;\n'.format(view)
         view += 1
@@ -125,47 +122,10 @@ def latticeresult_to_msh(lres: LatticeResult, mshfilepath: str):
         frmstr = '{:d} {:f} {:f} {:f}\n'
         for pnl in lres.sys.pnls:
             pntid = pnl.pnti.pntid
-            nffrc = lres.nffrc[pnl.lpid]
+            nffrc = lres.nfres.nffrc[pnl.lpid, 0]
             mshfile.write(frmstr.format(pntid, nffrc.x, nffrc.y, nffrc.z))
         mshfile.write('$EndNodeData\n')
         view += 1
     optfilepath = mshfilepath + '.opt'
     with open(optfilepath, 'wt') as optfile:
         optfile.write(optstr)
-    #     for lcname in group.loadcases:
-    #         for crit in group.result:
-    #             lcres = group.result[crit][lcname]
-    #             mshfile.write('$ElementData\n')
-    #             mshfile.write('1\n')
-    #             mshfile.write('"{:s} - {:s}"\n'.format(lcname, crit))
-    #             mshfile.write('1\n')
-    #             mshfile.write('0.0\n')
-    #             mshfile.write('3\n')
-    #             mshfile.write('0\n')
-    #             mshfile.write('1\n')
-    #             rescnt = 0
-    #             for eid in lcres:
-    #                 if eid in eidlst:
-    #                     rescnt += 1
-    #             mshfile.write('{:d}\n'.format(rescnt))
-    #             frmstr = '{:d} {:}\n'
-    #             for eid in lcres:
-    #                 if eid in eidlst:
-    #                     mshfile.write(frmstr.format(eid, 1/lcres[eid].RF))
-    #             mshfile.write('$EndElementData\n')
-    #             optstr += 'View[{:d}].CustomMax = 1;\n'.format(view)
-    #             optstr += 'View[{:d}].CustomMin = 0;\n'.format(view)
-    #             optstr += 'View[{:d}].Light = 0;\n'.format(view)
-    #             optstr += 'View[{:d}].RangeType = 2;\n'.format(view)
-    #             optstr += 'View[{:d}].SaturateValues = 1;\n'.format(view)
-    #             optstr += 'View[{:d}].Visible = 0;\n'.format(view)
-    #             view += 1
-    # optfilepath = mshfilepath + '.opt'
-    # with open(optfilepath, 'wt') as optfile:
-    #     optfile.write(optstr)
-
-# def msh_float(value: float):
-#     if value.is_integer():
-#         return '{:}.0'.format(value)
-#     else:
-#         return '{:}'.format(value)
