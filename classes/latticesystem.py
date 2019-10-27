@@ -1,8 +1,9 @@
 from time import time
 from math import pi, atan2
-from numpy.matlib import zeros, empty
-from numpy.linalg import solve, inv
+from numpy.matlib import zeros#, empty
+# from numpy.linalg import solve
 from pygeom.geom3d import Point, Vector, ihat, jhat, zero_vector
+from pygeom.matrixgeom3d import zero_matrix_vector
 
 class LatticeSystem(object):
     name = None
@@ -102,75 +103,13 @@ class LatticeSystem(object):
             if attr[0] == '_':
                 self.__dict__[attr] = None
     @property
-    def gam(self):
-        if self._gam is None:
-            print('Solving System.')
-            start = time()
-            num = len(self.pnls)
-            numc = len(self.ctrls)
-            gamma = -solve(self.aic, self.afs)
-            self._gam = empty((num, 2+4*numc), dtype=Vector)
-            for i in range(num):
-                for j in range(2+4*numc):
-                    self._gam[i, j] = Vector(gamma[i, j*3], gamma[i, j*3+1], gamma[i, j*3+2])
-            finish = time()
-            elapsed = finish-start
-            print(f'System Solved in {elapsed:.3f} seconds.')
-        return self._gam
-    @property
-    def avg(self):
-        if self._avg is None:
-            print('Building Induced Velocity Matrix.')
-            start = time()
-            num = len(self.pnls)
-            self._avg = empty((num, num), dtype=Vector)
-            for pnli in self.pnls:
-                i = pnli.lpid
-                for pnlj in self.pnls:
-                    j = pnlj.lpid
-                    self._avg[i, j] = pnlj.induced_velocity(pnli.pnti)
-            finish = time()
-            elapsed = finish-start
-            print(f'Built Induced Velocity Matrix in {elapsed:.3f} seconds.')
-        return self._avg
-    @property
-    def afg(self):
-        if self._afg is None:
-            print('Building Induced Force Matrix.')
-            start = time()
-            num = len(self.pnls)
-            self._afg = empty((num, num), dtype=Vector)
-            for pnl in self.pnls:
-                i = pnl.lpid
-                for j in range(num):
-                    self._afg[i, j] = pnl.induced_force(self.avg[i, j])
-                    # self._afg[i, j] = self.avg[i, j]**pnl.leni
-            finish = time()
-            elapsed = finish-start
-            print(f'Built Induced Force Matrix in {elapsed:.3f} seconds.')
-        return self._afg
-    @property
-    def amg(self):
-        if self._amg is None:
-            print('Building Induced Moment Matrix.')
-            start = time()
-            num = len(self.pnls)
-            self._amg = empty((num, num), dtype=Vector)
-            for pnl in self.pnls:
-                i = pnl.lpid
-                for j in range(num):
-                    self._amg[i, j] = (pnl.pnti-self.rref)**self.afg[i, j]
-            finish = time()
-            elapsed = finish-start
-            print(f'Built Induced Moment Matrix in {elapsed:.3f} seconds.')
-        return self._amg
-    @property
     def avc(self):
         if self._avc is None:
             print('Building Control Velocity Matrix.')
             start = time()
             num = len(self.pnls)
-            self._avc = empty((num, num), dtype=Vector)
+            self._avc = zero_matrix_vector((num, num))
+            # self._avc = empty((num, num), dtype=Vector)
             for pnli in self.pnls:
                 i = pnli.lpid
                 for pnlj in self.pnls:
@@ -189,12 +128,137 @@ class LatticeSystem(object):
             self._aic = zeros((num, num))
             for pnl in self.pnls:
                 i = pnl.lpid
-                for j in range(num):
-                    self._aic[i, j] = self.avc[i, j]*pnl.nrml
+                self._aic[i, :] = self.avc[i, :]*pnl.nrml
+                # for j in range(num):
+                #     self._aic[i, j] = self.avc[i, j]*pnl.nrml
             finish = time()
             elapsed = finish-start
             print(f'Built AIC Matrix in {elapsed:.3f} seconds.')
         return self._aic
+    @property
+    def afs(self):
+        if self._afs is None:
+            print('Building Freestream and Control Matrix.')
+            start = time()
+            num = len(self.pnls)
+            numc = len(self.ctrls)
+            # self._afs = zeros((num, 6+12*numc))
+            self._afs = zero_matrix_vector((num, 2+4*numc))
+            for pnl in self.pnls:
+                lpid = pnl.lpid
+                # rpx, rpy, rpz = pnl.pntc.x, pnl.pntc.y, pnl.pntc.z
+                # nmx, nmy, nmz = pnl.nrml.x, pnl.nrml.y, pnl.nrml.z
+                rrel = pnl.pntc-self.rref
+                # rpx, rpy, rpz = rrel.x, rrel.y, rrel.z
+                self._afs[lpid, 0] = pnl.nrml
+                # self._afs[lpid, 0] = nmx
+                # self._afs[lpid, 1] = nmy
+                # self._afs[lpid, 2] = nmz
+                self._afs[lpid, 1] = rrel**pnl.nrml
+                # self._afs[lpid, 3] = nmz*rpy - nmy*rpz
+                # self._afs[lpid, 4] = nmx*rpz - nmz*rpx
+                # self._afs[lpid, 5] = nmy*rpx - nmx*rpy
+            for srfc in self.srfcs:
+                for sht in srfc.shts:
+                    for control in sht.ctrls:
+                        ctrl = sht.ctrls[control]
+                        ctup = self.ctrls[control]
+                        for pnl in ctrl.pnls:
+                            lpid = pnl.lpid
+                            rrel = pnl.pntc-self.rref
+                            # rpx, rpy, rpz = rrel.x, rrel.y, rrel.z
+                            dndlp = pnl.dndl(ctrl.posgain, ctrl.uhvec)
+                            # nmx, nmy, nmz = dndlp.x, dndlp.y, dndlp.z
+                            self._afs[lpid, ctup[0]] = dndlp
+                            # self._afs[lpid, ctup[0]*3+0] = nmx
+                            # self._afs[lpid, ctup[0]*3+1] = nmy
+                            # self._afs[lpid, ctup[0]*3+2] = nmz
+                            self._afs[lpid, ctup[1]] = rrel**dndlp
+                            # self._afs[lpid, ctup[1]*3+0] = nmz*rpy - nmy*rpz
+                            # self._afs[lpid, ctup[1]*3+1] = nmx*rpz - nmz*rpx
+                            # self._afs[lpid, ctup[1]*3+2] = nmy*rpx - nmx*rpy
+                            dndln = pnl.dndl(ctrl.neggain, ctrl.uhvec)
+                            # nmx, nmy, nmz = dndln.x, dndln.y, dndln.z
+                            self._afs[lpid, ctup[2]] = dndln
+                            # self._afs[lpid, ctup[2]*3+0] = nmx
+                            # self._afs[lpid, ctup[2]*3+1] = nmy
+                            # self._afs[lpid, ctup[2]*3+2] = nmz
+                            self._afs[lpid, ctup[3]] = rrel**dndln
+                            # self._afs[lpid, ctup[3]*3+0] = nmz*rpy - nmy*rpz
+                            # self._afs[lpid, ctup[3]*3+1] = nmx*rpz - nmz*rpx
+                            # self._afs[lpid, ctup[3]*3+2] = nmy*rpx - nmx*rpy
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Freestream and Control Matrix in {elapsed:.3f} seconds.')
+        return self._afs
+    @property
+    def gam(self):
+        if self._gam is None:
+            from pygeom.matrixgeom3d import solve_matrix_vector
+            print('Solving System.')
+            start = time()
+            # num = len(self.pnls)
+            # numc = len(self.ctrls)
+            self._gam = -solve_matrix_vector(self.aic, self.afs)
+            # gamma = -solve(self.aic, self.afs)
+            # self._gam = empty((num, 2+4*numc), dtype=Vector)
+            # for i in range(num):
+            #     for j in range(2+4*numc):
+            #         self._gam[i, j] = Vector(gamma[i, j*3], gamma[i, j*3+1], gamma[i, j*3+2])
+            finish = time()
+            elapsed = finish-start
+            print(f'System Solved in {elapsed:.3f} seconds.')
+        return self._gam
+    @property
+    def avg(self):
+        if self._avg is None:
+            print('Building Induced Velocity Matrix.')
+            start = time()
+            num = len(self.pnls)
+            self._avg = zero_matrix_vector((num, num))
+            # self._avg = empty((num, num), dtype=Vector)
+            for pnli in self.pnls:
+                i = pnli.lpid
+                for pnlj in self.pnls:
+                    j = pnlj.lpid
+                    self._avg[i, j] = pnlj.induced_velocity(pnli.pnti)
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Induced Velocity Matrix in {elapsed:.3f} seconds.')
+        return self._avg
+    @property
+    def afg(self):
+        if self._afg is None:
+            print('Building Induced Force Matrix.')
+            start = time()
+            num = len(self.pnls)
+            self._afg = zero_matrix_vector((num, num))
+            # self._afg = empty((num, num), dtype=Vector)
+            for pnl in self.pnls:
+                i = pnl.lpid
+                for j in range(num):
+                    self._afg[i, j] = pnl.induced_force(self.avg[i, j])
+                    # self._afg[i, j] = self.avg[i, j]**pnl.leni
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Induced Force Matrix in {elapsed:.3f} seconds.')
+        return self._afg
+    @property
+    def amg(self):
+        if self._amg is None:
+            print('Building Induced Moment Matrix.')
+            start = time()
+            num = len(self.pnls)
+            self._amg = zero_matrix_vector((num, num))
+            # self._amg = empty((num, num), dtype=Vector)
+            for pnl in self.pnls:
+                i = pnl.lpid
+                for j in range(num):
+                    self._amg[i, j] = (pnl.pnti-self.rref)**self.afg[i, j]
+            finish = time()
+            elapsed = finish-start
+            print(f'Built Induced Moment Matrix in {elapsed:.3f} seconds.')
+        return self._amg
     @property
     def adc(self):
         if self._adc is None:
@@ -205,51 +269,6 @@ class LatticeSystem(object):
                 for j in range(num):
                     self._adc[i, j] = self.avc[i, j]*pnl.tang
         return self._adc
-    @property
-    def afs(self):
-        if self._afs is None:
-            print('Building Freestream and Control Matrix.')
-            start = time()
-            num = len(self.pnls)
-            numc = len(self.ctrls)
-            self._afs = zeros((num, 6+12*numc))
-            for pnl in self.pnls:
-                lpid = pnl.lpid
-                rpx, rpy, rpz = pnl.pntc.x, pnl.pntc.y, pnl.pntc.z
-                nmx, nmy, nmz = pnl.nrml.x, pnl.nrml.y, pnl.nrml.z
-                self._afs[lpid, 0] = nmx
-                self._afs[lpid, 1] = nmy
-                self._afs[lpid, 2] = nmz
-                self._afs[lpid, 3] = nmz*rpy - nmy*rpz
-                self._afs[lpid, 4] = nmx*rpz - nmz*rpx
-                self._afs[lpid, 5] = nmy*rpx - nmx*rpy
-            for srfc in self.srfcs:
-                for sht in srfc.shts:
-                    for control in sht.ctrls:
-                        ctrl = sht.ctrls[control]
-                        ctup = self.ctrls[control]
-                        for pnl in ctrl.pnls:
-                            lpid = pnl.lpid
-                            dndlp = pnl.dndl(ctrl.posgain, ctrl.uhvec)
-                            nmx, nmy, nmz = dndlp.x, dndlp.y, dndlp.z
-                            self._afs[lpid, ctup[0]*3+0] = nmx
-                            self._afs[lpid, ctup[0]*3+1] = nmy
-                            self._afs[lpid, ctup[0]*3+2] = nmz
-                            self._afs[lpid, ctup[1]*3+0] = nmz*rpy - nmy*rpz
-                            self._afs[lpid, ctup[1]*3+1] = nmx*rpz - nmz*rpx
-                            self._afs[lpid, ctup[1]*3+2] = nmy*rpx - nmx*rpy
-                            dndln = pnl.dndl(ctrl.neggain, ctrl.uhvec)
-                            nmx, nmy, nmz = dndln.x, dndln.y, dndln.z
-                            self._afs[lpid, ctup[2]*3+0] = nmx
-                            self._afs[lpid, ctup[2]*3+1] = nmy
-                            self._afs[lpid, ctup[2]*3+2] = nmz
-                            self._afs[lpid, ctup[3]*3+0] = nmz*rpy - nmy*rpz
-                            self._afs[lpid, ctup[3]*3+1] = nmx*rpz - nmz*rpx
-                            self._afs[lpid, ctup[3]*3+2] = nmy*rpx - nmx*rpy
-            finish = time()
-            elapsed = finish-start
-            print(f'Built Freestream and Control Matrix in {elapsed:.3f} seconds.')
-        return self._afs
     @property
     def bvg(self):
         if self._bvg is None:

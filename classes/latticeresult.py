@@ -1,5 +1,6 @@
 from pygeom.geom3d import Coordinate, Vector, jhat
-from numpy.matlib import zeros, empty, matrix
+from pygeom.matrixgeom3d import zero_matrix_vector, elementwise_multiply
+from numpy.matlib import zeros, matrix#, empty
 from numpy import multiply
 from math import radians, cos, sin
 from matplotlib.pyplot import figure
@@ -109,18 +110,18 @@ class LatticeResult(object):
             dirz = -1.0*self.acs.dirz
             self._wcs = Coordinate(pnt, dirx, diry, dirz)
         return self._wcs
-    def set_freestream_velocity(self, vfs: Vector, ofs: Vector):
-        self._vfs = vfs
-        self._ofs = ofs
-        num = len(self.sys.pnls)
-        self.avv = empty((num, 1), dtype=Vector)
-        self.afv = empty((num, 1), dtype=Vector)
-        self.amv = empty((num, 1), dtype=Vector)
-        for i, pnl in enumerate(self.sys.pnls):
-            rpi = pnl.pnti-self.sys.rref
-            self.avv[i, 0] = self.vfs+rpi*self.ofs
-            self.afv[i, 0] = self.avv[i, 0]**pnl.leni
-            self.amv[i, 0] = (pnl.pnti-self.sys.rref)**self.afv[i, 0]
+    # def set_freestream_velocity(self, vfs: Vector, ofs: Vector):
+    #     self._vfs = vfs
+    #     self._ofs = ofs
+    #     num = len(self.sys.pnls)
+    #     self.avv = empty((num, 1), dtype=Vector)
+    #     self.afv = empty((num, 1), dtype=Vector)
+    #     self.amv = empty((num, 1), dtype=Vector)
+    #     for i, pnl in enumerate(self.sys.pnls):
+    #         rpi = pnl.pnti-self.sys.rref
+    #         self.avv[i, 0] = self.vfs+rpi*self.ofs
+    #         self.afv[i, 0] = self.avv[i, 0]**pnl.leni
+    #         self.amv[i, 0] = (pnl.pnti-self.sys.rref)**self.afv[i, 0]
     def set_gam(self, gam: list):
         self._gam = gam
         self._gmat = matrix(self._gam, dtype=float).transpose()
@@ -253,7 +254,8 @@ class LatticeResult(object):
     def avv(self):
         if self._avv is None:
             num = len(self.sys.pnls)
-            self._avv = empty((num, 1), dtype=Vector)
+            self._avv = zero_matrix_vector((num, 1))
+            # self._avv = empty((num, 1), dtype=Vector)
             for i, pnl in enumerate(self.sys.pnls):
                 if pnl.noload:
                     self._avv[i, 0] = Vector(0.0, 0.0, 0.0)
@@ -265,7 +267,8 @@ class LatticeResult(object):
     def afv(self):
         if self._afv is None:
             num = len(self.sys.pnls)
-            self._afv = empty((num, 1), dtype=Vector)
+            self._afv = zero_matrix_vector((num, 1))
+            # self._afv = empty((num, 1), dtype=Vector)
             for i, pnl in enumerate(self.sys.pnls):
                 self._afv[i, 0] = pnl.induced_force(self.avv[i, 0])
                 # self._afv[i, 0] = self.avv[i, 0]**pnl.leni
@@ -274,7 +277,8 @@ class LatticeResult(object):
     def amv(self):
         if self._amv is None:
             num = len(self.sys.pnls)
-            self._amv = empty((num, 1), dtype=Vector)
+            self._amv = zero_matrix_vector((num, 1))
+            # self._amv = empty((num, 1), dtype=Vector)
             for i, pnl in enumerate(self.sys.pnls):
                 self._amv[i, 0] = (pnl.pnti-self.sys.rref)**self.afv[i, 0]
         return self._amv
@@ -767,6 +771,7 @@ def vector_matrix_dot(mat: matrix, vec: Vector):
 class GammaResult(object):
     res = None
     gamma = None
+    _rhogamma = None
     _nfvel = None
     _nffrc = None
     _nfmom = None
@@ -784,29 +789,38 @@ class GammaResult(object):
         self.res = res
         self.gamma = gamma
     @property
+    def rhogamma(self):
+        if self._rhogamma is None:
+            self._rhogamma = self.res.rho*self.gamma
+        return self._rhogamma
+    @property
     def nfvel(self):
         if self._nfvel is None:
-            self._nfvel = multiply(self.gamma, self.res.sys.avg*self.gamma+self.res.avv)
+            self._nfvel = self.res.sys.avg*self.gamma+self.res.avv
         return self._nfvel
     @property
     def nffrc(self):
         if self._nffrc is None:
-            self._nffrc = self.res.rho*multiply(self.gamma, self.res.sys.afg*self.gamma+self.res.afv)
+            tmp = self.res.sys.afg*self.gamma+self.res.afv
+            self._nffrc = elementwise_multiply(self.rhogamma, tmp)
         return self._nffrc
     @property
     def nfmom(self):
         if self._nfmom is None:
-            self._nfmom = self.res.rho*multiply(self.gamma, self.res.sys.amg*self.gamma+self.res.amv)
+            tmp = self.res.sys.amg*self.gamma+self.res.amv
+            self._nfmom = elementwise_multiply(self.rhogamma, tmp)
         return self._nfmom
     @property
     def nffrctot(self):
         if self._nffrctot is None:
-            self._nffrctot = sum(self.nffrc.transpose().tolist()[0])
+            self._nffrctot = self.nffrc.sumall()
+            # self._nffrctot = sum(self.nffrc.transpose().tolist()[0])
         return self._nffrctot
     @property
     def nfmomtot(self):
         if self._nfmomtot is None:
-            self._nfmomtot = sum(self.nfmom.transpose().tolist()[0])
+            self._nfmomtot = self.nfmom.sumall()
+            # self._nfmomtot = sum(self.nfmom.transpose().tolist()[0])
         return self._nfmomtot
     @property
     def Cfrc(self):
