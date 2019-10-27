@@ -88,6 +88,7 @@ class LatticeSystem(object):
         self.avc
         self.aic
         self.afs
+        self.gam
         self.avg
         self.afg
         self.amg
@@ -103,6 +104,8 @@ class LatticeSystem(object):
     @property
     def gam(self):
         if self._gam is None:
+            print('Solving System.')
+            start = time()
             num = len(self.pnls)
             numc = len(self.ctrls)
             gamma = -solve(self.aic, self.afs)
@@ -110,7 +113,9 @@ class LatticeSystem(object):
             for i in range(num):
                 for j in range(2+4*numc):
                     self._gam[i, j] = Vector(gamma[i, j*3], gamma[i, j*3+1], gamma[i, j*3+2])
-            # self._gam = -solve(self.aic, self.afs)
+            finish = time()
+            elapsed = finish-start
+            print(f'System Solved in {elapsed:.3f} seconds.')
         return self._gam
     @property
     def avg(self):

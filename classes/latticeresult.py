@@ -661,7 +661,7 @@ class LatticeResult(object):
     def __str__(self):
         from py2md.classes import MDTable
         from . import cfrm, dfrm, efrm
-        outstr = '# Lattice Result '+self.name+'\n'
+        outstr = '# Lattice Result '+self.name+' for '+self.sys.name+'\n'
         table = MDTable()
         table.add_column('Alpha (deg)', cfrm, data=[self.alpha])
         table.add_column('Beta (deg)', cfrm, data=[self.beta])
