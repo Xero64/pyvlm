@@ -8,17 +8,17 @@ from .latticesystem import LatticeSystem
 class LatticeResult(object):
     name = None
     sys = None
-    ctrls = None
+    rho = None
     speed = None
     alpha = None
     beta = None
     pbo2V = None
     qco2V = None
     rbo2V = None
+    ctrls = None
     _acs = None
     _scs = None
     _wcs = None
-    _rho = None
     _vfs = None
     _qfs = None
     _ofs = None
@@ -40,6 +40,15 @@ class LatticeResult(object):
     def __init__(self, name: str, sys: LatticeSystem):
         self.name = name
         self.sys = sys
+        self.initialise()
+    def initialise(self):
+        self.rho = 1.0
+        self.speed = 1.0
+        self.alpha = 0.0
+        self.beta = 0.0
+        self.pbo2V = 0.0
+        self.qco2V = 0.0
+        self.rbo2V = 0.0
         self.ctrls = {}
         for control in self.sys.ctrls:
             self.ctrls[control] = 0.0
@@ -47,21 +56,29 @@ class LatticeResult(object):
         for attr in self.__dict__:
             if attr[0] == '_':
                 self.__dict__[attr] = None
-    def set_density(self, rho: float=1.0):
-        self._rho = rho
-    @property
-    def rho(self):
-        if self._rho is None:
-            self._rho = 1.0
-        return self._rho
-    def set_state(self, speed: float=1.0, alpha: float=0.0, beta: float=0.0,
-                  pbo2V: float=0.0, qco2V: float=0.0, rbo2V: float=0.0):
-        self.speed = speed
-        self.alpha = alpha
-        self.beta = beta
-        self.pbo2V = pbo2V
-        self.qco2V = qco2V
-        self.rbo2V = rbo2V
+    def set_density(self, rho: float=None):
+        if rho is not None:
+            self.rho = rho
+        self.reset()
+    def set_state(self, speed: float=None, alpha: float=None, beta: float=None,
+                  pbo2V: float=None, qco2V: float=None, rbo2V: float=None):
+        if speed is not None:
+            self.speed = speed
+        if alpha is not None:
+            self.alpha = alpha
+        if beta is not None:
+            self.beta = beta
+        if pbo2V is not None:
+            self.pbo2V = pbo2V
+        if qco2V is not None:
+            self.qco2V = qco2V
+        if rbo2V is not None:
+            self.rbo2V = rbo2V
+        self.reset()
+    def set_controls(self, **kwargs):
+        for control in kwargs:
+            self.ctrls[control] = kwargs[control]
+        self.reset()
     @property
     def acs(self):
         if self._acs is None:
@@ -92,9 +109,6 @@ class LatticeResult(object):
             dirz = -1.0*self.acs.dirz
             self._wcs = Coordinate(pnt, dirx, diry, dirz)
         return self._wcs
-    def set_controls(self, **kwargs):
-        for control in kwargs:
-            self.ctrls[control] = kwargs[control]
     def set_freestream_velocity(self, vfs: Vector, ofs: Vector):
         self._vfs = vfs
         self._ofs = ofs
@@ -167,23 +181,27 @@ class LatticeResult(object):
         ofs = drbo2V(self.speed, self.alpha, self.sys.bref)
         gmat = vector_matrix_dot(self.sys.gam[:, 1], ofs)
         return gmat
-    def gctrlp(self):
+    def gctrlp_single(self, control: str):
+        indv = self.sys.ctrls[control][0]
+        gmat = vector_matrix_dot(self.sys.gam[:, indv], self.vfs)
+        indo = self.sys.ctrls[control][1]
+        gmat += vector_matrix_dot(self.sys.gam[:, indo], self.ofs)
+        return gmat
+    def gctrlp(self, control: str=''):
         gmats = {}
         for control in self.sys.ctrls:
-            indv = self.sys.ctrls[control][0]
-            gmat = vector_matrix_dot(self.sys.gam[:, indv], self.vfs)
-            indo = self.sys.ctrls[control][1]
-            gmat += vector_matrix_dot(self.sys.gam[:, indo], self.ofs)
-            gmats[control] = gmat
-        return gmats        
+            gmats[control] = self.gctrlp_single(control)
+        return gmats
+    def gctrln_single(self, control: str):
+        indv = self.sys.ctrls[control][2]
+        gmat = vector_matrix_dot(self.sys.gam[:, indv], self.vfs)
+        indo = self.sys.ctrls[control][3]
+        gmat += vector_matrix_dot(self.sys.gam[:, indo], self.ofs)
+        return gmat
     def gctrln(self):
         gmats = {}
         for control in self.sys.ctrls:
-            indv = self.sys.ctrls[control][2]
-            gmat = vector_matrix_dot(self.sys.gam[:, indv], self.vfs)
-            indo = self.sys.ctrls[control][3]
-            gmat += vector_matrix_dot(self.sys.gam[:, indo], self.ofs)
-            gmats[control] = gmat
+            gmats[control] = self.gctrln_single(control)
         return gmats 
     @property
     def gam(self):
@@ -197,7 +215,7 @@ class LatticeResult(object):
             self._pmat = zeros((num, 1))
             for i, strp in enumerate(self.sys.strps):
                 for pnl in strp.pnls:
-                    self._pmat[i, 0] += self.gam[pnl.lpid]
+                    self._pmat[i, 0] += self.gmat[pnl.lpid, 0]
         return self._pmat
     @property
     def phi(self):
@@ -645,22 +663,22 @@ class LatticeResult(object):
         from . import cfrm, dfrm, efrm
         outstr = '# Lattice Result '+self.name+'\n'
         table = MDTable()
-        table.add_column('Alpha (deg)', 'g', data=[self.alpha])
-        table.add_column('Beta (deg)', 'g', data=[self.beta])
-        table.add_column('Speed', 'g', data=[self.speed])
-        table.add_column('Rho', 'g', data=[self.rho])
+        table.add_column('Alpha (deg)', cfrm, data=[self.alpha])
+        table.add_column('Beta (deg)', cfrm, data=[self.beta])
+        table.add_column('Speed', cfrm, data=[self.speed])
+        table.add_column('Rho', cfrm, data=[self.rho])
         outstr += table._repr_markdown_()
         table = MDTable()
-        table.add_column('pb/2V (rad)', 'g', data=[self.pbo2V])
-        table.add_column('qc/2V (rad)', 'g', data=[self.qco2V])
-        table.add_column('rb/2V (rad)', 'g', data=[self.rbo2V])
+        table.add_column('pb/2V (rad)', cfrm, data=[self.pbo2V])
+        table.add_column('qc/2V (rad)', cfrm, data=[self.qco2V])
+        table.add_column('rb/2V (rad)', cfrm, data=[self.rbo2V])
         outstr += table._repr_markdown_()
         table = MDTable()
         if len(self.ctrls) > 0:
             for control in self.ctrls:
                 ctrl = self.ctrls[control]
                 control = control.capitalize()
-                table.add_column(f'{control} (deg)', 'g', data=[ctrl])
+                table.add_column(f'{control} (deg)', cfrm, data=[ctrl])
             outstr += table._repr_markdown_()
         if self.gam is not None:
             table = MDTable()
@@ -818,23 +836,20 @@ class GammaResult(object):
     @property
     def Cl(self):
         if self._Cl is None:
-            Cmom = Vector(-self.Cmom.x, self.Cmom.y, -self.Cmom.z)
-            Cmomloc = self.res.wcs.vector_to_local(Cmom)
-            self._Cl = Cmomloc.x/self.res.sys.bref
+            Cmom = self.res.wcs.vector_to_local(self.Cmom)
+            self._Cl = Cmom.x/self.res.sys.bref
         return self._Cl
     @property
     def Cm(self):
         if self._Cm is None:
-            Cmom = Vector(-self.Cmom.x, self.Cmom.y, -self.Cmom.z)
-            Cmomloc = self.res.wcs.vector_to_local(Cmom)
-            self._Cm = Cmomloc.y/self.res.sys.cref
+            Cmom = self.res.wcs.vector_to_local(self.Cmom)
+            self._Cm = Cmom.y/self.res.sys.cref
         return self._Cm
     @property
     def Cn(self):
         if self._Cn is None:
-            Cmom = Vector(-self.Cmom.x, self.Cmom.y, -self.Cmom.z)
-            Cmomloc = self.res.wcs.vector_to_local(Cmom)
-            self._Cn = Cmomloc.z/self.res.sys.bref
+            Cmom = self.res.wcs.vector_to_local(self.Cmom)
+            self._Cn = Cmom.z/self.res.sys.bref
         return self._Cn
     @property
     def plot_strip_drag_distribution(self, ax=None):

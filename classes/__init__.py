@@ -7,6 +7,7 @@ from .latticepanel import LatticePanel
 from .latticeresult import LatticeResult
 from .latticeoptimum import LatticeOptimum
 from .latticecontrol import LatticeControl
+from .latticetrim import LatticeTrim
 
 cfrm = '.5f'
 dfrm = '.7f'
