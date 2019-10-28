@@ -37,7 +37,7 @@ class LevelTrim(object):
         self.loadfac = loadfac
         self.reset()
     def create_trim_result(self):
-        ltrm = LatticeTrim('5g Pull Out', self.sys)
+        ltrm = LatticeTrim(self.name, self.sys)
         ltrm.set_density(rho=self.density)
         ltrm.set_state(speed=self.speed, qco2V=self.qco2V)
         ltrm.set_targets(CLt=self.CL)
@@ -65,12 +65,15 @@ class LevelTrim(object):
     @property
     def acc(self):
         if self._acc is None:
-            self._acc = self.loadfac*self.gravacc
+            self._acc = (self.loadfac-1)*self.gravacc
         return self._acc
     @property
     def rad(self):
         if self._rad is None:
-            self._rad = self.speed**2/self.acc
+            if self.acc == 0.0:
+                self._rad = float('inf')
+            else:
+                self._rad = self.speed**2/self.acc
         return self._rad
     @property
     def prate(self):

@@ -1,4 +1,4 @@
-from time import time
+from time import perf_counter
 from math import pi, atan2
 from numpy.matlib import zeros#, empty
 # from numpy.linalg import solve
@@ -84,7 +84,7 @@ class LatticeSystem(object):
                     if control not in self.ctrls:
                         # self.ctrls[control] = (ind, ind+1, ind+2, ind+3, ind+4, ind+5)
                         self.ctrls[control] = (ind, ind+1, ind+2, ind+3)
-                        ind += 2
+                        ind += 4
     def build(self):
         self.avc
         self.aic
@@ -106,7 +106,7 @@ class LatticeSystem(object):
     def avc(self):
         if self._avc is None:
             print('Building Control Velocity Matrix.')
-            start = time()
+            start = perf_counter()
             num = len(self.pnls)
             self._avc = zero_matrix_vector((num, num))
             # self._avc = empty((num, num), dtype=Vector)
@@ -115,7 +115,7 @@ class LatticeSystem(object):
                 for pnlj in self.pnls:
                     j = pnlj.lpid
                     self._avc[i, j] = pnlj.velocity(pnli.pntc)
-            finish = time()
+            finish = perf_counter()
             elapsed = finish-start
             print(f'Built Control Velocity Matrix in {elapsed:.3f} seconds.')
         return self._avc
@@ -123,7 +123,7 @@ class LatticeSystem(object):
     def aic(self):
         if self._aic is None:
             print('Building AIC Matrix.')
-            start = time()
+            start = perf_counter()
             num = len(self.pnls)
             self._aic = zeros((num, num))
             for pnl in self.pnls:
@@ -131,7 +131,7 @@ class LatticeSystem(object):
                 self._aic[i, :] = self.avc[i, :]*pnl.nrml
                 # for j in range(num):
                 #     self._aic[i, j] = self.avc[i, j]*pnl.nrml
-            finish = time()
+            finish = perf_counter()
             elapsed = finish-start
             print(f'Built AIC Matrix in {elapsed:.3f} seconds.')
         return self._aic
@@ -139,7 +139,7 @@ class LatticeSystem(object):
     def afs(self):
         if self._afs is None:
             print('Building Freestream and Control Matrix.')
-            start = time()
+            start = perf_counter()
             num = len(self.pnls)
             numc = len(self.ctrls)
             # self._afs = zeros((num, 6+12*numc))
@@ -187,7 +187,7 @@ class LatticeSystem(object):
                             # self._afs[lpid, ctup[3]*3+0] = nmz*rpy - nmy*rpz
                             # self._afs[lpid, ctup[3]*3+1] = nmx*rpz - nmz*rpx
                             # self._afs[lpid, ctup[3]*3+2] = nmy*rpx - nmx*rpy
-            finish = time()
+            finish = perf_counter()
             elapsed = finish-start
             print(f'Built Freestream and Control Matrix in {elapsed:.3f} seconds.')
         return self._afs
@@ -196,7 +196,7 @@ class LatticeSystem(object):
         if self._gam is None:
             from pygeom.matrixgeom3d import solve_matrix_vector
             print('Solving System.')
-            start = time()
+            start = perf_counter()
             # num = len(self.pnls)
             # numc = len(self.ctrls)
             self._gam = -solve_matrix_vector(self.aic, self.afs)
@@ -205,7 +205,7 @@ class LatticeSystem(object):
             # for i in range(num):
             #     for j in range(2+4*numc):
             #         self._gam[i, j] = Vector(gamma[i, j*3], gamma[i, j*3+1], gamma[i, j*3+2])
-            finish = time()
+            finish = perf_counter()
             elapsed = finish-start
             print(f'System Solved in {elapsed:.3f} seconds.')
         return self._gam
@@ -213,7 +213,7 @@ class LatticeSystem(object):
     def avg(self):
         if self._avg is None:
             print('Building Induced Velocity Matrix.')
-            start = time()
+            start = perf_counter()
             num = len(self.pnls)
             self._avg = zero_matrix_vector((num, num))
             # self._avg = empty((num, num), dtype=Vector)
@@ -222,7 +222,7 @@ class LatticeSystem(object):
                 for pnlj in self.pnls:
                     j = pnlj.lpid
                     self._avg[i, j] = pnlj.induced_velocity(pnli.pnti)
-            finish = time()
+            finish = perf_counter()
             elapsed = finish-start
             print(f'Built Induced Velocity Matrix in {elapsed:.3f} seconds.')
         return self._avg
@@ -230,16 +230,18 @@ class LatticeSystem(object):
     def afg(self):
         if self._afg is None:
             print('Building Induced Force Matrix.')
-            start = time()
+            start = perf_counter()
             num = len(self.pnls)
             self._afg = zero_matrix_vector((num, num))
             # self._afg = empty((num, num), dtype=Vector)
             for pnl in self.pnls:
                 i = pnl.lpid
-                for j in range(num):
-                    self._afg[i, j] = pnl.induced_force(self.avg[i, j])
+                if not pnl.noload:
+                    self._afg[i, :] = self.avg[i, :]**pnl.leni
+                # for j in range(num):
+                #     self._afg[i, j] = pnl.induced_force(self.avg[i, j])
                     # self._afg[i, j] = self.avg[i, j]**pnl.leni
-            finish = time()
+            finish = perf_counter()
             elapsed = finish-start
             print(f'Built Induced Force Matrix in {elapsed:.3f} seconds.')
         return self._afg
@@ -247,15 +249,18 @@ class LatticeSystem(object):
     def amg(self):
         if self._amg is None:
             print('Building Induced Moment Matrix.')
-            start = time()
+            start = perf_counter()
             num = len(self.pnls)
             self._amg = zero_matrix_vector((num, num))
             # self._amg = empty((num, num), dtype=Vector)
             for pnl in self.pnls:
                 i = pnl.lpid
-                for j in range(num):
-                    self._amg[i, j] = (pnl.pnti-self.rref)**self.afg[i, j]
-            finish = time()
+                if not pnl.noload:
+                    rrel = pnl.pnti-self.rref
+                    self._amg[i, :] = rrel**self.afg[i, :]
+                # for j in range(num):
+                #     self._amg[i, j] = rrel**self.afg[i, j]
+            finish = perf_counter()
             elapsed = finish-start
             print(f'Built Induced Moment Matrix in {elapsed:.3f} seconds.')
         return self._amg
@@ -266,14 +271,15 @@ class LatticeSystem(object):
             self._adc = zeros((num, num))
             for pnl in self.pnls:
                 i = pnl.lpid
-                for j in range(num):
-                    self._adc[i, j] = self.avc[i, j]*pnl.tang
+                self._adc[i, :] = self.avc[i, :]*pnl.tang
+                # for j in range(num):
+                #     self._adc[i, j] = self.avc[i, j]*pnl.tang
         return self._adc
     @property
     def bvg(self):
         if self._bvg is None:
             print('Building Trefftz Induced Velocity Matrix.')
-            start = time()
+            start = perf_counter()
             num = len(self.strps)
             self._bvg = zeros((num, num))
             for strpi in self.strps:
@@ -281,7 +287,7 @@ class LatticeSystem(object):
                 for strpj in self.strps:
                     j =  strpj.lsid
                     self._bvg[i, j] = strpj.trefftz_velocity(strpi.pnti)*strpi.nrmt
-            finish = time()
+            finish = perf_counter()
             elapsed = finish-start
             print(f'Built Trefftz Induced Velocity Matrix in {elapsed:.3f} seconds.')
         return self._bvg
@@ -289,7 +295,7 @@ class LatticeSystem(object):
     def bdg(self):
         if self._bdg is None:
             print('Building Trefftz Induced Drag Matrix.')
-            start = time()
+            start = perf_counter()
             num = len(self.strps)
             self._bdg = zeros((num, num))
             for strp in self.strps:
@@ -297,7 +303,7 @@ class LatticeSystem(object):
                 for j in range(num):
                     self._bdg[i, j] = strp.trefftz_drag(self.bvg[i, j])
                     # self._bdg[i, j] = -strp.dst*self.bvg[i, j]/2
-            finish = time()
+            finish = perf_counter()
             elapsed = finish-start
             print(f'Built Trefftz Induced Drag Matrix in {elapsed:.3f} seconds.')
         return self._bdg
@@ -305,14 +311,14 @@ class LatticeSystem(object):
     def blg(self):
         if self._blg is None:
             print('Building Trefftz Induced Lift Matrix.')
-            start = time()
+            start = perf_counter()
             num = len(self.strps)
             self._blg = zeros((num, 1))
             for strp in self.strps:
                 i = strp.lsid
                 self._blg[i, 0] = strp.trefftz_lift()
                 # self._blg[i, 0] = strp.lent.y
-            finish = time()
+            finish = perf_counter()
             elapsed = finish-start
             print(f'Built Trefftz Induced Lift Matrix in {elapsed:.3f} seconds.')
         return self._blg
@@ -320,14 +326,14 @@ class LatticeSystem(object):
     def byg(self):
         if self._byg is None:
             print('Building Trefftz Induced Y-Force Matrix.')
-            start = time()
+            start = perf_counter()
             num = len(self.strps)
             self._byg = zeros((num, 1))
             for strp in self.strps:
                 i = strp.lsid
                 self._byg[i, 0] = strp.trefftz_yfrc()
                 # self._byg[i, 0] = -strp.lent.z
-            finish = time()
+            finish = perf_counter()
             elapsed = finish-start
             print(f'Built Trefftz Induced Y-Force Matrix in {elapsed:.3f} seconds.')
         return self._byg
@@ -335,13 +341,13 @@ class LatticeSystem(object):
     def bmg(self):
         if self._bmg is None:
             print('Building Trefftz Induced X-Moment Matrix.')
-            start = time()
+            start = perf_counter()
             num = len(self.strps)
             self._bmg = zeros((num, 1))
             for strp in self.strps:
                 i = strp.lsid
                 self._bmg[i, 0] = strp.pnti.y*self.blg[i, 0]-strp.pnti.z*self.byg[i, 0]
-            finish = time()
+            finish = perf_counter()
             elapsed = finish-start
             print(f'Built Trefftz Induced X-Moment Matrix in {elapsed:.3f} seconds.')
         return self._bmg
