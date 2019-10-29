@@ -1,7 +1,6 @@
 from time import perf_counter
 from math import pi, atan2
-from numpy.matlib import zeros#, empty
-# from numpy.linalg import solve
+from numpy.matlib import zeros
 from pygeom.geom3d import Point, Vector, ihat, jhat, zero_vector
 from pygeom.matrixgeom3d import zero_matrix_vector
 
@@ -122,8 +121,8 @@ class LatticeSystem(object):
     @property
     def aic(self):
         if self._aic is None:
-            print('Building AIC Matrix.')
-            start = perf_counter()
+            # print('Building AIC Matrix.')
+            # start = perf_counter()
             num = len(self.pnls)
             self._aic = zeros((num, num))
             for pnl in self.pnls:
@@ -131,15 +130,15 @@ class LatticeSystem(object):
                 self._aic[i, :] = self.avc[i, :]*pnl.nrml
                 # for j in range(num):
                 #     self._aic[i, j] = self.avc[i, j]*pnl.nrml
-            finish = perf_counter()
-            elapsed = finish-start
-            print(f'Built AIC Matrix in {elapsed:.3f} seconds.')
+            # finish = perf_counter()
+            # elapsed = finish-start
+            # print(f'Built AIC Matrix in {elapsed:.3f} seconds.')
         return self._aic
     @property
     def afs(self):
         if self._afs is None:
-            print('Building Freestream and Control Matrix.')
-            start = perf_counter()
+            # print('Building Freestream and Control Matrix.')
+            # start = perf_counter()
             num = len(self.pnls)
             numc = len(self.ctrls)
             # self._afs = zeros((num, 6+12*numc))
@@ -187,9 +186,9 @@ class LatticeSystem(object):
                             # self._afs[lpid, ctup[3]*3+0] = nmz*rpy - nmy*rpz
                             # self._afs[lpid, ctup[3]*3+1] = nmx*rpz - nmz*rpx
                             # self._afs[lpid, ctup[3]*3+2] = nmy*rpx - nmx*rpy
-            finish = perf_counter()
-            elapsed = finish-start
-            print(f'Built Freestream and Control Matrix in {elapsed:.3f} seconds.')
+            # finish = perf_counter()
+            # elapsed = finish-start
+            # print(f'Built Freestream and Control Matrix in {elapsed:.3f} seconds.')
         return self._afs
     @property
     def gam(self):
@@ -229,8 +228,8 @@ class LatticeSystem(object):
     @property
     def afg(self):
         if self._afg is None:
-            print('Building Induced Force Matrix.')
-            start = perf_counter()
+            # print('Building Induced Force Matrix.')
+            # start = perf_counter()
             num = len(self.pnls)
             self._afg = zero_matrix_vector((num, num))
             # self._afg = empty((num, num), dtype=Vector)
@@ -241,15 +240,15 @@ class LatticeSystem(object):
                 # for j in range(num):
                 #     self._afg[i, j] = pnl.induced_force(self.avg[i, j])
                     # self._afg[i, j] = self.avg[i, j]**pnl.leni
-            finish = perf_counter()
-            elapsed = finish-start
-            print(f'Built Induced Force Matrix in {elapsed:.3f} seconds.')
+            # finish = perf_counter()
+            # elapsed = finish-start
+            # print(f'Built Induced Force Matrix in {elapsed:.3f} seconds.')
         return self._afg
     @property
     def amg(self):
         if self._amg is None:
-            print('Building Induced Moment Matrix.')
-            start = perf_counter()
+            # print('Building Induced Moment Matrix.')
+            # start = perf_counter()
             num = len(self.pnls)
             self._amg = zero_matrix_vector((num, num))
             # self._amg = empty((num, num), dtype=Vector)
@@ -260,9 +259,9 @@ class LatticeSystem(object):
                     self._amg[i, :] = rrel**self.afg[i, :]
                 # for j in range(num):
                 #     self._amg[i, j] = rrel**self.afg[i, j]
-            finish = perf_counter()
-            elapsed = finish-start
-            print(f'Built Induced Moment Matrix in {elapsed:.3f} seconds.')
+            # finish = perf_counter()
+            # elapsed = finish-start
+            # print(f'Built Induced Moment Matrix in {elapsed:.3f} seconds.')
         return self._amg
     @property
     def adc(self):
@@ -278,8 +277,8 @@ class LatticeSystem(object):
     @property
     def bvg(self):
         if self._bvg is None:
-            print('Building Trefftz Induced Velocity Matrix.')
-            start = perf_counter()
+            # print('Building Trefftz Induced Velocity Matrix.')
+            # start = perf_counter()
             num = len(self.strps)
             self._bvg = zeros((num, num))
             for strpi in self.strps:
@@ -287,15 +286,15 @@ class LatticeSystem(object):
                 for strpj in self.strps:
                     j =  strpj.lsid
                     self._bvg[i, j] = strpj.trefftz_velocity(strpi.pnti)*strpi.nrmt
-            finish = perf_counter()
-            elapsed = finish-start
-            print(f'Built Trefftz Induced Velocity Matrix in {elapsed:.3f} seconds.')
+            # finish = perf_counter()
+            # elapsed = finish-start
+            # print(f'Built Trefftz Induced Velocity Matrix in {elapsed:.3f} seconds.')
         return self._bvg
     @property
     def bdg(self):
         if self._bdg is None:
-            print('Building Trefftz Induced Drag Matrix.')
-            start = perf_counter()
+            # print('Building Trefftz Induced Drag Matrix.')
+            # start = perf_counter()
             num = len(self.strps)
             self._bdg = zeros((num, num))
             for strp in self.strps:
@@ -303,53 +302,53 @@ class LatticeSystem(object):
                 for j in range(num):
                     self._bdg[i, j] = strp.trefftz_drag(self.bvg[i, j])
                     # self._bdg[i, j] = -strp.dst*self.bvg[i, j]/2
-            finish = perf_counter()
-            elapsed = finish-start
-            print(f'Built Trefftz Induced Drag Matrix in {elapsed:.3f} seconds.')
+            # finish = perf_counter()
+            # elapsed = finish-start
+            # print(f'Built Trefftz Induced Drag Matrix in {elapsed:.3f} seconds.')
         return self._bdg
     @property
     def blg(self):
         if self._blg is None:
-            print('Building Trefftz Induced Lift Matrix.')
-            start = perf_counter()
+            # print('Building Trefftz Induced Lift Matrix.')
+            # start = perf_counter()
             num = len(self.strps)
             self._blg = zeros((num, 1))
             for strp in self.strps:
                 i = strp.lsid
                 self._blg[i, 0] = strp.trefftz_lift()
                 # self._blg[i, 0] = strp.lent.y
-            finish = perf_counter()
-            elapsed = finish-start
-            print(f'Built Trefftz Induced Lift Matrix in {elapsed:.3f} seconds.')
+            # finish = perf_counter()
+            # elapsed = finish-start
+            # print(f'Built Trefftz Induced Lift Matrix in {elapsed:.3f} seconds.')
         return self._blg
     @property
     def byg(self):
         if self._byg is None:
-            print('Building Trefftz Induced Y-Force Matrix.')
-            start = perf_counter()
+            # print('Building Trefftz Induced Y-Force Matrix.')
+            # start = perf_counter()
             num = len(self.strps)
             self._byg = zeros((num, 1))
             for strp in self.strps:
                 i = strp.lsid
                 self._byg[i, 0] = strp.trefftz_yfrc()
                 # self._byg[i, 0] = -strp.lent.z
-            finish = perf_counter()
-            elapsed = finish-start
-            print(f'Built Trefftz Induced Y-Force Matrix in {elapsed:.3f} seconds.')
+            # finish = perf_counter()
+            # elapsed = finish-start
+            # print(f'Built Trefftz Induced Y-Force Matrix in {elapsed:.3f} seconds.')
         return self._byg
     @property
     def bmg(self):
         if self._bmg is None:
-            print('Building Trefftz Induced X-Moment Matrix.')
-            start = perf_counter()
+            # print('Building Trefftz Induced X-Moment Matrix.')
+            # start = perf_counter()
             num = len(self.strps)
             self._bmg = zeros((num, 1))
             for strp in self.strps:
                 i = strp.lsid
                 self._bmg[i, 0] = strp.pnti.y*self.blg[i, 0]-strp.pnti.z*self.byg[i, 0]
-            finish = perf_counter()
-            elapsed = finish-start
-            print(f'Built Trefftz Induced X-Moment Matrix in {elapsed:.3f} seconds.')
+            # finish = perf_counter()
+            # elapsed = finish-start
+            # print(f'Built Trefftz Induced X-Moment Matrix in {elapsed:.3f} seconds.')
         return self._bmg
     @property
     def ar(self):

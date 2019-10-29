@@ -1,4 +1,4 @@
-from .camber import NACA4
+from .camber import NACA4, NACA6Series
 from .spacing import normalise_spacing, equal_spacing
 from .spacing import semi_cosine_spacing, semi_elliptical_spacing
 from .spacing import full_cosine_spacing, full_elliptical_spacing
