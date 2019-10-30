@@ -140,7 +140,14 @@ class LatticeSurface(object):
         return [strp.pnti.y for strp in self.strps]
     @property
     def strpi(self):
-        return [strp.lsid for strp in self.strps]        
+        return [strp.lsid for strp in self.strps]
+    @property
+    def pnli(self):
+        lpids = []
+        for i in range(self.pnls.shape[0]):
+            for j in range(self.pnls.shape[1]):
+                lpids.append(self.pnls[i, j].lpid)
+        return lpids
     def __repr__(self):
         return '<LatticeSurface {:s}>'.format(self.name)
 

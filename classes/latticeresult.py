@@ -1,6 +1,6 @@
 from pygeom.geom3d import Coordinate, Vector, jhat
 from pygeom.matrixgeom3d import zero_matrix_vector, elementwise_multiply
-from numpy.matlib import zeros, matrix#, empty
+from numpy.matlib import zeros, matrix
 from numpy import multiply
 from math import radians, cos, sin
 from matplotlib.pyplot import figure
@@ -23,13 +23,11 @@ class LatticeResult(object):
     _vfs = None
     _qfs = None
     _ofs = None
-    _gam = None
-    _gmat = None
+    _gamma = None
     _avv = None
     _afv = None
     _amv = None
     _phi = None
-    _pmat = None
     _nfres = None
     _trres = None
     _stgam = None
@@ -110,37 +108,24 @@ class LatticeResult(object):
             dirz = -1.0*self.acs.dirz
             self._wcs = Coordinate(pnt, dirx, diry, dirz)
         return self._wcs
-    # def set_freestream_velocity(self, vfs: Vector, ofs: Vector):
-    #     self._vfs = vfs
-    #     self._ofs = ofs
-    #     num = len(self.sys.pnls)
-    #     self.avv = empty((num, 1), dtype=Vector)
-    #     self.afv = empty((num, 1), dtype=Vector)
-    #     self.amv = empty((num, 1), dtype=Vector)
-    #     for i, pnl in enumerate(self.sys.pnls):
-    #         rpi = pnl.pnti-self.sys.rref
-    #         self.avv[i, 0] = self.vfs+rpi*self.ofs
-    #         self.afv[i, 0] = self.avv[i, 0]**pnl.leni
-    #         self.amv[i, 0] = (pnl.pnti-self.sys.rref)**self.afv[i, 0]
-    def set_gam(self, gam: list):
-        self._gam = gam
-        self._gmat = matrix(self._gam, dtype=float).transpose()
+    def set_gamma(self, gam: list):
+        self._gamma = matrix(gam, dtype=float).transpose()
     def set_phi(self, phi: list):
         if len(phi) != len(self.sys.strps):
             raise Exception('The length of phi must equal the number of strips.')
-        self._phi = phi
-        self._pmat = matrix(self._phi, dtype=float).transpose()
+        self._phi = matrix(phi, dtype=float).transpose()
     def set_lift_distribution(self, l: list, rho: float, speed: float):
         if len(l) != len(self.sys.strps):
             raise Exception('The length of l must equal the number of strips.')
-        # nrml = [strpi.leni.y for strpi in self.sys.strps]
-        self._phi = [li/rho/speed for li in l]
-        self._pmat = matrix(self._phi, dtype=float).transpose()
+        phi = [li/rho/speed for li in l]
+        self.set_phi(phi)
+        self.set_density(rho)
+        self.set_state(speed)
     @property
-    def gmat(self):
-        if self._gmat is None:
-            self._gmat = vector_matrix_dot(self.sys.gam[:, 0], self.vfs)
-            self._gmat += vector_matrix_dot(self.sys.gam[:, 1], self.ofs)
+    def gamma(self):
+        if self._gamma is None:
+            self._gamma = vector_matrix_dot(self.sys.gam[:, 0], self.vfs)
+            self._gamma += vector_matrix_dot(self.sys.gam[:, 1], self.ofs)
             for control in self.ctrls:
                 if control in self.sys.ctrls:
                     ctrl = self.ctrls[control]
@@ -152,9 +137,9 @@ class LatticeResult(object):
                     else:
                         indv = index[2]
                         indo = index[3]
-                    self._gmat += vector_matrix_dot(self.sys.gam[:, indv], self.vfs*ctrlrad)
-                    self._gmat += vector_matrix_dot(self.sys.gam[:, indo], self.ofs*ctrlrad)
-        return self._gmat
+                    self._gamma += vector_matrix_dot(self.sys.gam[:, indv], self.vfs*ctrlrad)
+                    self._gamma += vector_matrix_dot(self.sys.gam[:, indo], self.ofs*ctrlrad)
+        return self._gamma
     def galpha(self):
         vfs = dufsdal_sa(radians(self.alpha))*self.speed
         vfs, ofs = dalpha(self.speed, self.alpha, self.beta,
@@ -205,23 +190,13 @@ class LatticeResult(object):
             gmats[control] = self.gctrln_single(control)
         return gmats 
     @property
-    def gam(self):
-        if self._gam is None:
-            self._gam = [self.gmat[i, 0] for i in range(self.gmat.shape[0])]
-        return self._gam
-    @property
-    def pmat(self):
-        if self._pmat is None:
-            num = len(self.sys.strps)
-            self._pmat = zeros((num, 1))
-            for i, strp in enumerate(self.sys.strps):
-                for pnl in strp.pnls:
-                    self._pmat[i, 0] += self.gmat[pnl.lpid, 0]
-        return self._pmat
-    @property
     def phi(self):
         if self._phi is None:
-            self._phi = [self.pmat[i, 0] for i in range(self.pmat.shape[0])]
+            num = len(self.sys.strps)
+            self._phi = zeros((num, 1))
+            for i, strp in enumerate(self.sys.strps):
+                for pnl in strp.pnls:
+                    self._phi[i, 0] += self.gamma[pnl.lpid, 0]
         return self._phi
     @property
     def vfs(self):
@@ -255,7 +230,6 @@ class LatticeResult(object):
         if self._avv is None:
             num = len(self.sys.pnls)
             self._avv = zero_matrix_vector((num, 1))
-            # self._avv = empty((num, 1), dtype=Vector)
             for i, pnl in enumerate(self.sys.pnls):
                 if pnl.noload:
                     self._avv[i, 0] = Vector(0.0, 0.0, 0.0)
@@ -268,29 +242,26 @@ class LatticeResult(object):
         if self._afv is None:
             num = len(self.sys.pnls)
             self._afv = zero_matrix_vector((num, 1))
-            # self._afv = empty((num, 1), dtype=Vector)
             for i, pnl in enumerate(self.sys.pnls):
                 self._afv[i, 0] = pnl.induced_force(self.avv[i, 0])
-                # self._afv[i, 0] = self.avv[i, 0]**pnl.leni
         return self._afv
     @property
     def amv(self):
         if self._amv is None:
             num = len(self.sys.pnls)
             self._amv = zero_matrix_vector((num, 1))
-            # self._amv = empty((num, 1), dtype=Vector)
             for i, pnl in enumerate(self.sys.pnls):
                 self._amv[i, 0] = (pnl.pnti-self.sys.rref)**self.afv[i, 0]
         return self._amv
     @property
     def nfres(self):
         if self._nfres is None:
-            self._nfres = GammaResult(self, self.gmat)
+            self._nfres = GammaResult(self, self.gamma)
         return self._nfres
     @property
     def trres(self):
         if self._trres is None:
-            self._trres = PhiResult(self, self.pmat)
+            self._trres = PhiResult(self, self.phi)
         return self._trres
     @property
     def stgam(self):
@@ -431,24 +402,29 @@ class LatticeResult(object):
                 ax.plot(y, w, label=label)
         ax.legend()
         return ax
-    def plot_strip_wash_distribution(self, lsid: int, ax=None):
-        if ax is None:
-            fig = figure(figsize=(12, 8))
-            ax = fig.gca()
-            ax.grid(True)
-        stwash = []
-        for i in range(self.sys.bvg.shape[0]):
-            stwash.append(self.sys.bvg[i, lsid])
-        ax.plot(self.sys.strpy, stwash)
-        return ax
-    def print_near_field_total_loads(self):
-        print(f'Total Force in X = {self.nfres.nffrctot.x}')
-        print(f'Total Force in Y = {self.nfres.nffrctot.y}')
-        print(f'Total Force in Z = {self.nfres.nffrctot.z}')
-        print(f'Total Moment in X = {self.nfres.nfmomtot.x}')
-        print(f'Total Moment in Y = {self.nfres.nfmomtot.y}')
-        print(f'Total Moment in Z = {self.nfres.nfmomtot.z}')
-    def print_strip_forces(self, filepath: str=''):
+    @property
+    def surface_loads(self):
+        from py2md.classes import MDTable
+        from math import atan
+        table = MDTable()
+        table.add_column('Name', 's')
+        table.add_column('Fx', '.3f')
+        table.add_column('Fy', '.3f')
+        table.add_column('Fz', '.3f')
+        table.add_column('Mx', '.3f')
+        table.add_column('My', '.3f')
+        table.add_column('Mz', '.3f')
+        for srfc in self.sys.srfcs:
+            ind = srfc.pnli
+            frc = self.nfres.nffrc[ind, 0].sumall()
+            mom = self.nfres.nfmom[ind, 0].sumall()
+            table.add_row([srfc.name, frc.x, frc.y, frc.z, mom.x, mom.y, mom.z])
+        frc = self.nfres.nffrc.sumall()
+        mom = self.nfres.nfmom.sumall()
+        table.add_row(['Total', frc.x, frc.y, frc.z, mom.x, mom.y, mom.z])
+        return table
+    @property
+    def strip_forces(self):
         from py2md.classes import MDTable
         from math import atan
         table = MDTable()
@@ -479,22 +455,17 @@ class LatticeResult(object):
             cl_norm = cf*strp.nrmt
             cl = cl_norm
             table.add_row([j, yle, chord, area, c_cl, ai, cl_norm, cl, cd])
-        if filepath != '':
-            with open(filepath, 'wt') as resfile:
-                resfile.write(table._repr_markdown_())
-        else:
-            print(table._repr_markdown_())
-    def print_strip_coefficients(self, filepath: str=''):
+        return table
+    @property
+    def strip_coefficients(self):
         from py2md.classes import MDTable
         from math import atan
         table = MDTable()
         table.add_column('#', 'd')
         table.add_column('Chord', '.4f')
         table.add_column('Area', '.6f')
-        # Strip Normal Load
-        table.add_column('cn', '.5f')
-        # String Axial Load
-        table.add_column('ca', '.5f')
+        table.add_column('cn', '.5f') # Strip Normal Load
+        table.add_column('ca', '.5f') # String Axial Load
         table.add_column('cl', '.5f')
         table.add_column('cd', '.5f')
         table.add_column('dw', '.5f')
@@ -509,7 +480,6 @@ class LatticeResult(object):
             momle = Vector(0.0, 0.0, 0.0)
             for pnl in strp.pnls:
                 force += self.nfres.nffrc[pnl.lpid, 0]
-                # momle += self.nfmom[pnl.lpid]
                 rref = pnl.pnti-strp.pnti
                 momle += rref**self.nfres.nffrc[pnl.lpid, 0]
             cn = force*strp.nrmt/q/area
@@ -522,12 +492,9 @@ class LatticeResult(object):
             momqc = momle+rqc**force
             cmqc = momqc.y/q/area/chord
             table.add_row([j, chord, area, cn, ca, cl, cd, dw, cmle, cmqc])
-        if filepath != '':
-            with open(filepath, 'wt') as resfile:
-                resfile.write(table._repr_markdown_())
-        else:
-            print(table._repr_markdown_())
-    def print_panel_forces(self, filepath: str=''):
+        return table
+    @property
+    def panel_forces(self):
         from py2md.classes import MDTable
         from math import atan, tan
         table = MDTable()
@@ -553,12 +520,9 @@ class LatticeResult(object):
             chord = pnl.crd
             alc = tan(radians(pnl.alpha))
             table.add_row([j, k, x, y, z, chord, alc, cp])
-        if filepath != '':
-            with open(filepath, 'wt') as resfile:
-                resfile.write(table._repr_markdown_())
-        else:
-            print(table._repr_markdown_())
-    def print_panel_near_field_results(self, filepath: str=''):
+        return table
+    @property
+    def panel_near_field_results(self):
         from py2md.classes import MDTable
         from math import atan
         table = MDTable()
@@ -577,7 +541,7 @@ class LatticeResult(object):
         for pnl in self.sys.pnls:
             j = pnl.lpid
             k = pnl.strp.lsid
-            gam = self.gam[j]
+            gamma = self.gamma[j, 0]
             Vx = self.nfres.nfvel[j, 0].x
             Vy = self.nfres.nfvel[j, 0].y
             Vz = self.nfres.nfvel[j, 0].z
@@ -587,13 +551,10 @@ class LatticeResult(object):
             Fx = self.nfres.nffrc[j, 0].x
             Fy = self.nfres.nffrc[j, 0].y
             Fz = self.nfres.nffrc[j, 0].z
-            table.add_row([j, k, gam, Vx, Vy, Vz, lx, ly, lz, Fx, Fy, Fz])
-        if filepath != '':
-            with open(filepath, 'wt') as resfile:
-                resfile.write(table._repr_markdown_())
-        else:
-            print(table._repr_markdown_())
-    def print_stability_derivatives(self, filepath: str=''):
+            table.add_row([j, k, gamma, Vx, Vy, Vz, lx, ly, lz, Fx, Fy, Fz])
+        return table._repr_markdown_()
+    @property
+    def stability_derivatives(self):
         from py2md.classes import MDTable
         from . import sfrm
         outstr = '\n# Stability Derivatives\n'
@@ -632,12 +593,9 @@ class LatticeResult(object):
         table.add_column('Cmr', sfrm, data=[self.stres['rbo2V'].Cm])
         table.add_column('Cnr', sfrm, data=[self.stres['rbo2V'].Cn])
         outstr += table._repr_markdown_()
-        if filepath != '':
-            with open(filepath, 'wt') as resfile:
-                resfile.write(outstr)
-        else:
-            print(outstr)
-    def print_control_derivatives(self, filepath: str=''):
+        return outstr
+    @property
+    def control_derivatives(self):
         from py2md.classes import MDTable
         from . import sfrm
         outstr = '\n# Control Derivatives\n'
@@ -657,11 +615,7 @@ class LatticeResult(object):
                 ctresp = self.ctresp[control]
                 table.add_row([ctresp.CL, ctresp.CY, ctresp.Cl, ctresp.Cm, ctresp.Cn])
             outstr += table._repr_markdown_()
-        if filepath != '':
-            with open(filepath, 'wt') as resfile:
-                resfile.write(outstr)
-        else:
-            print(outstr)
+        return outstr
     def __str__(self):
         from py2md.classes import MDTable
         from . import cfrm, dfrm, efrm
@@ -684,26 +638,28 @@ class LatticeResult(object):
                 control = control.capitalize()
                 table.add_column(f'{control} (deg)', cfrm, data=[ctrl])
             outstr += table._repr_markdown_()
-        if self.gam is not None:
+        if self.gamma is not None:
             table = MDTable()
             table.add_column('Cx', cfrm, data=[self.nfres.Cfrc.x])
             table.add_column('Cy', cfrm, data=[self.nfres.Cfrc.y])
             table.add_column('Cz', cfrm, data=[self.nfres.Cfrc.z])
+            outstr += table._repr_markdown_()
+            table = MDTable()
+            table.add_column('CDi', dfrm, data=[self.nfres.CDi])
+            table.add_column('CY', cfrm, data=[self.nfres.CY])
+            table.add_column('CL', cfrm, data=[self.nfres.CL])
+            table.add_column('e', efrm, data=[self.nfres.e])
             table.add_column('Cl', cfrm, data=[self.nfres.Cl])
             table.add_column('Cm', cfrm, data=[self.nfres.Cm])
             table.add_column('Cn', cfrm, data=[self.nfres.Cn])
             outstr += table._repr_markdown_()
-            table = MDTable()
-            table.add_column('CL', cfrm, data=[self.nfres.CL])
-            table.add_column('CDi', dfrm, data=[self.nfres.CDi])
-            table.add_column('CY', cfrm, data=[self.nfres.CY])
-            outstr += table._repr_markdown_()
         if self.phi is not None:
             table = MDTable()
-            table.add_column('CL_ff', cfrm, data=[self.trres.CL])
             table.add_column('CDi_ff', dfrm, data=[self.trres.CDi])
             table.add_column('CY_ff', cfrm, data=[self.trres.CY])
+            table.add_column('CL_ff', cfrm, data=[self.trres.CL])
             table.add_column('e', efrm, data=[self.trres.e])
+            table.add_column('Cl_ff', cfrm, data=[self.trres.Cl])
             outstr += table._repr_markdown_()
         return outstr
     def __repr__(self):
@@ -782,6 +738,7 @@ class GammaResult(object):
     _CDi = None
     _CY = None
     _CL = None
+    _e = None
     _Cl = None
     _Cm = None
     _Cn = None
@@ -814,13 +771,11 @@ class GammaResult(object):
     def nffrctot(self):
         if self._nffrctot is None:
             self._nffrctot = self.nffrc.sumall()
-            # self._nffrctot = sum(self.nffrc.transpose().tolist()[0])
         return self._nffrctot
     @property
     def nfmomtot(self):
         if self._nfmomtot is None:
             self._nfmomtot = self.nfmom.sumall()
-            # self._nfmomtot = sum(self.nfmom.transpose().tolist()[0])
         return self._nfmomtot
     @property
     def Cfrc(self):
@@ -848,6 +803,15 @@ class GammaResult(object):
             self._CL = self.res.acs.dirz*self.Cfrc
         return self._CL
     @property
+    def e(self):
+        if self._e is None:
+            if self.CDi == 0.0:
+                self._e = float('nan')
+            else:
+                from math import pi
+                self._e = (self.CL**2+self.CY**2)/pi/self.res.sys.ar/self.CDi
+        return self._e
+    @property
     def Cl(self):
         if self._Cl is None:
             Cmom = self.res.wcs.vector_to_local(self.Cmom)
@@ -865,28 +829,6 @@ class GammaResult(object):
             Cmom = self.res.wcs.vector_to_local(self.Cmom)
             self._Cn = Cmom.z/self.res.sys.bref
         return self._Cn
-    @property
-    def plot_strip_drag_distribution(self, ax=None):
-        if ax is None:
-            fig = figure(figsize=(12, 8))
-            ax = fig.gca()
-            ax.grid(True)
-        for srfc in self.res.sys.srfcs:
-            y = []
-            d = []
-            for strp in srfc.strps:
-                y.append(strp.pnti.y)
-                force = Vector(0.0, 0.0, 0.0)
-                for pnl in strp.pnls:
-                    i = pnl.lpid
-                    force += self.nffrc[i, 0]
-                di = force*self.res.wcs.dirx/strp.dst
-                d.append(di)
-            if len(d) > 0:
-                label = self.res.name + ' for ' + srfc.name
-                ax.plot(y, d, label=label)
-        ax.legend()
-        return ax
 
 class PhiResult(object):
     res = None
@@ -895,13 +837,16 @@ class PhiResult(object):
     _trdrg = None
     _trfrc = None
     _trlft = None
+    _trmom = None
     _trdrgtot = None
     _trfrctot = None
     _trlfttot = None
+    _trmomtot = None
     _CDi = None
     _CY = None
     _CL = None
     _e = None
+    _Cl = None
     def __init__(self, res: LatticeResult, phi: matrix):
         self.res = res
         self.phi = phi
@@ -926,6 +871,11 @@ class PhiResult(object):
             self._trlft = self.res.rho*self.res.speed*multiply(self.phi, self.res.sys.blg)
         return self._trlft
     @property
+    def trmom(self):
+        if self._trmom is None:
+            self._trmom = -self.res.rho*self.res.speed*multiply(self.phi, self.res.sys.bmg)
+        return self._trmom
+    @property
     def trdrgtot(self):
         if self._trdrgtot is None:
             self._trdrgtot = sum(self.trdrg.transpose().tolist()[0])
@@ -940,6 +890,11 @@ class PhiResult(object):
         if self._trlfttot is None:
             self._trlfttot = sum(self.trlft.transpose().tolist()[0])
         return self._trlfttot
+    @property
+    def trmomtot(self):
+        if self._trmomtot is None:
+            self._trmomtot = sum(self.trmom.transpose().tolist()[0])
+        return self._trmomtot
     @property
     def CDi(self):
         if self._CDi is None:
@@ -958,9 +913,14 @@ class PhiResult(object):
     @property
     def e(self):
         if self._e is None:
-            if self.CL == 0.0 and self.CDi == 0.0:
+            if self.CDi == 0.0:
                 self._e = float('nan')
             else:
                 from math import pi
-                self._e = self.CL**2/pi/self.res.sys.ar/self.CDi
+                self._e = (self.CL**2+self.CY**2)/pi/self.res.sys.ar/self.CDi
         return self._e
+    @property
+    def Cl(self):
+        if self._Cl is None:
+            self._Cl = self.trmomtot/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+        return self._Cl
