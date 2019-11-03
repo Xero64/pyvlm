@@ -2,7 +2,7 @@ from time import perf_counter
 from math import pi, atan2
 from numpy.matlib import zeros
 from pygeom.geom3d import Point, Vector, ihat, jhat, zero_vector
-from pygeom.matrixgeom3d import zero_matrix_vector
+from pygeom.matrix3d import zero_matrix_vector
 
 class LatticeSystem(object):
     name = None
@@ -154,7 +154,7 @@ class LatticeSystem(object):
     @property
     def gam(self):
         if self._gam is None:
-            from pygeom.matrixgeom3d import solve_matrix_vector
+            from pygeom.matrix3d import solve_matrix_vector
             print('Solving System.')
             start = perf_counter()
             self._gam = -solve_matrix_vector(self.aic, self.afs)

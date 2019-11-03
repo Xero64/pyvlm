@@ -1,5 +1,4 @@
 from pygeom.geom3d import Vector
-# from .latticesheet import LatticeSheet
 
 class LatticeControl(object):
     name = None

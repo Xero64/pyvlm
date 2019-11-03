@@ -1,5 +1,5 @@
 from pygeom.geom3d import Coordinate, Vector, jhat
-from pygeom.matrixgeom3d import zero_matrix_vector, elementwise_multiply
+from pygeom.matrix3d import zero_matrix_vector, elementwise_multiply
 from numpy.matlib import zeros, matrix
 from numpy import multiply
 from math import radians, cos, sin
