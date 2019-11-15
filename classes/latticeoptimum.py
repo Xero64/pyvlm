@@ -165,7 +165,7 @@ class LatticeOptimum(object):
                         dafsda[i, j] += self.res.vfs*pnl.dnda
                         daicda[i, j] += self.sys.avc[i, k]*pnl.dnda
 
-        dgda = -solve(self.sys.aic, dafsda+daicda*self.res.pmat)
+        dgda = -solve(self.sys.aic, dafsda+daicda*self.res.phi)
 
         dpda = zeros((nums, nums))
         for i, strp in enumerate(self.sys.strps):
@@ -174,7 +174,7 @@ class LatticeOptimum(object):
                     k = pnl.lpid
                     dpda[i, j] += dgda[k, j]
 
-        dal = solve(dpda, popt-self.res.pmat)
+        dal = solve(dpda, popt-self.res.phi)
 
         for i in range(nums):
             dal[i, 0] = degrees(dal[i, 0])

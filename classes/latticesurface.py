@@ -8,13 +8,10 @@ class LatticeSurface(object):
     sects = None
     cspace = None
     xspace = None
-    bdsit = None
     strps = None
     pnts = None
     pnls = None
-    msht = None
     msect = None
-    mirrored = None
     def __init__(self, name: str, sects: list, mirror: bool):
         self.name = name
         self.sects = sects
@@ -105,7 +102,6 @@ class LatticeSurface(object):
         for sht in self.shts:
             sht.inherit_panels()
             sht.set_control_panels()
-            # sht.set_control_points_and_normals()
         return lsid, lpid
     def point_xyz(self):
         from numpy.matlib import zeros
@@ -171,6 +167,4 @@ def latticesurface_from_json(surfdata: dict, display: bool=False):
             surf.set_chord_equal_distribution(numc)
         elif cspace == 'cosine':
             surf.set_chord_cosine_distribution(numc)
-        # elif cspace == 'elliptical':
-        #     surf.set_chord_elliptical_distribution(numc)
     return surf

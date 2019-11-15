@@ -19,18 +19,22 @@ class LatticeSystem(object):
     _gam = None
     _avg = None
     _afg = None
-    _amg = None
+    # _amg = None
     _avc = None
     _aic = None
     _afs = None
     _adc = None
+    _ada = None
+    # _ama = None
     _bvg = None
     _bdg = None
     _blg = None
     _byg = None
     _bmg = None
+    _bda = None
     _ar = None
-    _strpy = None
+    _cdo = None
+    _cdo_ff = None
     def __init__(self, name: str, srfcs: list, bref: float, cref: float, sref: float, rref: Point):
         self.name = name
         self.srfcs = srfcs
@@ -90,7 +94,7 @@ class LatticeSystem(object):
         self.gam
         self.avg
         self.afg
-        self.amg
+        # self.amg
         self.bvg
         self.bdg
         self.blg
@@ -188,17 +192,17 @@ class LatticeSystem(object):
                 if not pnl.noload:
                     self._afg[i, :] = self.avg[i, :]**pnl.leni
         return self._afg
-    @property
-    def amg(self):
-        if self._amg is None:
-            num = len(self.pnls)
-            self._amg = zero_matrix_vector((num, num))
-            for pnl in self.pnls:
-                i = pnl.lpid
-                if not pnl.noload:
-                    rrel = pnl.pnti-self.rref
-                    self._amg[i, :] = rrel**self.afg[i, :]
-        return self._amg
+    # @property
+    # def amg(self):
+    #     if self._amg is None:
+    #         num = len(self.pnls)
+    #         self._amg = zero_matrix_vector((num, num))
+    #         for pnl in self.pnls:
+    #             i = pnl.lpid
+    #             if not pnl.noload:
+    #                 rrel = pnl.pnti-self.rref
+    #                 self._amg[i, :] = rrel**self.afg[i, :]
+    #     return self._amg
     @property
     def adc(self):
         if self._adc is None:
@@ -208,6 +212,35 @@ class LatticeSystem(object):
                 i = pnl.lpid
                 self._adc[i, :] = self.avc[i, :]*pnl.tang
         return self._adc
+    @property
+    def ada(self):
+        if self._ada is None:
+            num = len(self.pnls)
+            self._ada = zeros((num, 1))
+            for pnl in self.pnls:
+                i = pnl.lpid
+                self._ada[i, 0] = pnl.cdoarea
+        return self._ada
+    @property
+    def cdo(self):
+        if self._cdo is None:
+            dragarea = 0.0
+            for pnl in self.pnls:
+                i = pnl.lpid
+                dragarea += self.ada[i, 0]
+            self._cdo = dragarea/self.sref
+        return self._cdo
+    # @property
+    # def ama(self):
+    #     if self._ama is None:
+    #         num = len(self.pnls)
+    #         self._ama = zero_matrix_vector((num, 1))
+    #         for pnl in self.pnls:
+    #             i = pnl.lpid
+    #             if not pnl.noload:
+    #                 rrel = pnl.pnti-self.rref
+    #                 self._ama[i, 0] = rrel
+    #     return self._ama
     @property
     def bvg(self):
         if self._bvg is None:
@@ -257,6 +290,24 @@ class LatticeSystem(object):
                 self._bmg[i, 0] = strp.pnti.y*self.blg[i, 0]-strp.pnti.z*self.byg[i, 0]
         return self._bmg
     @property
+    def bda(self):
+        if self._bda is None:
+            num = len(self.strps)
+            self._bda = zeros((num, 1))
+            for strp in self.strps:
+                i = strp.lsid
+                self._bda[i, 0] = strp.cdoarea
+        return self._bda
+    @property
+    def cdo_ff(self):
+        if self._cdo_ff is None:
+            dragarea = 0.0
+            for strp in self.strps:
+                i = strp.lsid
+                dragarea += self.bda[i, 0]
+            self._cdo_ff = dragarea/self.sref
+        return self._cdo_ff
+    @property
     def ar(self):
         if self._ar is None:
             self._ar = self.bref**2/self.sref
@@ -267,7 +318,8 @@ class LatticeSystem(object):
         self._aic = None
         self._afs = None
         self._gam = None
-    def print_strip_geometry(self, filepath: str=''):
+    @property
+    def strip_geometry(self):
         from py2md.classes import MDTable
         table = MDTable()
         table.add_column('#', 'd')
@@ -290,12 +342,9 @@ class LatticeSystem(object):
             dihed = strp.dihedral
             angle = strp.angle
             table.add_row([j, xle, yle, zle, chord, width, area, dihed, angle])
-        if filepath != '':
-            with open(filepath, 'wt') as resfile:
-                resfile.write(table._repr_markdown_())
-        else:
-            print(table._repr_markdown_())
-    def print_panel_geometry(self, filepath: str=''):
+        return table
+    @property
+    def panel_geometry(self):
         from py2md.classes import MDTable
         table = MDTable()
         table.add_column('#', 'd')
@@ -310,11 +359,7 @@ class LatticeSystem(object):
             z = pnl.pntg.z
             dx = pnl.crd
             table.add_row([j, x, y, z, dx])
-        if filepath != '':
-            with open(filepath, 'wt') as resfile:
-                resfile.write(table._repr_markdown_())
-        else:
-            print(table._repr_markdown_())
+        return table
     def __repr__(self):
         return '<LatticeSystem: {:s}>'.format(self.name)
     def __str__(self):

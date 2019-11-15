@@ -1,5 +1,6 @@
-from pygeom.geom3d import Coordinate, Vector, jhat
+from pygeom.geom3d import Point, Coordinate, Vector, jhat, ihat
 from pygeom.matrix3d import zero_matrix_vector, elementwise_multiply
+from pygeom.matrix3d import elementwise_cross_product, elementwise_dot_product
 from numpy.matlib import zeros, matrix
 from numpy import multiply
 from math import radians, cos, sin
@@ -17,6 +18,7 @@ class LatticeResult(object):
     qco2V = None
     rbo2V = None
     ctrls = None
+    rcg = None
     _acs = None
     _scs = None
     _wcs = None
@@ -26,8 +28,11 @@ class LatticeResult(object):
     _gamma = None
     _avv = None
     _afv = None
-    _amv = None
+    _arm = None
+    # _amv = None
     _phi = None
+    _bvv = None
+    _brm = None
     _nfres = None
     _trres = None
     _stgam = None
@@ -51,6 +56,7 @@ class LatticeResult(object):
         self.ctrls = {}
         for control in self.sys.ctrls:
             self.ctrls[control] = 0.0
+        self.rcg = self.sys.rref
     def reset(self):
         for attr in self.__dict__:
             if attr[0] == '_':
@@ -78,6 +84,8 @@ class LatticeResult(object):
         for control in kwargs:
             self.ctrls[control] = kwargs[control]
         self.reset()
+    def set_cg(self, rcg: Point):
+        self.rcg = rcg
     @property
     def acs(self):
         if self._acs is None:
@@ -109,18 +117,18 @@ class LatticeResult(object):
             self._wcs = Coordinate(pnt, dirx, diry, dirz)
         return self._wcs
     def set_gamma(self, gam: list):
-        self._gamma = matrix(gam, dtype=float).transpose()
+        self._gamma = matrix([gam], dtype=float).transpose()
     def set_phi(self, phi: list):
         if len(phi) != len(self.sys.strps):
             raise Exception('The length of phi must equal the number of strips.')
-        self._phi = matrix(phi, dtype=float).transpose()
+        self._phi = matrix([phi], dtype=float).transpose()
     def set_lift_distribution(self, l: list, rho: float, speed: float):
         if len(l) != len(self.sys.strps):
             raise Exception('The length of l must equal the number of strips.')
         phi = [li/rho/speed for li in l]
-        self.set_phi(phi)
         self.set_density(rho)
         self.set_state(speed)
+        self.set_phi(phi)
     @property
     def gamma(self):
         if self._gamma is None:
@@ -194,7 +202,8 @@ class LatticeResult(object):
         if self._phi is None:
             num = len(self.sys.strps)
             self._phi = zeros((num, 1))
-            for i, strp in enumerate(self.sys.strps):
+            for strp in self.sys.strps:
+                i = strp.lsid
                 for pnl in strp.pnls:
                     self._phi[i, 0] += self.gamma[pnl.lpid, 0]
         return self._phi
@@ -230,29 +239,68 @@ class LatticeResult(object):
         if self._avv is None:
             num = len(self.sys.pnls)
             self._avv = zero_matrix_vector((num, 1))
-            for i, pnl in enumerate(self.sys.pnls):
+            for pnl in self.sys.pnls:
+                i = pnl.lpid
                 if pnl.noload:
                     self._avv[i, 0] = Vector(0.0, 0.0, 0.0)
                 else:
-                    rpi = self.sys.pnls[i].pnti-self.sys.rref
-                    self._avv[i, 0] = self.vfs+self.ofs**rpi
+                    # rpi = self.sys.pnls[i].pnti-self.rcg
+                    self._avv[i, 0] = self.vfs+self.ofs**self.arm[i, 0]
         return self._avv
+    @property
+    def bvv(self):
+        if self._bvv is None:
+            num = len(self.sys.strps)
+            self._bvv = zero_matrix_vector((num, 1))
+            for strp in self.sys.strps:
+                i = strp.lsid
+                if strp.noload:
+                    self._bvv[i, 0] = Vector(0.0, 0.0, 0.0)
+                else:
+                    self._bvv[i, 0] = self.vfs+self.ofs**self.brm[i, 0]
+        return self._bvv
+    @property
+    def arm(self):
+        if self._arm is None:
+            num = len(self.sys.pnls)
+            self._arm = zero_matrix_vector((num, 1))
+            for pnl in self.sys.pnls:
+                i = pnl.lpid
+                if pnl.noload:
+                    self._arm[i, 0] = Vector(0.0, 0.0, 0.0)
+                else:
+                    self._arm[i, 0] = pnl.pnti-self.rcg
+        return self._arm
+    @property
+    def brm(self):
+        if self._brm is None:
+            num = len(self.sys.strps)
+            self._brm = zero_matrix_vector((num, 1))
+            for strp in self.sys.strps:
+                i = strp.lsid
+                if strp.noload:
+                    self._brm[i, 0] = Vector(0.0, 0.0, 0.0)
+                else:
+                    self._brm[i, 0] = strp.pntq-self.rcg
+        return self._brm
     @property
     def afv(self):
         if self._afv is None:
             num = len(self.sys.pnls)
             self._afv = zero_matrix_vector((num, 1))
-            for i, pnl in enumerate(self.sys.pnls):
+            for pnl in self.sys.pnls:
+                i = pnl.lpid
                 self._afv[i, 0] = pnl.induced_force(self.avv[i, 0])
         return self._afv
-    @property
-    def amv(self):
-        if self._amv is None:
-            num = len(self.sys.pnls)
-            self._amv = zero_matrix_vector((num, 1))
-            for i, pnl in enumerate(self.sys.pnls):
-                self._amv[i, 0] = (pnl.pnti-self.sys.rref)**self.afv[i, 0]
-        return self._amv
+    # @property
+    # def amv(self):
+    #     if self._amv is None:
+    #         num = len(self.sys.pnls)
+    #         self._amv = zero_matrix_vector((num, 1))
+    #         for pnl in self.sys.pnls:
+    #             i = pnl.lpid
+    #             self._amv[i, 0] = (pnl.pnti-self.rcg)**self.afv[i, 0]
+    #     return self._amv
     @property
     def nfres(self):
         if self._nfres is None:
@@ -344,7 +392,7 @@ class LatticeResult(object):
                 lsid = strp.lsid
                 if strp.dyt != 0.0:
                     y.append(strp.pnti.y)
-                    l.append(self.trres.trlft[lsid, 0]/strp.dyt)
+                    l.append(self.trres.trfrc.z[lsid, 0]/strp.dyt)
             if len(l) > 0:
                 label = self.name+' for '+srfc.name
                 ax.plot(y, l, label=label)
@@ -362,7 +410,7 @@ class LatticeResult(object):
                 lsid = strp.lsid
                 if strp.dzt != 0.0:
                     z.append(strp.pnti.z)
-                    f.append(self.trres.trfrc[lsid, 0]/strp.dzt)
+                    f.append(self.trres.trfrc.y[lsid, 0]/strp.dzt)
             if len(f) > 0:
                 label = self.name+' for '+srfc.name
                 ax.plot(f, z, label=label)
@@ -379,7 +427,7 @@ class LatticeResult(object):
             for strp in srfc.strps:
                 lsid = strp.lsid
                 y.append(strp.pnti.y)
-                d.append(self.trres.trdrg[lsid, 0]/strp.dst)
+                d.append(self.trres.trfrc.x[lsid, 0]/strp.dst)
             if len(d) > 0:
                 label = self.name+' for '+srfc.name
                 ax.plot(y, d, label=label)
@@ -448,7 +496,7 @@ class LatticeResult(object):
                 nrmfrc += self.nfres.nffrc[pnl.lpid, 0]/pnl.area*pnl.crd
             c_cl = nrmfrc.z/q
             ai = -self.trres.trwsh[strp.lsid, 0]/self.speed
-            cd = self.trres.trdrg[strp.lsid, 0]/q/area
+            cd = self.trres.trfrc.x[strp.lsid, 0]/q/area
             cy = nrmfrc*self.acs.diry/q/chord
             cz = nrmfrc*self.acs.dirz/q/chord
             cf = Vector(0.0, cy, cz)
@@ -632,7 +680,12 @@ class LatticeResult(object):
         table.add_column('rb/2V (rad)', cfrm, data=[self.rbo2V])
         outstr += table._repr_markdown_()
         table = MDTable()
+        table.add_column('xcg', '.5f', data=[self.rcg.x])
+        table.add_column('ycg', '.5f', data=[self.rcg.y])
+        table.add_column('zcg', '.5f', data=[self.rcg.z])
+        outstr += table._repr_markdown_()
         if len(self.ctrls) > 0:
+            table = MDTable()
             for control in self.ctrls:
                 ctrl = self.ctrls[control]
                 control = control.capitalize()
@@ -648,19 +701,41 @@ class LatticeResult(object):
             table.add_column('CDi', dfrm, data=[self.nfres.CDi])
             table.add_column('CY', cfrm, data=[self.nfres.CY])
             table.add_column('CL', cfrm, data=[self.nfres.CL])
-            table.add_column('e', efrm, data=[self.nfres.e])
             table.add_column('Cl', cfrm, data=[self.nfres.Cl])
             table.add_column('Cm', cfrm, data=[self.nfres.Cm])
             table.add_column('Cn', cfrm, data=[self.nfres.Cn])
+            table.add_column('e', efrm, data=[self.nfres.e])
             outstr += table._repr_markdown_()
+            if self.sys.cdo != 0.0:
+                table = MDTable()
+                table.add_column('CDo', dfrm, data=[self.nfres.CDo])
+                table.add_column('CYo', cfrm, data=[self.nfres.CYo])
+                table.add_column('CLo', cfrm, data=[self.nfres.CLo])
+                table.add_column('Clo', cfrm, data=[self.nfres.Clo])
+                table.add_column('Cmo', cfrm, data=[self.nfres.Cmo])
+                table.add_column('Cno', cfrm, data=[self.nfres.Cno])
+                table.add_column('L/D', '.5g', data=[self.nfres.lod])
+                outstr += table._repr_markdown_()
         if self.phi is not None:
             table = MDTable()
             table.add_column('CDi_ff', dfrm, data=[self.trres.CDi])
             table.add_column('CY_ff', cfrm, data=[self.trres.CY])
             table.add_column('CL_ff', cfrm, data=[self.trres.CL])
-            table.add_column('e', efrm, data=[self.trres.e])
             table.add_column('Cl_ff', cfrm, data=[self.trres.Cl])
+            table.add_column('Cm_ff', cfrm, data=[self.trres.Cm])
+            table.add_column('Cn_ff', cfrm, data=[self.trres.Cn])
+            table.add_column('e', efrm, data=[self.trres.e])
             outstr += table._repr_markdown_()
+            if self.sys.cdo_ff != 0.0:
+                table = MDTable()
+                table.add_column('CDo_ff', dfrm, data=[self.trres.CDo])
+                table.add_column('CYo_ff', cfrm, data=[self.trres.CYo])
+                table.add_column('CLo_ff', cfrm, data=[self.trres.CLo])
+                table.add_column('Clo_ff', cfrm, data=[self.trres.Clo])
+                table.add_column('Cmo_ff', cfrm, data=[self.trres.Cmo])
+                table.add_column('Cno_ff', cfrm, data=[self.trres.Cno])
+                table.add_column('L/D', '.5g', data=[self.trres.lod])
+                outstr += table._repr_markdown_()
         return outstr
     def __repr__(self):
         return f'<LatticeResult: {self.name}>'
@@ -731,10 +806,16 @@ class GammaResult(object):
     _nfvel = None
     _nffrc = None
     _nfmom = None
+    _nfdrg = None
+    _nfdrm = None
     _nffrctot = None
     _nfmomtot = None
+    _nfdrgtot = None
+    _nfdrmtot = None
     _Cfrc = None
     _Cmom = None
+    _Cdrg = None
+    _Cdrm = None
     _CDi = None
     _CY = None
     _CL = None
@@ -742,6 +823,13 @@ class GammaResult(object):
     _Cl = None
     _Cm = None
     _Cn = None
+    _CDo = None
+    _CYo = None
+    _CLo = None
+    _Clo = None
+    _Cmo = None
+    _Cno = None
+    _lod = None
     def __init__(self, res: LatticeResult, gamma: matrix):
         self.res = res
         self.gamma = gamma
@@ -764,9 +852,20 @@ class GammaResult(object):
     @property
     def nfmom(self):
         if self._nfmom is None:
-            tmp = self.res.sys.amg*self.gamma+self.res.amv
-            self._nfmom = elementwise_multiply(self.rhogamma, tmp)
+            self._nfmom = elementwise_cross_product(self.res.arm, self.nffrc)
         return self._nfmom
+    @property
+    def nfdrg(self):
+        if self._nfdrg is None:
+            nfvelmag2 = elementwise_dot_product(self.nfvel, self.nfvel)
+            dynpr = (self.res.rho/2)*nfvelmag2
+            self._nfdrg = elementwise_multiply(self.res.sys.ada, ihat*dynpr)
+        return self._nfdrg
+    @property
+    def nfdrm(self):
+        if self._nfdrm is None:
+            self._nfdrm = elementwise_cross_product(self.res.arm, self.nfdrg)
+        return self._nfdrm
     @property
     def nffrctot(self):
         if self._nffrctot is None:
@@ -778,6 +877,16 @@ class GammaResult(object):
             self._nfmomtot = self.nfmom.sumall()
         return self._nfmomtot
     @property
+    def nfdrgtot(self):
+        if self._nfdrgtot is None:
+            self._nfdrgtot = self.nfdrg.sumall()
+        return self._nfdrgtot
+    @property
+    def nfdrmtot(self):
+        if self._nfdrmtot is None:
+            self._nfdrmtot = self.nfdrm.sumall()
+        return self._nfdrmtot
+    @property
     def Cfrc(self):
         if self._Cfrc is None:
             self._Cfrc = self.nffrctot/self.res.qfs/self.res.sys.sref
@@ -787,6 +896,16 @@ class GammaResult(object):
         if self._Cmom is None:
             self._Cmom = self.nfmomtot/self.res.qfs/self.res.sys.sref
         return self._Cmom
+    @property
+    def Cdrg(self):
+        if self._Cdrg is None:
+            self._Cdrg = self.nfdrgtot/self.res.qfs/self.res.sys.sref
+        return self._Cdrg
+    @property
+    def Cdrm(self):
+        if self._Cdrm is None:
+            self._Cdrm = self.nfdrmtot/self.res.qfs/self.res.sys.sref
+        return self._Cdrm
     @property
     def CDi(self):
         if self._CDi is None:
@@ -829,24 +948,69 @@ class GammaResult(object):
             Cmom = self.res.wcs.vector_to_local(self.Cmom)
             self._Cn = Cmom.z/self.res.sys.bref
         return self._Cn
+    @property
+    def CDo(self):
+        if self._CDo is None:
+            self._CDo = self.Cdrg.x
+        return self._CDo
+    @property
+    def CYo(self):
+        if self._CYo is None:
+            self._CYo = self.Cdrg.y
+        return self._CYo
+    @property
+    def CLo(self):
+        if self._CLo is None:
+            self._CLo = self.Cdrg.z
+        return self._CLo
+    @property
+    def Clo(self):
+        if self._Clo is None:
+            self._Clo = -self.Cdrm.x/self.res.sys.bref
+        return self._Clo
+    @property
+    def Cmo(self):
+        if self._Cmo is None:
+            self._Cmo = self.Cdrm.y/self.res.sys.cref
+        return self._Cmo
+    @property
+    def Cno(self):
+        if self._Cno is None:
+            self._Cno = -self.Cdrm.z/self.res.sys.bref
+        return self._Cno
+    @property
+    def lod(self):
+        if self._lod is None:
+            self._lod = self.CL/(self.CDo+self.CDi)
+        return self._lod
 
 class PhiResult(object):
     res = None
     phi = None
+    _trvel = None
     _trwsh = None
     _trdrg = None
     _trfrc = None
-    _trlft = None
     _trmom = None
-    _trdrgtot = None
+    _trdrm = None
     _trfrctot = None
-    _trlfttot = None
     _trmomtot = None
+    _trdrgtot = None
+    _trdrmtot = None
     _CDi = None
     _CY = None
     _CL = None
-    _e = None
     _Cl = None
+    _Cm = None
+    _Cn = None
+    _CDo = None
+    _CYo = None
+    _CLo = None
+    _Clo = None
+    _Cmo = None
+    _Cno = None
+    _e = None
+    _lod = None
     def __init__(self, res: LatticeResult, phi: matrix):
         self.res = res
         self.phi = phi
@@ -856,60 +1020,80 @@ class PhiResult(object):
             self._trwsh = self.res.sys.bvg*self.phi
         return self._trwsh
     @property
-    def trdrg(self):
-        if self._trdrg is None:
-            self._trdrg = self.res.rho*multiply(self.phi, self.res.sys.bdg*self.phi)
-        return self._trdrg
-    @property
     def trfrc(self):
         if self._trfrc is None:
-            self._trfrc = self.res.rho*self.res.speed*multiply(self.phi, self.res.sys.byg)
+            from pygeom.matrix3d import MatrixVector
+            x = self.res.rho*multiply(self.phi, self.res.sys.bdg*self.phi)
+            y = self.res.rho*self.res.speed*multiply(self.phi, self.res.sys.byg)
+            z = self.res.rho*self.res.speed*multiply(self.phi, self.res.sys.blg)
+            self._trfrc = MatrixVector(x, y, z)
         return self._trfrc
     @property
-    def trlft(self):
-        if self._trlft is None:
-            self._trlft = self.res.rho*self.res.speed*multiply(self.phi, self.res.sys.blg)
-        return self._trlft
+    def trdrg(self):
+        if self._trdrg is None:
+            dynpr = (self.res.rho/2)*elementwise_dot_product(self.res.bvv, self.res.bvv)
+            self._trdrg = elementwise_multiply(self.res.sys.bda, dynpr*ihat)
+        return self._trdrg
     @property
     def trmom(self):
         if self._trmom is None:
-            self._trmom = -self.res.rho*self.res.speed*multiply(self.phi, self.res.sys.bmg)
+            self._trmom = elementwise_cross_product(self.res.brm, self.trfrc)
         return self._trmom
     @property
-    def trdrgtot(self):
-        if self._trdrgtot is None:
-            self._trdrgtot = sum(self.trdrg.transpose().tolist()[0])
-        return self._trdrgtot
+    def trdrm(self):
+        if self._trdrm is None:
+            self._trdrm = elementwise_cross_product(self.res.brm, self.trdrg)
+        return self._trdrm
     @property
     def trfrctot(self):
         if self._trfrctot is None:
-            self._trfrctot = sum(self.trfrc.transpose().tolist()[0])
+            self._trfrctot = self.trfrc.sumall()
         return self._trfrctot
     @property
-    def trlfttot(self):
-        if self._trlfttot is None:
-            self._trlfttot = sum(self.trlft.transpose().tolist()[0])
-        return self._trlfttot
+    def trdrgtot(self):
+        if self._trdrgtot is None:
+            self._trdrgtot = self.trdrg.sumall()
+        return self._trdrgtot
     @property
     def trmomtot(self):
         if self._trmomtot is None:
-            self._trmomtot = sum(self.trmom.transpose().tolist()[0])
+            self._trmomtot = self.trmom.sumall()
         return self._trmomtot
+    @property
+    def trdrmtot(self):
+        if self._trdrmtot is None:
+            self._trdrmtot = self.trdrm.sumall()
+        return self._trdrmtot
     @property
     def CDi(self):
         if self._CDi is None:
-            self._CDi = self.trdrgtot/self.res.qfs/self.res.sys.sref
+            self._CDi = self.trfrctot.x/self.res.qfs/self.res.sys.sref
         return self._CDi
     @property
     def CY(self):
         if self._CY is None:
-            self._CY = self.trfrctot/self.res.qfs/self.res.sys.sref
+            self._CY = self.trfrctot.y/self.res.qfs/self.res.sys.sref
         return self._CY
     @property
     def CL(self):
         if self._CL is None:
-            self._CL = self.trlfttot/self.res.qfs/self.res.sys.sref
+            self._CL = self.trfrctot.z/self.res.qfs/self.res.sys.sref
         return self._CL
+    @property
+    def Cl(self):
+        if self._Cl is None:
+            self._Cl = self.trmomtot.x/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+        return self._Cl
+    @property
+    def Cm(self):
+        if self._Cm is None:
+            self._Cm = self.trmomtot.y/self.res.qfs/self.res.sys.sref/self.res.sys.cref
+        return self._Cm
+    @property
+    def Cn(self):
+        if self._Cn is None:
+            self._Cn = self.trmomtot.z/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+        return self._Cn
     @property
     def e(self):
         if self._e is None:
@@ -920,7 +1104,37 @@ class PhiResult(object):
                 self._e = (self.CL**2+self.CY**2)/pi/self.res.sys.ar/self.CDi
         return self._e
     @property
-    def Cl(self):
-        if self._Cl is None:
-            self._Cl = self.trmomtot/self.res.qfs/self.res.sys.sref/self.res.sys.bref
-        return self._Cl
+    def CDo(self):
+        if self._CDo is None:
+            self._CDo = self.trdrgtot.x/self.res.qfs/self.res.sys.sref
+        return self._CDo
+    @property
+    def CYo(self):
+        if self._CYo is None:
+            self._CYo = self.trdrgtot.y/self.res.qfs/self.res.sys.sref
+        return self._CYo
+    @property
+    def CLo(self):
+        if self._CLo is None:
+            self._CLo = self.trdrgtot.z/self.res.qfs/self.res.sys.sref
+        return self._CLo
+    @property
+    def Clo(self):
+        if self._Clo is None:
+            self._Clo = -self.trdrmtot.x/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+        return self._Clo
+    @property
+    def Cmo(self):
+        if self._Cmo is None:
+            self._Cmo = self.trdrmtot.y/self.res.qfs/self.res.sys.sref/self.res.sys.cref
+        return self._Cmo
+    @property
+    def Cno(self):
+        if self._Cno is None:
+            self._Cno = -self.trdrmtot.z/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+        return self._Cno
+    @property
+    def lod(self):
+        if self._lod is None:
+            self._lod = self.CL/(self.CDo+self.CDi)
+        return self._lod

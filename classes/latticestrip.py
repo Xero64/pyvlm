@@ -9,10 +9,13 @@ class LatticeStrip(object):
     crd2 = None
     ang1 = None
     ang2 = None
+    cdo1 = None
+    cdo2 = None
     bspc = None
     bfrc = None
     leni = None
     pnti = None
+    pntq = None
     pnls = None
     msid = None
     sht = None
@@ -22,6 +25,7 @@ class LatticeStrip(object):
     dst = None
     _crd = None
     _ang = None
+    _cdo = None
     _area = None
     def __init__(self, lsid: int, pnt1: Point, pnt2: Point, crd1: float, crd2: float, bspc: tuple):
         self.lsid = lsid
@@ -40,9 +44,16 @@ class LatticeStrip(object):
         self.dyt = self.leni.y
         self.dzt = self.leni.z
         self.dst = (self.dyt**2+self.dzt**2)**0.5
+        pnta = self.pnt1+0.25*self.crd1*ihat
+        pntb = self.pnt2+0.25*self.crd2*ihat
+        vecab = pntb-pnta
+        self.pntq = pnta+self.bfrc*vecab
     def set_angles(self, ang1: float, ang2: float):
         self.ang1 = ang1
         self.ang2 = ang2
+    def set_cdo(self, cdo1: float, cdo2: float):
+        self.cdo1 = cdo1
+        self.cdo2 = cdo2
     def add_panel(self, pnl):
         self.pnls.append(pnl)
     def set_mirror(self, mstrp):
@@ -107,9 +118,19 @@ class LatticeStrip(object):
     @property
     def area(self):
         if self._area is None:
-            # self._area = self.dst*(self.crd1+self.crd2)/2
             self._area = self.dst*self.chord
         return self._area
+    @property
+    def cdo(self):
+        if self._cdo is None:
+            self._cdo = self.cdo1+(self.cdo2-self.cdo1)*self.bfrc
+        return self._cdo
+    @property
+    def cdoarea(self):
+        if self.noload:
+            return 0.0
+        else:
+            return self.cdo*self.area
     @property
     def noload(self):
         return self.sht.noload

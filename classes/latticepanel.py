@@ -90,6 +90,12 @@ class LatticePanel(object):
     @property
     def noload(self):
         return self.strp.noload
+    @property
+    def cdoarea(self):
+        if self.noload:
+            return 0.0
+        else:
+            return self.strp.cdo*self.area
     def dndl(self, gain: float, hvec: Vector):
         return gain*(hvec**self.nrml)
     def velocity(self, pnt: Point):

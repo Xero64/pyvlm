@@ -9,16 +9,14 @@ class LatticeSheet(object):
     sect1 = None
     sect2 = None
     bspace = None
-    yspace = None
     mirror = None
     levec = None
     cord = None
-    nrml = None
     strps = None
     pnls = None
-    mind = None
     ctrls = None
     noload = None
+    area = None
     def __init__(self, sect1: LatticeSection, sect2: LatticeSection):
         self.sect1 = sect1
         self.sect2 = sect2
@@ -31,15 +29,13 @@ class LatticeSheet(object):
         self.inherit_noload()
         self.inherit_spacing()
         self.inherit_controls()
-        # self.noload = inherit_noload(self)
-        # self.bspace = inherit_spacing(self)
-        # self.ctrls = inherit_controls(self)
         self.levec = self.sect2.pnt-self.sect1.pnt
         vecz = (ihat**self.levec).to_unit()
         vecy = (vecz**ihat).to_unit()
         self.cord = Coordinate(self.sect1.pnt, ihat, vecy, vecz)
         self.strps = []
         self.pnls = []
+        self.area = (self.levec*self.cord.diry)*(self.sect2.chord+self.sect1.chord)/2
     def mesh_strips(self, lsid: int):
         self.strps = []
         pnta = self.sect1.pnt
@@ -50,6 +46,9 @@ class LatticeSheet(object):
         anga = self.sect1.angle
         angb = self.sect2.angle
         angr = angb-anga
+        cdoa = self.sect1.cdo
+        cdob = self.sect2.cdo
+        cdor = cdob-cdoa
         lenb = len(self.bspace)
         for i in range(lenb):
             bspc = self.bspace[i]
@@ -63,6 +62,9 @@ class LatticeSheet(object):
             ang1 = anga+bsp1*angr
             ang2 = anga+bsp2*angr
             strp.set_angles(ang1, ang2)
+            cdo1 = cdoa+bsp1*cdor
+            cdo2 = cdoa+bsp2*cdor
+            strp.set_cdo(cdo1, cdo2)
             strp.sht = self
             self.strps.append(strp)
             lsid += 1
@@ -119,69 +121,10 @@ class LatticeSheet(object):
                 hvec = pntb-pnta
                 ctrl.set_hinge_vector(hvec)
     def set_control_panels(self):
-        # print(f'# Sheet Panels = {len(self.pnls):d}')
         for control in self.ctrls:
-            # print(f'Setting {control:s} panels!')
             ctrl = self.ctrls[control]
             for pnl in self.pnls:
                 if pnl.cspc[3] >= ctrl.xhinge:
                     ctrl.add_panel(pnl)
-    # def set_control_points_and_normals(self):
-    #     for pnl in self.pnls:
-    #         pntc = pnl.return_panel_point()
-    #         pnl.set_control_point(pntc)
-    #         pnl.set_camber_angle(0.0)
     def __repr__(self):
         return '<LatticeSheet>'
-
-# def inherit_noload(sht: LatticeSheet):
-#     if sht.mirror:
-#         noload = sht.sect2.noload
-#     else:
-#         noload = sht.sect1.noload
-#     return noload
-
-# def inherit_spacing(sht: LatticeSheet):
-#     if sht.mirror:
-#         if sht.sect2.bspace is None:
-#             bspace = [(0.0, 0.5, 1.0)]
-#         else:
-#             lenb = len(sht.sect2.bspace)
-#             bspace = []
-#             for i in range(lenb):
-#                 blst = []
-#                 for j in range(2, -1, -1):
-#                     blst.append(1.0-sht.sect2.bspace[i][j])
-#                 bspace.append(tuple(blst))
-#             bspace.reverse()
-#     else:
-#         if sht.sect1.bspace is None:
-#             bspace = [(0.0, 0.5, 1.0)]
-#         else:
-#             bspace = sht.sect1.bspace
-#     return bspace
-
-# def inherit_controls(sht: LatticeSheet):
-#     ctrls = {}
-#     if sht.mirror:
-#         for control in sht.sect2.ctrls:
-#             ctrl = sht.sect2.ctrls[control]
-#             newctrl = ctrl.duplicate(mirror=True)
-#             ctrls[control] = newctrl
-#     else:
-#         for control in sht.sect1.ctrls:
-#             ctrl = sht.sect1.ctrls[control]
-#             newctrl = ctrl.duplicate(mirror=False)
-#             ctrls[control] = newctrl
-#     for control in ctrls:
-#         ctrl = ctrls[control]
-#         if ctrl.uhvec.return_magnitude() == 0.0:
-#             pnt1 = sht.sect1.pnt
-#             crd1 = sht.sect1.chord
-#             pnta = pnt1+crd1*ihat*ctrl.xhinge
-#             pnt2 = sht.sect2.pnt
-#             crd2 = sht.sect2.chord
-#             pntb = pnt2+crd2*ihat*ctrl.xhinge
-#             hvec = pntb-pnta
-#             ctrl.set_hinge_vector(hvec)
-#     return ctrls

@@ -13,6 +13,7 @@ class LatticeSection(object):
     mirror = None
     noload = None
     ctrls = None
+    cdo = None
     def __init__(self, pnt: Point, chord: float, angle: float):
         self.pnt = pnt
         self.chord = chord
@@ -23,6 +24,7 @@ class LatticeSection(object):
         self.mirror = False
         self.camber = FlatPlate()
         self.ctrls = {}
+        self.cdo = 0.0
     def set_span_equal_spacing(self, numb: int):
         from pyvlm.tools import equal_spacing
         bsp = equal_spacing(2*numb)
@@ -48,6 +50,8 @@ class LatticeSection(object):
                 self.airfoil = airfoil
     def set_noload(self, noload: bool):
         self.noload = noload
+    def set_cdo(self, cdo: float):
+        self.cdo = cdo
     def add_control(self, ctrl: LatticeControl):
         self.ctrls[ctrl.name] = ctrl
     def return_mirror(self):
@@ -58,8 +62,9 @@ class LatticeSection(object):
         sect.camber = self.camber
         sect.bspace = self.bspace
         sect.yspace = self.yspace
-        sect.mirror = True
         sect.ctrls = self.ctrls
+        sect.cdo = self.cdo
+        sect.mirror = True
         return sect
     def return_point(self, percrd: float):
         return self.pnt+self.chord*percrd*ihat
@@ -79,6 +84,8 @@ def latticesecttion_from_json(sectdata: dict):
         ang = 0.0
     pnt = Point(xle, yle, zle)
     sect = LatticeSection(pnt, crd, ang)
+    if 'cdo' in sectdata:
+        sect.set_cdo(sectdata['cdo'])
     if 'noload' in sectdata:
         sect.set_noload(sectdata['noload'])
     if 'airfoil' in sectdata:
