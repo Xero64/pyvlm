@@ -11,12 +11,6 @@ print(lsys)
 #%% Create Elliptical Distribution
 lell = elliptical_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, 10000.0)
 
-# #%% Create Elliptical Result
-# lres_ell = LatticeResult('Equivalent Elliptical', lsys)
-# lres_ell.set_conditions(alpha=0.0)
-# lres_ell.set_lift_distribution(lell, rho=1.0, speed=1.0)
-# print(lres_ell)
-
 #%% Create Elliptical Optimum
 lopt_ell = LatticeOptimum('Equivalent Elliptical', lsys)
 lopt_ell.set_lift_distribution(lell, rho=1.0, speed=100.0)
@@ -33,8 +27,5 @@ axw = None
 axw = lopt_ell.res.plot_trefftz_wash_distribution(ax=axw)
 axw = lopt_ell.res.plot_panel_near_field_velocities(ax=axw, component='z')
 
-
-#%%
-lopt_ell.res.print_panel_near_field_results()
-
-#%%
+#%% Print Near Field Results
+print(lopt_ell.res.panel_near_field_results)

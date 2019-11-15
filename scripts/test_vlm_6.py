@@ -178,7 +178,7 @@ lres_0deg.set_state(alpha=0.0, speed=V)
 lres_0deg.set_density(rho=rho)
 print(lres_0deg)
 
-lres_14deg = LatticeResult('10deg Result', lsys_bll)
+lres_14deg = LatticeResult('14deg Result', lsys_bll)
 lres_14deg.set_state(alpha=14.0, speed=V)
 lres_14deg.set_density(rho=rho)
 print(lres_14deg)
@@ -196,5 +196,3 @@ axd = lres_14deg.plot_trefftz_drag_distribution(ax=axd)
 axw = None
 axw = lres_0deg.plot_trefftz_wash_distribution(ax=axw)
 axw = lres_14deg.plot_trefftz_wash_distribution(ax=axw)
-
-#%%

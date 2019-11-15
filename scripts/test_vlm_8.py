@@ -8,10 +8,10 @@ lsys = load_package_file(jsonfilename)
 print(lsys)
 
 #%% Original Strip Geometry
-lsys.print_strip_geometry()
+print(lsys.strip_geometry)
 
 #%% Original Strip Geometry
-lsys.print_panel_geometry()
+print(lsys.panel_geometry)
 
 #%% Original Case
 
@@ -23,13 +23,13 @@ print(lres_org)
 # lres_org.print_aerodynamic_coefficients()
 
 #%% Original Strip Forces
-lres_org.print_strip_forces()
+print(lres_org.strip_forces)
 
 #%% Original Strip Coefficients
-lres_org.print_strip_coefficients()
+print(lres_org.strip_coefficients)
 
 #%% Original Panel Forces
-lres_org.print_panel_forces()
+print(lres_org.panel_forces)
 
 #%% Plot Distribution
 axl = lres_org.plot_trefftz_lift_distribution()
@@ -44,12 +44,7 @@ axw = lres_org.plot_panel_near_field_velocities(component='z')
 print(lres_org)
 
 #%% Print Stability Derivatives
-lres_org.print_stability_derivatives()
+print(lres_org.stability_derivatives)
 
 #%% Print Control Derivatives
-lres_org.print_control_derivatives()
-
-#%% Checks
-# print(lres_org.ofs.x*lsys.bref/2/lres_org.speed)
-# print(lres_org.ofs.y*lsys.cref/2/lres_org.speed)
-# print(lres_org.ofs.z*lsys.bref/2/lres_org.speed)
+print(lres_org.control_derivatives)
