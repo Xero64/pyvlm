@@ -1,3 +1,4 @@
+from .airfoil import Airfoil, airfoil_from_dat
 from .camber import NACA4, NACA6Series
 from .spacing import normalise_spacing, equal_spacing
 from .spacing import semi_cosine_spacing, semi_elliptical_spacing
