@@ -1,6 +1,6 @@
 #%% Import Dependencies
 from pyvlm import LatticeResult, LatticeOptimum
-from pyvlm.files import load_package_file
+from pyvlm_files import load_package_file
 
 #%% Low AR Wing
 jsonfilename1 = "Sweep_Low_AR_100.json"

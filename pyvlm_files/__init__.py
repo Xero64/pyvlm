@@ -10,6 +10,6 @@ filepaths = glob(query)
 filedict = {basename(filepath): filepath for filepath in filepaths}
 
 def load_package_file(filename):
-    from ..classes.latticesystem import latticesystem_from_json
+    from pyvlm.classes import latticesystem_from_json
     filepath = filedict[filename]
     return latticesystem_from_json(filepath)

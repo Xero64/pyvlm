@@ -1,7 +1,7 @@
 #%% Import Dependencies
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm.tools import bell_lift_distribution, elliptical_lift_distribution
-from pyvlm.files import load_package_file
+from pyvlm_files import load_package_file
 
 #%% Inputs
 L = 64.498 # N

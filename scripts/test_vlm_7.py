@@ -1,6 +1,6 @@
 #%% Load Dependencies
 from pyvlm import LatticeResult, LatticeOptimum
-from pyvlm.files import load_package_file
+from pyvlm_files import load_package_file
 from pyvlm.tools import elliptical_lift_distribution
 
 #%% Create Lattice System

@@ -1,6 +1,6 @@
 #%% Import Dependencies
 from pyvlm import LatticeResult, LatticeOptimum
-from pyvlm.files import load_package_file
+from pyvlm_files import load_package_file
 from pyvlm.tools import bell_lift_distribution
 
 #%% Parameters

@@ -1,6 +1,6 @@
 #%% Load Dependencies
 from pyvlm import LatticeResult, LatticeOptimum
-from pyvlm.files import load_package_file
+from pyvlm_files import load_package_file
 
 #%% Create Lattice System
 jsonfilename = "Straight_Wing_Cosine_100.json"
