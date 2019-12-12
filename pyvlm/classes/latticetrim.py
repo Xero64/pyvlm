@@ -151,3 +151,17 @@ class LatticeTrim(LatticeResult):
             if i >= imax:
                 print('Convergence failed!')
                 return False
+    def to_result(self, name: str=''):
+        if name == '':
+            name = self.name
+        res = LatticeResult(name, self.sys)
+        res.rho = self.rho
+        res.speed = self.speed
+        res.alpha = self.alpha
+        res.beta = self.beta
+        res.pbo2V = self.pbo2V
+        res.qco2V = self.qco2V
+        res.rbo2V = self.rbo2V
+        res.ctrls = self.ctrls
+        res.rcg = self.rcg
+        return res
