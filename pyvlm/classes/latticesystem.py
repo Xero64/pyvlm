@@ -19,13 +19,11 @@ class LatticeSystem(object):
     _gam = None
     _avg = None
     _afg = None
-    # _amg = None
     _avc = None
     _aic = None
     _afs = None
     _adc = None
     _ada = None
-    # _ama = None
     _bvg = None
     _bdg = None
     _blg = None
@@ -35,6 +33,7 @@ class LatticeSystem(object):
     _ar = None
     _cdo = None
     _cdo_ff = None
+    results = None
     def __init__(self, name: str, srfcs: list, bref: float, cref: float, sref: float, rref: Point):
         self.name = name
         self.srfcs = srfcs
@@ -42,6 +41,7 @@ class LatticeSystem(object):
         self.cref = cref
         self.sref = sref
         self.rref = rref
+        self.results = {}
         self.mesh()
         self.inherit()
         self.build()
@@ -94,7 +94,6 @@ class LatticeSystem(object):
         self.gam
         self.avg
         self.afg
-        # self.amg
         self.bvg
         self.bdg
         self.blg
@@ -192,17 +191,6 @@ class LatticeSystem(object):
                 if not pnl.noload:
                     self._afg[i, :] = self.avg[i, :]**pnl.leni
         return self._afg
-    # @property
-    # def amg(self):
-    #     if self._amg is None:
-    #         num = len(self.pnls)
-    #         self._amg = zero_matrix_vector((num, num))
-    #         for pnl in self.pnls:
-    #             i = pnl.lpid
-    #             if not pnl.noload:
-    #                 rrel = pnl.pnti-self.rref
-    #                 self._amg[i, :] = rrel**self.afg[i, :]
-    #     return self._amg
     @property
     def adc(self):
         if self._adc is None:
@@ -230,17 +218,6 @@ class LatticeSystem(object):
                 dragarea += self.ada[i, 0]
             self._cdo = dragarea/self.sref
         return self._cdo
-    # @property
-    # def ama(self):
-    #     if self._ama is None:
-    #         num = len(self.pnls)
-    #         self._ama = zero_matrix_vector((num, 1))
-    #         for pnl in self.pnls:
-    #             i = pnl.lpid
-    #             if not pnl.noload:
-    #                 rrel = pnl.pnti-self.rref
-    #                 self._ama[i, 0] = rrel
-    #     return self._ama
     @property
     def bvg(self):
         if self._bvg is None:
@@ -385,9 +362,13 @@ class LatticeSystem(object):
 
 def latticesystem_from_json(jsonfilepath: str):
     from .latticesurface import latticesurface_from_json
+    from .latticeresult import latticeresult_from_json
+    from .latticetrim import latticetrim_from_json
     from json import load
+
     with open(jsonfilepath, 'rt') as jsonfile:
         data = load(jsonfile)
+    
     name = data['name']
     sfcs = []
     for surfdata in data['surfaces']:
@@ -400,5 +381,15 @@ def latticesystem_from_json(jsonfilepath: str):
     yref = data['yref']
     zref = data['zref']
     rref = Point(xref, yref, zref)
-    sys = LatticeSystem(name, sfcs, bref, cref, sref, rref)
-    return sys
+    lsys = LatticeSystem(name, sfcs, bref, cref, sref, rref)
+
+    if 'cases' in data:
+        lsys.build()
+        for i in range(len(data['cases'])):
+            resdata = data['cases'][i]
+            if 'trim' in resdata:
+                latticetrim_from_json(lsys, resdata)
+            else:
+                latticeresult_from_json(lsys, resdata)
+    
+    return lsys

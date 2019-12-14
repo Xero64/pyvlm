@@ -4,6 +4,7 @@ from .latticesystem import LatticeSystem
 from numpy.matlib import zeros
 from numpy.linalg import norm, inv
 from math import degrees, radians
+from pygeom.geom3d import Point
 
 class LatticeTrim(LatticeResult):
     CLt = None
@@ -43,6 +44,12 @@ class LatticeTrim(LatticeResult):
         Ccur[2, 0] = self.nfres.Cl
         Ccur[3, 0] = self.nfres.Cm
         Ccur[4, 0] = self.nfres.Cn
+        if self.sys.cdo != 0.0:
+            Ccur[0, 0] += self.pdres.CL
+            Ccur[1, 0] += self.pdres.CY
+            Ccur[2, 0] += self.pdres.Cl
+            Ccur[3, 0] += self.pdres.Cm
+            Ccur[4, 0] += self.pdres.Cn
         return Ccur
     def current_Dmat(self):
         numc = len(self.sys.ctrls)
@@ -87,47 +94,34 @@ class LatticeTrim(LatticeResult):
             c += 1
         return H
     def trim_iteration(self, crit: float=1e-6, imax: int=100):
-        start = time()
         Ctgt = self.target_Cmat()
         Ccur = self.current_Cmat()
         Cdff = Ctgt-Ccur
-        # nrmC = norm(Cdff)
         H = self.Hmat()
-        # print(f'H = {H}')
         A = H.transpose()*H
         Ainv = inv(A)
         Dcur = self.current_Dmat()
         B = H.transpose()*Cdff
         Ddff = Ainv*B
         Dcur = Dcur+Ddff
-        # i = 0
-        # while nrmC > crit:
-        #     B = H.transpose()*Cdff
-        #     Ddff = Ainv*B
-        #     Dcur = Dcur+Ddff
-        #     Ccur = Ccur+H*Ddff
-        #     Cdff = Ctgt-Ccur
-        #     nrmC = norm(Cdff)
-        #     print(f'normC = {nrmC}')
-        #     i += 1
-        #     if i >= imax:
-        #         print('Convergence failed!')
-        #         return False
-        # print(f'Internal Iteration Counter = {i:d}')
-        finish = time()
-        elapsed = finish-start
-        print(f'Trim Internal Iteration Duration = {elapsed:.3f} seconds.')
         return Dcur
-    def trim(self, crit: float=1e-6, imax: int=100):
+    def trim(self, crit: float=1e-6, imax: int=100, display=False):
         Ctgt = self.target_Cmat()
         Ccur = self.current_Cmat()
         Cdff = Ctgt-Ccur
         nrmC = norm(Cdff)
-        print(f'normC = {nrmC}')
+        if display:
+            print(f'normC = {nrmC}')
         i = 0
         while nrmC > crit:
-            print(f'Iteration {i:d}')
+            if display:
+                print(f'Iteration {i:d}')
+                start = time()
             Dcur = self.trim_iteration(crit, imax)
+            if display:
+                finish = time()
+                elapsed = finish-start
+                print(f'Trim Internal Iteration Duration = {elapsed:.3f} seconds.')
             if Dcur is False:
                 return
             alpha = degrees(Dcur[0, 0])
@@ -142,26 +136,59 @@ class LatticeTrim(LatticeResult):
             Ccur = self.current_Cmat()
             Cdff = Ctgt-Ccur
             nrmC = norm(Cdff)
-            print(f'alpha = {alpha:.6f} deg')
-            print(f'beta = {beta:.6f} deg')
-            for control in ctrls:
-                print(f'{control} = {ctrls[control]:.6f} deg')
-            print(f'normC = {nrmC}')
+            if display:
+                print(f'alpha = {alpha:.6f} deg')
+                print(f'beta = {beta:.6f} deg')
+                for control in ctrls:
+                    print(f'{control} = {ctrls[control]:.6f} deg')
+                print(f'normC = {nrmC}')
             i += 1
             if i >= imax:
                 print('Convergence failed!')
                 return False
-    def to_result(self, name: str=''):
-        if name == '':
-            name = self.name
-        res = LatticeResult(name, self.sys)
-        res.rho = self.rho
-        res.speed = self.speed
-        res.alpha = self.alpha
-        res.beta = self.beta
-        res.pbo2V = self.pbo2V
-        res.qco2V = self.qco2V
-        res.rbo2V = self.rbo2V
-        res.ctrls = self.ctrls
-        res.rcg = self.rcg
-        return res
+
+def latticetrim_from_json(lsys: LatticeSystem, resdata: dict):
+    from pyvlm.tools.trim import LoopingTrim,TurningTrim
+    name = resdata['name']
+
+    m = 1.0
+    if 'mass' in resdata:
+        m = resdata['mass']
+
+    if resdata['trim'] == 'Looping Trim':
+        trim = LoopingTrim(name, lsys)
+        n = 1.0
+        if 'load factor' in resdata:
+            n = resdata['load factor']
+        trim.set_mass_and_load_factor(m, n)
+    elif resdata['trim'] == 'Turning Trim':
+        trim = TurningTrim(name, lsys)
+        bang = 0.0
+        if 'bank angle' in resdata:
+            bang = resdata['bank angle']
+        trim.set_mass_and_bank_angle(m, bang)
+    
+    rho = 1.0
+    if 'density' in resdata:
+        rho = resdata['density']
+    speed = 1.0
+    if 'speed' in resdata:
+        speed = resdata['speed']
+    trim.set_speed_and_density(speed, rho)
+
+    if 'gravacc' in resdata:
+        g = resdata['gravacc']
+        trim.set_gravitational_acceleration(g)
+
+    ltrm = trim.create_trim_result()
+
+    if 'rcg' in resdata:
+        rcgdata = resdata['rcg']
+        rcg = Point(rcgdata['x'], rcgdata['y'], rcgdata['z'])
+        ltrm.set_cg(rcg)
+
+    lsys.results[name] = ltrm
+
+    ltrm.trim()
+
+    return ltrm
