@@ -35,5 +35,28 @@
                 }
             ]            
         }
-    ]
+    ],
+    "cases": [
+        {
+            "name": "Test Alpha",
+            "alpha": 3.0
+        },
+        {
+            "name": "Test Beta",
+            "beta": 3.0
+        },
+        {
+            "name": "Test pbo2V",
+            "pbo2V": 0.01
+        },
+        {
+            "name": "Test qco2V",
+            "qco2V": 0.01
+        },
+        {
+            "name": "Test rbo2V",
+            "rbo2V": 0.01
+        }
+    ],
+    "outputs": []
 }

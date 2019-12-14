@@ -1,6 +1,6 @@
 #%% Import Dependencies
 from pyvlm import LatticeResult, LatticeOptimum
-from pyvlm.files import load_package_file
+from pyvlm_files import load_package_file
 from pyvlm.tools import Bell
 
 #%% Low AR Wing
@@ -16,13 +16,13 @@ y = [pnt.y for pnt in lsys.srfcs[0].pnts[:, 0].transpose().tolist()[0]]
 
 bll = Bell(lsys.bref, y)
 bll.set_lift(1.0)
-bll.set_ym(lsys.strpy)
+bll.set_ym(lsys.srfcs[0].strpy)
 l = bll.return_phi()
 
 #%% Low AR Wing Optimum
 
 lres = LatticeResult('Low AR Wing', lsys)
-lres.set_conditions()
+lres.set_state()
 lres.set_lift_distribution(l, rho=1.0, speed=1.0)
 print(lres)
 

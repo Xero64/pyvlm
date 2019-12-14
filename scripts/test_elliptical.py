@@ -1,6 +1,6 @@
 #%% Import Dependencies
 from pyvlm import LatticeResult, LatticeOptimum
-from pyvlm.files import load_package_file
+from pyvlm_files import load_package_file
 from pyvlm.tools import Elliptical
 
 #%% Low AR Wing
@@ -16,13 +16,13 @@ y = [pnt.y for pnt in lsys.srfcs[0].pnts[:, 0].transpose().tolist()[0]]
 
 ell = Elliptical(lsys.bref, y)
 ell.set_lift(1.0)
-ell.set_ym(lsys.strpy)
+ell.set_ym(lsys.srfcs[0].strpy)
 l = ell.return_phi()
 
 #%% Low AR Wing Optimum
 
 lres = LatticeResult('Low AR Wing', lsys)
-lres.set_conditions()
+lres.set_state()
 lres.set_lift_distribution(l, rho=1.0, speed=1.0)
 print(lres)
 
@@ -44,7 +44,7 @@ axw2 = ell.plot_trefftz_wash_distribution(ax=axw2)
 #%% Variables
 
 well = ell.trefftz_wash_distribution()
-wres = lres.trwsh
+wres = lres.trres.trwsh
 
 from matplotlib.pyplot import figure
 
@@ -53,7 +53,7 @@ ax = fig.gca()
 ax.grid(True)
 ax.plot([0.0], [0.0])
 ax.plot(ell.y, well, label='Theory')
-ax.plot(lsys.strpy, wres, label='Result')
+ax.plot(lsys.srfcs[0].strpy, wres, label='Result')
 l = ax.legend()
 
 # # bvg = lsys.bvg.tolist()
