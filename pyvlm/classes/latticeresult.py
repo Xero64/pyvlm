@@ -455,15 +455,11 @@ class LatticeResult(object):
         if name == '':
             name = self.name
         res = LatticeResult(name, self.sys)
-        res.rho = self.rho
-        res.speed = self.speed
-        res.alpha = self.alpha
-        res.beta = self.beta
-        res.pbo2V = self.pbo2V
-        res.qco2V = self.qco2V
-        res.rbo2V = self.rbo2V
-        res.ctrls = self.ctrls
-        res.rcg = self.rcg
+        res.set_density(rho=self.rho)
+        res.set_state(speed=self.speed, alpha=self.alpha, beta=self.beta,
+                      pbo2V=self.pbo2V, qco2V=self.qco2V, rbo2V=self.rbo2V)
+        res.set_controls(**self.ctrls)
+        res.set_cg(self.rcg)
         return res
     @property
     def surface_loads(self):
@@ -615,56 +611,61 @@ class LatticeResult(object):
             Fy = self.nfres.nffrc[j, 0].y
             Fz = self.nfres.nffrc[j, 0].z
             table.add_row([j, k, gamma, Vx, Vy, Vz, lx, ly, lz, Fx, Fy, Fz])
-        return table._repr_markdown_()
+        return table
     @property
     def stability_derivatives(self):
-        from py2md.classes import MDTable
+        from py2md.classes import MDTable, MDHeading, MDReport
         from . import sfrm
-        outstr = '\n# Stability Derivatives\n'
+        report = MDReport()
+        heading = MDHeading('Stability Derivatives', 1)
+        report.add_object(heading)
         table = MDTable()
         table.add_column('CLa', sfrm, data=[self.stres['alpha'].CL])
         table.add_column('CYa', sfrm, data=[self.stres['alpha'].CY])
         table.add_column('Cla', sfrm, data=[self.stres['alpha'].Cl])
         table.add_column('Cma', sfrm, data=[self.stres['alpha'].Cm])
         table.add_column('Cna', sfrm, data=[self.stres['alpha'].Cn])
-        outstr += table._repr_markdown_()
+        report.add_object(table)
         table = MDTable()
         table.add_column('CLb', sfrm, data=[self.stres['beta'].CL])
         table.add_column('CYb', sfrm, data=[self.stres['beta'].CY])
         table.add_column('Clb', sfrm, data=[self.stres['beta'].Cl])
         table.add_column('Cmb', sfrm, data=[self.stres['beta'].Cm])
         table.add_column('Cnb', sfrm, data=[self.stres['beta'].Cn])
-        outstr += table._repr_markdown_()
+        report.add_object(table)
         table = MDTable()
         table.add_column('CLp', sfrm, data=[self.stres['pbo2V'].CL])
         table.add_column('CYp', sfrm, data=[self.stres['pbo2V'].CY])
         table.add_column('Clp', sfrm, data=[self.stres['pbo2V'].Cl])
         table.add_column('Cmp', sfrm, data=[self.stres['pbo2V'].Cm])
         table.add_column('Cnp', sfrm, data=[self.stres['pbo2V'].Cn])
-        outstr += table._repr_markdown_()
+        report.add_object(table)
         table = MDTable()
         table.add_column('CLq', sfrm, data=[self.stres['qco2V'].CL])
         table.add_column('CYq', sfrm, data=[self.stres['qco2V'].CY])
         table.add_column('Clq', sfrm, data=[self.stres['qco2V'].Cl])
         table.add_column('Cmq', sfrm, data=[self.stres['qco2V'].Cm])
         table.add_column('Cnq', sfrm, data=[self.stres['qco2V'].Cn])
-        outstr += table._repr_markdown_()
+        report.add_object(table)
         table = MDTable()
         table.add_column('CLr', sfrm, data=[self.stres['rbo2V'].CL])
         table.add_column('CYr', sfrm, data=[self.stres['rbo2V'].CY])
         table.add_column('Clr', sfrm, data=[self.stres['rbo2V'].Cl])
         table.add_column('Cmr', sfrm, data=[self.stres['rbo2V'].Cm])
         table.add_column('Cnr', sfrm, data=[self.stres['rbo2V'].Cn])
-        outstr += table._repr_markdown_()
-        return outstr
+        report.add_object(table)
+        return report
     @property
     def control_derivatives(self):
-        from py2md.classes import MDTable
+        from py2md.classes import MDTable, MDHeading, MDReport
         from . import sfrm
-        outstr = '\n# Control Derivatives\n'
+        report = MDReport()
+        heading = MDHeading('Control Derivatives', 1)
+        report.add_object(heading)
         for control in self.ctrls:
             letter = control[0]
-            outstr += f'\n## {control.capitalize()} Derivatives\n'
+            heading = MDHeading(f'{control.capitalize()} Derivatives', 2)
+            report.add_object(heading)
             table = MDTable()
             table.add_column(f'CLd{letter:s}', sfrm)
             table.add_column(f'CYd{letter:s}', sfrm)
@@ -677,8 +678,8 @@ class LatticeResult(object):
             if self.ctrls[control] <= 0.0:
                 ctresp = self.ctresp[control]
                 table.add_row([ctresp.CL, ctresp.CY, ctresp.Cl, ctresp.Cm, ctresp.Cn])
-            outstr += table._repr_markdown_()
-        return outstr
+            report.add_object(table)
+        return report
     def __str__(self):
         from py2md.classes import MDTable
         from . import cfrm, dfrm, efrm
@@ -816,16 +817,10 @@ class GammaResult(object):
     _nfvel = None
     _nffrc = None
     _nfmom = None
-    _nfdrg = None
-    _nfdrm = None
     _nffrctot = None
     _nfmomtot = None
-    _nfdrgtot = None
-    _nfdrmtot = None
     _Cfrc = None
     _Cmom = None
-    _Cdrg = None
-    _Cdrm = None
     _CDi = None
     _CY = None
     _CL = None
@@ -833,13 +828,6 @@ class GammaResult(object):
     _Cl = None
     _Cm = None
     _Cn = None
-    _CDo = None
-    _CYo = None
-    _CLo = None
-    _Clo = None
-    _Cmo = None
-    _Cno = None
-    _lod = None
     def __init__(self, res: LatticeResult, gamma: matrix):
         self.res = res
         self.gamma = gamma
@@ -865,18 +853,6 @@ class GammaResult(object):
             self._nfmom = elementwise_cross_product(self.res.arm, self.nffrc)
         return self._nfmom
     @property
-    def nfdrg(self):
-        if self._nfdrg is None:
-            nfvelmag2 = elementwise_dot_product(self.nfvel, self.nfvel)
-            dynpr = (self.res.rho/2)*nfvelmag2
-            self._nfdrg = elementwise_multiply(self.res.sys.ada, ihat*dynpr)
-        return self._nfdrg
-    @property
-    def nfdrm(self):
-        if self._nfdrm is None:
-            self._nfdrm = elementwise_cross_product(self.res.arm, self.nfdrg)
-        return self._nfdrm
-    @property
     def nffrctot(self):
         if self._nffrctot is None:
             self._nffrctot = self.nffrc.sumall()
@@ -887,16 +863,6 @@ class GammaResult(object):
             self._nfmomtot = self.nfmom.sumall()
         return self._nfmomtot
     @property
-    def nfdrgtot(self):
-        if self._nfdrgtot is None:
-            self._nfdrgtot = self.nfdrg.sumall()
-        return self._nfdrgtot
-    @property
-    def nfdrmtot(self):
-        if self._nfdrmtot is None:
-            self._nfdrmtot = self.nfdrm.sumall()
-        return self._nfdrmtot
-    @property
     def Cfrc(self):
         if self._Cfrc is None:
             self._Cfrc = self.nffrctot/self.res.qfs/self.res.sys.sref
@@ -906,16 +872,6 @@ class GammaResult(object):
         if self._Cmom is None:
             self._Cmom = self.nfmomtot/self.res.qfs/self.res.sys.sref
         return self._Cmom
-    @property
-    def Cdrg(self):
-        if self._Cdrg is None:
-            self._Cdrg = self.nfdrgtot/self.res.qfs/self.res.sys.sref
-        return self._Cdrg
-    @property
-    def Cdrm(self):
-        if self._Cdrm is None:
-            self._Cdrm = self.nfdrmtot/self.res.qfs/self.res.sys.sref
-        return self._Cdrm
     @property
     def CDi(self):
         if self._CDi is None:
@@ -1077,7 +1033,7 @@ class ParasiticDragResult(object):
     def pdfrc(self):
         if self._pdfrc is None:
             dynpr = (self.res.rho/2)*elementwise_dot_product(self.res.bvv, self.res.bvv)
-            self._pdfrc = elementwise_multiply(self.res.sys.bda, dynpr*ihat)
+            self._pdfrc = elementwise_multiply(self.res.sys.bda, dynpr*self.res.acs.dirx)
         return self._pdfrc
     @property
     def pdmom(self):
@@ -1163,15 +1119,12 @@ def latticeresult_from_json(lsys: LatticeSystem, resdata: dict):
             lres.set_state(beta=beta)
         elif key ==  'pbo2V':
             pbo2V = resdata['pbo2V']
-            print(f'pbo2V = {pbo2V}')
             lres.set_state(pbo2V=pbo2V)
         elif key ==  'qco2V':
             qco2V = resdata['qco2V']
-            print(f'qco2V = {qco2V}')
             lres.set_state(qco2V=qco2V)
         elif key ==  'rbo2V':
             rbo2V = resdata['rbo2V']
-            print(f'rbo2V = {rbo2V}')
             lres.set_state(rbo2V=rbo2V)
         elif key in lres.ctrls:
             lres.ctrls[key] = resdata[key]

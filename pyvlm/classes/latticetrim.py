@@ -144,7 +144,7 @@ class LatticeTrim(LatticeResult):
                 print(f'normC = {nrmC}')
             i += 1
             if i >= imax:
-                print('Convergence failed!')
+                print(f'Convergence failed for {self.name}!')
                 return False
 
 def latticetrim_from_json(lsys: LatticeSystem, resdata: dict):
