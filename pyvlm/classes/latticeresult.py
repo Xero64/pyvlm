@@ -249,8 +249,7 @@ class LatticeResult(object):
                 if pnl.noload:
                     self._avv[i, 0] = Vector(0.0, 0.0, 0.0)
                 else:
-                    # rpi = self.sys.pnls[i].pnti-self.rcg
-                    self._avv[i, 0] = self.vfs+self.ofs**self.arm[i, 0]
+                    self._avv[i, 0] = self.vfs-self.ofs**self.arm[i, 0]
         return self._avv
     @property
     def bvv(self):
@@ -262,7 +261,7 @@ class LatticeResult(object):
                 if strp.noload:
                     self._bvv[i, 0] = Vector(0.0, 0.0, 0.0)
                 else:
-                    self._bvv[i, 0] = self.vfs+self.ofs**self.brm[i, 0]
+                    self._bvv[i, 0] = self.vfs-self.ofs**self.brm[i, 0]
         return self._bvv
     @property
     def arm(self):
@@ -718,9 +717,9 @@ class LatticeResult(object):
             outstr += table._repr_markdown_()
         if self.gamma is not None:
             table = MDTable()
-            table.add_column('Cx', cfrm, data=[self.nfres.Cfrc.x])
-            table.add_column('Cy', cfrm, data=[self.nfres.Cfrc.y])
-            table.add_column('Cz', cfrm, data=[self.nfres.Cfrc.z])
+            table.add_column('Cx', cfrm, data=[self.nfres.Cx])
+            table.add_column('Cy', cfrm, data=[self.nfres.Cy])
+            table.add_column('Cz', cfrm, data=[self.nfres.Cz])
             outstr += table._repr_markdown_()
             table = MDTable()
             table.add_column('CDi', dfrm, data=[self.nfres.CDi])
@@ -739,9 +738,9 @@ class LatticeResult(object):
             table.add_column('CDi_ff', dfrm, data=[self.trres.CDi])
             table.add_column('CY_ff', cfrm, data=[self.trres.CY])
             table.add_column('CL_ff', cfrm, data=[self.trres.CL])
-            table.add_column('Cl_ff', cfrm, data=[self.trres.Cl])
-            table.add_column('Cm_ff', cfrm, data=[self.trres.Cm])
-            table.add_column('Cn_ff', cfrm, data=[self.trres.Cn])
+            # table.add_column('Cl_ff', cfrm, data=[self.trres.Cl])
+            # table.add_column('Cm_ff', cfrm, data=[self.trres.Cm])
+            # table.add_column('Cn_ff', cfrm, data=[self.trres.Cn])
             table.add_column('e', efrm, data=[self.trres.e])
             if self.sys.cdo != 0.0:
                 lod_ff = self.trres.CL/(self.pdres.CDo+self.trres.CDi)
@@ -819,8 +818,9 @@ class GammaResult(object):
     _nfmom = None
     _nffrctot = None
     _nfmomtot = None
-    _Cfrc = None
-    _Cmom = None
+    _Cx = None
+    _Cy = None
+    _Cz = None
     _CDi = None
     _CY = None
     _CL = None
@@ -863,63 +863,77 @@ class GammaResult(object):
             self._nfmomtot = self.nfmom.sumall()
         return self._nfmomtot
     @property
-    def Cfrc(self):
-        if self._Cfrc is None:
-            self._Cfrc = self.nffrctot/self.res.qfs/self.res.sys.sref
-        return self._Cfrc
+    def Cx(self):
+        if self._Cx is None:
+            self._Cx = self.nffrctot.x/self.res.qfs/self.res.sys.sref
+            self._Cx = fix_zero(self._Cx)
+        return self._Cx
     @property
-    def Cmom(self):
-        if self._Cmom is None:
-            self._Cmom = self.nfmomtot/self.res.qfs/self.res.sys.sref
-        return self._Cmom
+    def Cy(self):
+        if self._Cy is None:
+            self._Cy = self.nffrctot.y/self.res.qfs/self.res.sys.sref
+            self._Cy = fix_zero(self._Cy)
+        return self._Cy
+    @property
+    def Cz(self):
+        if self._Cz is None:
+            self._Cz = self.nffrctot.z/self.res.qfs/self.res.sys.sref
+            self._Cz = fix_zero(self._Cz)
+        return self._Cz
     @property
     def CDi(self):
         if self._CDi is None:
-            self._CDi = self.res.acs.dirx*self.Cfrc
+            Di = self.res.acs.dirx*self.nffrctot
+            self._CDi = Di/self.res.qfs/self.res.sys.sref
             self._CDi = fix_zero(self._CDi)
         return self._CDi
     @property
     def CY(self):
         if self._CY is None:
-            self._CY = self.res.acs.diry*self.Cfrc
+            Y = self.res.acs.diry*self.nffrctot
+            self._CY = Y/self.res.qfs/self.res.sys.sref
             self._CY = fix_zero(self._CY)
         return self._CY
     @property
     def CL(self):
         if self._CL is None:
-            self._CL = self.res.acs.dirz*self.Cfrc
+            L = self.res.acs.dirz*self.nffrctot
+            self._CL = L/self.res.qfs/self.res.sys.sref
             self._CL = fix_zero(self._CL)
         return self._CL
     @property
-    def e(self):
-        if self._e is None:
-            if self.CDi == 0.0:
-                self._e = float('nan')
-            else:
-                from math import pi
-                self._e = (self.CL**2+self.CY**2)/pi/self.res.sys.ar/self.CDi
-        return self._e
-    @property
     def Cl(self):
         if self._Cl is None:
-            Cmom = self.res.wcs.vector_to_local(self.Cmom)
-            self._Cl = Cmom.x/self.res.sys.bref
+            l = self.res.wcs.dirx*self.nfmomtot
+            self._Cl = l/self.res.qfs/self.res.sys.sref/self.res.sys.bref
             self._Cl = fix_zero(self._Cl)
         return self._Cl
     @property
     def Cm(self):
         if self._Cm is None:
-            Cmom = self.res.wcs.vector_to_local(self.Cmom)
-            self._Cm = Cmom.y/self.res.sys.cref
+            m = self.res.wcs.diry*self.nfmomtot
+            self._Cm = m/self.res.qfs/self.res.sys.sref/self.res.sys.cref
             self._Cm = fix_zero(self._Cm)
         return self._Cm
     @property
     def Cn(self):
         if self._Cn is None:
-            Cmom = self.res.wcs.vector_to_local(self.Cmom)
-            self._Cn = Cmom.z/self.res.sys.bref
+            n = self.res.wcs.dirz*self.nfmomtot
+            self._Cn = n/self.res.qfs/self.res.sys.sref/self.res.sys.bref
             self._Cn = fix_zero(self._Cn)
         return self._Cn
+    @property
+    def e(self):
+        if self._e is None:
+            if self.CDi <= 0.0:
+                self._e = float('nan')
+            elif self.CL == 0.0 and self.CY == 0.0:
+                self._e = 0.0
+            else:
+                from math import pi
+                self._e = (self.CL**2+self.CY**2)/pi/self.res.sys.ar/self.CDi
+                self._e = fix_zero(self._e)
+        return self._e
 
 class PhiResult(object):
     res = None
@@ -972,47 +986,57 @@ class PhiResult(object):
     @property
     def CDi(self):
         if self._CDi is None:
-            self._CDi = self.trfrctot.x/self.res.qfs/self.res.sys.sref
+            Di = self.trfrctot.x
+            self._CDi = Di/self.res.qfs/self.res.sys.sref
             self._CDi = fix_zero(self._CDi)
         return self._CDi
     @property
     def CY(self):
         if self._CY is None:
-            self._CY = self.trfrctot.y/self.res.qfs/self.res.sys.sref
+            Y = self.trfrctot.y
+            self._CY = Y/self.res.qfs/self.res.sys.sref
             self._CY = fix_zero(self._CY)
         return self._CY
     @property
     def CL(self):
         if self._CL is None:
-            self._CL = self.trfrctot.z/self.res.qfs/self.res.sys.sref
+            L = self.trfrctot.z
+            self._CL = L/self.res.qfs/self.res.sys.sref
             self._CL = fix_zero(self._CL)
         return self._CL
     @property
     def Cl(self):
         if self._Cl is None:
-            self._Cl = self.trmomtot.x/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+            l = -self.trmomtot.x
+            self._Cl = l/self.res.qfs/self.res.sys.sref/self.res.sys.bref
             self._Cl = fix_zero(self._Cl)
         return self._Cl
     @property
     def Cm(self):
         if self._Cm is None:
-            self._Cm = self.trmomtot.y/self.res.qfs/self.res.sys.sref/self.res.sys.cref
+            m = self.trmomtot.y
+            self._Cm = m/self.res.qfs/self.res.sys.sref/self.res.sys.cref
             self._Cm = fix_zero(self._Cm)
         return self._Cm
     @property
     def Cn(self):
         if self._Cn is None:
-            self._Cn = self.trmomtot.z/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+            n = -self._trmomtot.z
+            self._Cn = n/self.res.qfs/self.res.sys.sref/self.res.sys.bref
             self._Cn = fix_zero(self._Cn)
         return self._Cn
     @property
     def e(self):
         if self._e is None:
             if self.CDi == 0.0:
-                self._e = float('nan')
+                if self.CL == 0.0 and self.CY == 0.0:
+                    self._e = 0.0
+                else:
+                    self._e = float('nan')
             else:
                 from math import pi
                 self._e = (self.CL**2+self.CY**2)/pi/self.res.sys.ar/self.CDi
+                self._e = fix_zero(self._e)
         return self._e
 
 class ParasiticDragResult(object):
@@ -1053,37 +1077,43 @@ class ParasiticDragResult(object):
     @property
     def CDo(self):
         if self._CDo is None:
-            self._CDo = self.pdfrctot.x/self.res.qfs/self.res.sys.sref
+            Do = self.res.acs.dirx*self.pdfrctot
+            self._CDo = Do/self.res.qfs/self.res.sys.sref
             self._CDo = fix_zero(self._CDo)
         return self._CDo
     @property
     def CY(self):
         if self._CY is None:
-            self._CY = self.pdfrctot.y/self.res.qfs/self.res.sys.sref
+            Y = self.res.acs.diry*self.pdfrctot
+            self._CY = Y/self.res.qfs/self.res.sys.sref
             self._CY = fix_zero(self._CY)
         return self._CY
     @property
     def CL(self):
         if self._CL is None:
-            self._CL = self.pdfrctot.z/self.res.qfs/self.res.sys.sref
+            L = self.res.acs.dirz*self.pdfrctot
+            self._CL = L/self.res.qfs/self.res.sys.sref
             self._CL = fix_zero(self._CL)
         return self._CL
     @property
     def Cl(self):
         if self._Cl is None:
-            self._Cl = -self.pdmomtot.x/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+            l = self.res.wcs.dirx*self.pdmomtot
+            self._Cl = l/self.res.qfs/self.res.sys.sref/self.res.sys.bref
             self._Cl = fix_zero(self._Cl)
         return self._Cl
     @property
     def Cm(self):
         if self._Cm is None:
-            self._Cm = self.pdmomtot.y/self.res.qfs/self.res.sys.sref/self.res.sys.cref
+            m = self.res.wcs.diry*self.pdmomtot
+            self._Cm = m/self.res.qfs/self.res.sys.sref/self.res.sys.cref
             self._Cm = fix_zero(self._Cm)
         return self._Cm
     @property
     def Cn(self):
         if self._Cn is None:
-            self._Cn = -self.pdmomtot.z/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+            n = self.res.wcs.dirz*self.pdmomtot
+            self._Cn = n/self.res.qfs/self.res.sys.sref/self.res.sys.bref
             self._Cn = fix_zero(self._Cn)
         return self._Cn
 

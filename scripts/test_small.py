@@ -1,5 +1,5 @@
 #%% Load Dependencies
-from pyvlm import LatticeResult, LatticeOptimum
+from pyvlm import LatticeResult
 from pyvlm_files import load_package_file
 
 #%% Create Lattice System

@@ -22,16 +22,14 @@
                     "chord": 0.5,
                     "angle": 0.0,
                     "numb": 20,
-                    "bspace": "semi-cosine",
-                    "cdo": 0.005
+                    "bspace": "semi-cosine"
                 },
                 {
                     "xle": 0.0,
                     "yle": 5.0,
                     "zle": 0.0,
                     "chord": 0.5,
-                    "angle": 0.0,
-                    "cdo": 0.005
+                    "angle": 0.0
                 }
             ]            
         }
@@ -57,6 +55,5 @@
             "name": "Test rbo2V",
             "rbo2V": 0.01
         }
-    ],
-    "outputs": []
+    ]
 }

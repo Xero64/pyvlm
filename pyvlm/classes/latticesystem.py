@@ -138,7 +138,7 @@ class LatticeSystem(object):
                 lpid = pnl.lpid
                 rrel = pnl.pntc-self.rref
                 self._afs[lpid, 0] = pnl.nrml
-                self._afs[lpid, 1] = rrel**pnl.nrml
+                self._afs[lpid, 1] = -rrel**pnl.nrml
             for srfc in self.srfcs:
                 for sht in srfc.shts:
                     for control in sht.ctrls:
