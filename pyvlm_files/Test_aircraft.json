@@ -86,7 +86,7 @@
                     "yle": 0.0,
                     "zle": 0.15,
                     "chord": 0.22,
-                    "angle": 0.0,
+                    "angle": -2.0,
                     "numb": 25,
                     "bspace": "cosine",
                     "controls": {
@@ -104,7 +104,7 @@
                     "yle": 0.66,
                     "zle": 0.15,
                     "chord": 0.175,
-                    "angle": 0.0
+                    "angle": -2.0
                 }
             ]
         },
@@ -162,7 +162,7 @@
             "name": "60deg Banked Turn Cruise",
             "trim": "Turning Trim",
             "density": 0.945,
-            "speed": 193.0,
+            "speed": 25.0,
             "mass": 20.0,
             "bank angle": 60.0
         },

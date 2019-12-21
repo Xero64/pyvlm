@@ -12,17 +12,16 @@ lsys = load_package_file(jsonfilepath)
 display_markdown(lsys)
 
 #%% Display Results
-
 for case in lsys.results:
     lres = lsys.results[case]
     display_markdown(lres)
 
 #%% Mesh File Output
 lres = lsys.results['Positive 1g Cruise + 15deg Side Slip']
-latticeresult_to_msh(lres, 'Test_aicraft.msh')
+latticeresult_to_msh(lres, r'..\results\Test_aicraft.msh')
 
 #%% Pessure File Output
-latticeresult_to_prf(lsys, 'Test_aicraft_pressures.json')
+latticeresult_to_prf(lsys, r'..\results\Test_aicraft_pressures.json')
 
 #%% 5g Trim Case
 ltrm = lsys.results['Positive 5g Dive']

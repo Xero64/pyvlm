@@ -106,7 +106,7 @@ The above command generates a aircraft.md containing results.
                     "yle": 0.0,
                     "zle": 0.15,
                     "chord": 0.22,
-                    "angle": 0.0,
+                    "angle": -2.0,
                     "numb": 25,
                     "bspace": "cosine",
                     "controls": {
@@ -124,7 +124,7 @@ The above command generates a aircraft.md containing results.
                     "yle": 0.66,
                     "zle": 0.15,
                     "chord": 0.175,
-                    "angle": 0.0
+                    "angle": -2.0
                 }
             ]
         },
@@ -182,7 +182,7 @@ The above command generates a aircraft.md containing results.
             "name": "60deg Banked Turn Cruise",
             "trim": "Turning Trim",
             "density": 0.945,
-            "speed": 193.0,
+            "speed": 25.0,
             "mass": 20.0,
             "bank angle": 60.0
         },
@@ -222,17 +222,16 @@ lsys = load_package_file(jsonfilepath)
 display_markdown(lsys)
 
 #%% Display Results
-
 for case in lsys.results:
     lres = lsys.results[case]
     display_markdown(lres)
 
 #%% Mesh File Output
 lres = lsys.results['Positive 1g Cruise + 15deg Side Slip']
-latticeresult_to_msh(lres, 'Test_aicraft.msh')
+latticeresult_to_msh(lres, r'..\results\Test_aicraft.msh')
 
 #%% Pessure File Output
-latticeresult_to_prf(lsys, 'Test_aicraft_pressures.json')
+latticeresult_to_prf(lsys, r'..\results\Test_aicraft_pressures.json')
 
 #%% 5g Trim Case
 ltrm = lsys.results['Positive 5g Dive']

@@ -30,7 +30,7 @@ excel/
 notes/
 symbolic/
 notebooks/
-results/
+results/*
 
 # py2md files
 *.py.*
