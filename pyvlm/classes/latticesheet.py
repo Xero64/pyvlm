@@ -16,6 +16,7 @@ class LatticeSheet(object):
     pnls = None
     ctrls = None
     noload = None
+    width = None
     area = None
     def __init__(self, sect1: LatticeSection, sect2: LatticeSection):
         self.sect1 = sect1
@@ -35,7 +36,8 @@ class LatticeSheet(object):
         self.cord = Coordinate(self.sect1.pnt, ihat, vecy, vecz)
         self.strps = []
         self.pnls = []
-        self.area = (self.levec*self.cord.diry)*(self.sect2.chord+self.sect1.chord)/2
+        self.width = self.levec*self.cord.diry
+        self.area = self.width*(self.sect2.chord+self.sect1.chord)/2
     def mesh_strips(self, lsid: int):
         self.strps = []
         pnta = self.sect1.pnt
@@ -126,5 +128,10 @@ class LatticeSheet(object):
             for pnl in self.pnls:
                 if pnl.cspc[3] >= ctrl.xhinge:
                     ctrl.add_panel(pnl)
+    def set_strip_bpos(self):
+        bpos = self.sect1.bpos
+        for i, strp in enumerate(self.strps):
+            bspc = self.bspace[i]
+            strp.bpos = bpos+self.width*bspc[1]
     def __repr__(self):
         return '<LatticeSheet>'

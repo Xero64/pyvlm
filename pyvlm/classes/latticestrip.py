@@ -23,6 +23,7 @@ class LatticeStrip(object):
     dyt = None
     dzt = None
     dst = None
+    bpos = None
     _crd = None
     _ang = None
     _cdo = None

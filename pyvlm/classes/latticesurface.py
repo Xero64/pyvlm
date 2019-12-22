@@ -99,9 +99,20 @@ class LatticeSurface(object):
                 strp = self.strps[numstrp-1-i]
                 mstrp = self.strps[i]
                 strp.set_mirror(mstrp)
+        bpos = [0.0]
         for sht in self.shts:
             sht.inherit_panels()
             sht.set_control_panels()
+            bpos.append(bpos[-1]+sht.width)
+        if self.mirror:
+            numsht = len(self.shts)
+            wmir = bpos[int(numsht/2)]
+            for i in range(len(bpos)):
+                bpos[i] = bpos[i]-wmir
+        for i, sect in enumerate(self.sects):
+            sect.bpos = bpos[i]
+        for sht in self.shts:
+            sht.set_strip_bpos()
         return lsid, lpid
     def point_xyz(self):
         from numpy.matlib import zeros
@@ -132,8 +143,14 @@ class LatticeSurface(object):
             print(f'{sht.sect1.pnt:.5f}\t{sht.sect1.chord:.5f}')
             print(f'{sht.sect2.pnt:.5f}\t{sht.sect2.chord:.5f}')
     @property
+    def strpb(self):
+        return [strp.bpos for strp in self.strps]
+    @property
     def strpy(self):
         return [strp.pnti.y for strp in self.strps]
+    @property
+    def strpz(self):
+        return [strp.pnti.z for strp in self.strps]
     @property
     def strpi(self):
         return [strp.lsid for strp in self.strps]

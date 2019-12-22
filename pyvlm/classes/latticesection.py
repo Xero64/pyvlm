@@ -14,6 +14,7 @@ class LatticeSection(object):
     noload = None
     ctrls = None
     cdo = None
+    bpos = None
     def __init__(self, pnt: Point, chord: float, angle: float):
         self.pnt = pnt
         self.chord = chord
