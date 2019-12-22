@@ -35,6 +35,7 @@ class LatticeResult(object):
     _nfres = None
     _trres = None
     _pdres = None
+    _stripres = None
     _stgam = None
     _stres = None
     _ctgamp = None
@@ -312,6 +313,11 @@ class LatticeResult(object):
             self._pdres = ParasiticDragResult(self)
         return self._pdres
     @property
+    def stripres(self):
+        if self._stripres is None:
+            self._stripres = StripResult(self.nfres)
+        return self._stripres
+    @property
     def stgam(self):
         if self._stgam is None:
             self._stgam = {}
@@ -380,74 +386,200 @@ class LatticeResult(object):
         ax.plot(self.sys.srfcs[0].strpy, self.phi, label=self.name)
         ax.legend()
         return ax
-    def plot_trefftz_lift_distribution(self, ax=None):
+    def plot_strip_lift_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        for srfc in self.sys.srfcs:
-            y = []
-            l = []
-            for strp in srfc.strps:
-                lsid = strp.lsid
-                if strp.dyt != 0.0:
-                    y.append(strp.pnti.y)
-                    l.append(self.trres.trfrc.z[lsid, 0]/strp.dyt)
-            if len(l) > 0:
-                label = self.name+' for '+srfc.name
-                ax.plot(y, l, label=label)
+        if len(surfaces) == 0:
+            srfcs = [srfc for srfc in self.sys.srfcs]
+        else:
+            srfcs = []
+            for srfc in self.sys.srfcs:
+                if srfc.name in surfaces:
+                    srfcs.append(srfc)
+        for srfc in srfcs:
+            label = self.name+' for '+srfc.name
+            l = [self.stripres.stfrc.z[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+            if axis == 'b':
+                b = srfc.strpb
+                ax.plot(b, l, label=label)
+            elif axis == 'y':
+                y = srfc.strpy
+                if max(y) > min(y):
+                    ax.plot(y, l, label=label)
+            elif axis == 'z':
+                z = srfc.strpz
+                if max(z) > min(z):
+                    ax.plot(l, z, label=label)
         ax.legend()
         return ax
-    def plot_trefftz_yforce_distribution(self, ax=None):
+    def plot_strip_yforce_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        for srfc in self.sys.srfcs:
-            z = []
-            f = []
-            for strp in srfc.strps:
-                lsid = strp.lsid
-                if strp.dzt != 0.0:
-                    z.append(strp.pnti.z)
-                    f.append(self.trres.trfrc.y[lsid, 0]/strp.dzt)
-            if len(f) > 0:
-                label = self.name+' for '+srfc.name
-                ax.plot(f, z, label=label)
+        if len(surfaces) == 0:
+            srfcs = [srfc for srfc in self.sys.srfcs]
+        else:
+            srfcs = []
+            for srfc in self.sys.srfcs:
+                if srfc.name in surfaces:
+                    srfcs.append(srfc)
+        for srfc in srfcs:
+            label = self.name+' for '+srfc.name
+            f = [self.stripres.stfrc.y[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+            if axis == 'b':
+                b = srfc.strpb
+                ax.plot(b, f, label=label)
+            elif axis == 'y':
+                y = srfc.strpy
+                if max(y) > min(y):
+                    ax.plot(y, f, label=label)
+            elif axis == 'z':
+                z = srfc.strpz
+                if max(z) > min(z):
+                    ax.plot(f, z, label=label)
         ax.legend()
         return ax
-    def plot_trefftz_drag_distribution(self, ax=None):
+    def plot_strip_drag_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        for srfc in self.sys.srfcs:
-            y = []
-            d = []
-            for strp in srfc.strps:
-                lsid = strp.lsid
-                y.append(strp.pnti.y)
-                d.append(self.trres.trfrc.x[lsid, 0]/strp.dst)
-            if len(d) > 0:
-                label = self.name+' for '+srfc.name
-                ax.plot(y, d, label=label)
+        if len(surfaces) == 0:
+            srfcs = [srfc for srfc in self.sys.srfcs]
+        else:
+            srfcs = []
+            for srfc in self.sys.srfcs:
+                if srfc.name in surfaces:
+                    srfcs.append(srfc)
+        for srfc in srfcs:
+            label = self.name+' for '+srfc.name
+            d = [self.stripres.stfrc.x[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+            if axis == 'b':
+                b = srfc.strpb
+                ax.plot(b, d, label=label)
+            elif axis == 'y':
+                y = srfc.strpy
+                if max(y) > min(y):
+                    ax.plot(y, d, label=label)
+            elif axis == 'z':
+                z = srfc.strpz
+                if max(z) > min(z):
+                    ax.plot(d, z, label=label)
         ax.legend()
         return ax
-    def plot_trefftz_wash_distribution(self, ax=None):
+    def plot_trefftz_lift_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        for srfc in self.sys.srfcs:
-            y = []
-            w = []
-            for strp in srfc.strps:
-                lsid = strp.lsid
-                y.append(strp.pnti.y)
-                w.append(self.trres.trwsh[lsid, 0])
-            if len(w) > 0:
-                label = self.name+' for '+srfc.name
-                ax.plot(y, w, label=label)
+        if len(surfaces) == 0:
+            srfcs = [srfc for srfc in self.sys.srfcs]
+        else:
+            srfcs = []
+            for srfc in self.sys.srfcs:
+                if srfc.name in surfaces:
+                    srfcs.append(srfc)
+        for srfc in srfcs:
+            label = self.name+' for '+srfc.name
+            l = [self.trres.trfrc.z[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+            if axis == 'b':
+                b = srfc.strpb
+                ax.plot(b, l, label=label)
+            elif axis == 'y':
+                y = srfc.strpy
+                if max(y) > min(y):
+                    ax.plot(y, l, label=label)
+            elif axis == 'z':
+                z = srfc.strpz
+                if max(z) > min(z):
+                    ax.plot(l, z, label=label)
+        ax.legend()
+        return ax
+    def plot_trefftz_yforce_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        if len(surfaces) == 0:
+            srfcs = [srfc for srfc in self.sys.srfcs]
+        else:
+            srfcs = []
+            for srfc in self.sys.srfcs:
+                if srfc.name in surfaces:
+                    srfcs.append(srfc)
+        for srfc in srfcs:
+            label = self.name+' for '+srfc.name
+            f = [self.trres.trfrc.y[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+            if axis == 'b':
+                b = srfc.strpb
+                ax.plot(b, f, label=label)
+            elif axis == 'y':
+                y = srfc.strpy
+                if max(y) > min(y):
+                    ax.plot(y, f, label=label)
+            elif axis == 'z':
+                z = srfc.strpz
+                if max(z) > min(z):
+                    ax.plot(f, z, label=label)
+        ax.legend()
+        return ax
+    def plot_trefftz_drag_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        if len(surfaces) == 0:
+            srfcs = [srfc for srfc in self.sys.srfcs]
+        else:
+            srfcs = []
+            for srfc in self.sys.srfcs:
+                if srfc.name in surfaces:
+                    srfcs.append(srfc)
+        for srfc in srfcs:
+            label = self.name+' for '+srfc.name
+            d = [self.trres.trfrc.x[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+            if axis == 'b':
+                b = srfc.strpb
+                ax.plot(b, d, label=label)
+            elif axis == 'y':
+                y = srfc.strpy
+                if max(y) > min(y):
+                    ax.plot(y, d, label=label)
+            elif axis == 'z':
+                z = srfc.strpz
+                if max(z) > min(z):
+                    ax.plot(d, z, label=label)
+        ax.legend()
+        return ax
+    def plot_trefftz_wash_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        if len(surfaces) == 0:
+            srfcs = [srfc for srfc in self.sys.srfcs]
+        else:
+            srfcs = []
+            for srfc in self.sys.srfcs:
+                if srfc.name in surfaces:
+                    srfcs.append(srfc)
+        for srfc in srfcs:
+            label = self.name+' for '+srfc.name
+            w = [self.trres.trwsh[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+            if axis == 'b':
+                b = srfc.strpb
+                ax.plot(b, w, label=label)
+            elif axis == 'y':
+                y = srfc.strpy
+                if max(y) > min(y):
+                    ax.plot(y, w, label=label)
+            elif axis == 'z':
+                z = srfc.strpz
+                if max(z) > min(z):
+                    ax.plot(w, z, label=label)
         ax.legend()
         return ax
     def to_result(self, name: str=''):
@@ -934,6 +1066,70 @@ class GammaResult(object):
                 self._e = (self.CL**2+self.CY**2)/pi/self.res.sys.ar/self.CDi
                 self._e = fix_zero(self._e)
         return self._e
+
+class StripResult(object):
+    gamres = None
+    _stfrc = None
+    _stmom = None
+    _lift = None
+    _side = None
+    _drag = None
+    _pmom = None
+    def __init__(self, gamres: GammaResult):
+        self.gamres = gamres
+    @property
+    def stfrc(self):
+        if self._stfrc is None:
+            sys = self.gamres.res.sys
+            num = len(sys.strps)
+            self._stfrc = zero_matrix_vector((num, 1))
+            for strp in sys.strps:
+                i = strp.lsid
+                for pnl in strp.pnls:
+                    j = pnl.lpid
+                    self._stfrc[i, 0] += self.gamres.nffrc[j, 0]
+        return self._stfrc
+    @property
+    def stmom(self):
+        if self._stmom is None:
+            sys = self.gamres.res.sys
+            num = len(sys.strps)
+            self._stmom = zero_matrix_vector((num, 1))
+            for strp in sys.strps:
+                i = strp.lsid
+                for pnl in strp.pnls:
+                    j = pnl.lpid
+                    arm = pnl.pnti-strp.pntq
+                    self._stmom[i, 0] += arm**self.gamres.nffrc[j, 0]
+        return self._stmom
+    @property
+    def drag(self):
+        if self._drag is None:
+            self._drag = zeros(self.stfrc.shape)
+            for i in range(self.stfrc.shape[0]):
+                self._drag[i, 0] = self.gamres.res.acs.dirx*self.stfrc[i, 0]
+        return self._drag
+    @property
+    def side(self):
+        if self._side is None:
+            self._side = zeros(self.stfrc.shape)
+            for i in range(self.stfrc.shape[0]):
+                self._side[i, 0] = self.gamres.res.acs.diry*self.stfrc[i, 0]
+        return self._side
+    @property
+    def lift(self):
+        if self._lift is None:
+            self._lift = zeros(self.stfrc.shape)
+            for i in range(self.stfrc.shape[0]):
+                self._lift[i, 0] = self.gamres.res.acs.dirz*self.stfrc[i, 0]
+        return self._lift
+    @property
+    def pmom(self):
+        if self._pmom is None:
+            self._pmom = zeros(self.stmom.shape)
+            for i in range(self.stmom.shape[0]):
+                self._pmom[i, 0] = self.gamres.res.acs.diry*self.stmom[i, 0]
+        return self._pmom
 
 class PhiResult(object):
     res = None

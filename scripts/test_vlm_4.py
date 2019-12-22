@@ -1,4 +1,5 @@
 #%% Import Dependencies
+from IPython.display import display_markdown
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm_files import load_package_file
 from pyvlm.tools import bell_lift_distribution
@@ -29,12 +30,12 @@ jsonfilename = "Test_rhofw.json"
 lsys = load_package_file(jsonfilename)
 lsys_opt = load_package_file(jsonfilename)
 lsys_bll = load_package_file(jsonfilename)
-print(lsys)
+display_markdown(lsys)
 
 lres_org = LatticeResult('Initial', lsys)
 lres_org.set_state(speed=V)
 lres_org.set_density(rho=rho)
-print(lres_org)
+display_markdown(lres_org)
 
 l = bell_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, W)
 
@@ -44,13 +45,13 @@ lopt_bll = LatticeOptimum('Bell', lsys_bll)
 lopt_bll.set_conditions(speed=V, rho=rho)
 lopt_bll.set_lift_distribution(l, rho, V)
 lopt_bll.add_record('l', strplst='Mirrored')
-print(lopt_bll)
+display_markdown(lopt_bll)
 
 lres_bll = LatticeResult('Bell', lsys)
 lres_bll.set_state(speed=V)
 lres_bll.set_density(rho=rho)
 lres_bll.set_lift_distribution(l, rho, V)
-print(lres_bll)
+display_markdown(lres_bll)
 
 #%% Optimal Lift Distribution
 
@@ -60,13 +61,13 @@ lopt.add_constraint('L', W)
 lopt.add_constraint('l', 20.566097, strplst='Mirrored')
 # lopt.add_record('l', strplst='Mirrored')
 lopt.optimum_lift_distribution()
-print(lopt)
+display_markdown(lopt)
 
 lres_opt = LatticeResult('Optimal', lsys)
 lres_opt.set_state(speed=V)
 lres_opt.set_density(rho=rho)
 lres_opt.set_phi(lopt.phi)
-print(lres_opt)
+display_markdown(lres_opt)
 
 #%% Plots
 
@@ -127,12 +128,14 @@ axl = lres_org.plot_trefftz_lift_distribution(ax=axl)
 axl = lres_bll.plot_trefftz_lift_distribution(ax=axl)
 axl = lres_opt.plot_trefftz_lift_distribution(ax=axl)
 axl = lopt.res.plot_trefftz_lift_distribution(ax=axl)
+axl = lopt.res.plot_strip_lift_distribution(ax=axl)
 
 axd = None
 axd = lres_org.plot_trefftz_drag_distribution(ax=axd)
 axd = lres_bll.plot_trefftz_drag_distribution(ax=axd)
 axd = lres_opt.plot_trefftz_drag_distribution(ax=axd)
 axd = lopt.res.plot_trefftz_drag_distribution(ax=axd)
+axd = lopt.res.plot_strip_drag_distribution(ax=axd)
 
 axw = None
 axw = lres_org.plot_trefftz_wash_distribution(ax=axw)
@@ -198,3 +201,22 @@ ax.plot(yspec, alspec)
 ax.set_title('Wing Geometric Twist as a function of Span')
 ax.set_xlabel('Span Coordinate - y - [m]')
 _ = ax.set_ylabel('Geometric Twist Angle - $\\alpha_g$ - [deg]')
+
+#%% Sum of Drag
+
+stdrg = 0.0
+for i in range(lopt.res.stripres.drag.shape[0]):
+    stdrg += lopt.res.stripres.drag[i, 0]
+
+trdrg = lopt.res.acs.dirx*lopt.res.trres.trfrctot
+
+print(f'stdrg = {stdrg:g}')
+print(f'trdrg = {trdrg:g}')
+
+stcdi = stdrg/lopt.res.qfs/lsys.sref
+trcdi = trdrg/lopt.res.qfs/lsys.sref
+
+print(f'stcdi = {stcdi:g}')
+print(f'trcdi = {trcdi:g}')
+
+# %%
