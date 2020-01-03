@@ -1,10 +1,10 @@
 #%% Load Dependencies
 from pyvlm import LatticeResult, LatticeOptimum
-from pyvlm_files import load_package_file
+from pyvlm import latticesystem_from_json
 
 #%% Create Lattice System
-jsonfilename = "Straight_Wing_Cosine_100.json"
-lsys = load_package_file(jsonfilename)
+jsonfilepath = r'..\files\Straight_Wing_Cosine_100.json'
+lsys = latticesystem_from_json(jsonfilepath)
 print(lsys)
 
 #%% Original Strip Geometry

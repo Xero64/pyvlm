@@ -1,13 +1,13 @@
 #%% Import Dependencies
 from pyvlm import LatticeResult, LatticeOptimum
-from pyvlm_files import load_package_file
+from pyvlm import latticesystem_from_json
 
 #%% Low AR Wing
-jsonfilename = "Test.json"
-lsys = load_package_file(jsonfilename)
+jsonfilepath = r'..\files\Test.json'
+lsys = latticesystem_from_json(jsonfilepath)
 print(lsys)
 
-lsys_new = load_package_file(jsonfilename)
+lsys_new = latticesystem_from_json(jsonfilepath)
 
 lres_org = LatticeResult('Initial', lsys)
 lres_org.set_state(alpha=3.0)

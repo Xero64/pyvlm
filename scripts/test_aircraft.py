@@ -1,12 +1,12 @@
 #%% Import Dependencies
 from IPython.display import display_markdown
-from pyvlm_files import load_package_file
+from pyvlm import latticesystem_from_json
 from pyvlm.outputs.msh import latticeresult_to_msh
 from pyvlm.outputs.prf import latticeresult_to_prf
 
 #%% Import Geometry
-jsonfilepath = 'Test_aircraft.json'
-lsys = load_package_file(jsonfilepath)
+jsonfilepath = r'..\files\Test_aircraft.json'
+lsys = latticesystem_from_json(jsonfilepath)
 
 #%% Display System
 display_markdown(lsys)

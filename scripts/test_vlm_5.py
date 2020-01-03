@@ -1,7 +1,7 @@
 #%% Import Dependencies
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm.tools import bell_lift_distribution, elliptical_lift_distribution
-from pyvlm_files import load_package_file
+from pyvlm import latticesystem_from_json
 
 #%% Inputs
 L = 64.498 # N
@@ -9,13 +9,13 @@ rho = 1.206 # kg/m**3
 V = 12.9173511047957 # m/s
 
 #%% Low AR Wing
-jsonfilename1 = "Test_rhofw_elliptical.json"
-lsys1 = load_package_file(jsonfilename1)
+jsonfilepath1 = r'..\files\Test_rhofw_elliptical.json'
+lsys1 = latticesystem_from_json(jsonfilepath1)
 print(lsys1)
 
 #%% High AR Wing
-jsonfilename2 = "Test_rhofw_bell.json"
-lsys2 = load_package_file(jsonfilename2)
+jsonfilepath2 = r'..\files\Test_rhofw_bell.json'
+lsys2 = latticesystem_from_json(jsonfilepath2)
 print(lsys2)
 
 #%% Low AR Wing Optimum

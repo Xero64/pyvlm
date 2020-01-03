@@ -1,7 +1,7 @@
 #%% Import Dependencies
 from IPython.display import display_markdown
 from pyvlm import LatticeResult, LatticeOptimum
-from pyvlm_files import load_package_file
+from pyvlm import latticesystem_from_json
 from pyvlm.tools import bell_lift_distribution
 
 #%% Parameters
@@ -26,10 +26,10 @@ print(f'q = {q:.2f} Pa')
 
 #%% Low AR Wing
 
-jsonfilename = "Test_rhofw.json"
-lsys = load_package_file(jsonfilename)
-lsys_opt = load_package_file(jsonfilename)
-lsys_bll = load_package_file(jsonfilename)
+jsonfilepath = r'..\files\Test_rhofw.json'
+lsys = latticesystem_from_json(jsonfilepath)
+lsys_opt = latticesystem_from_json(jsonfilepath)
+lsys_bll = latticesystem_from_json(jsonfilepath)
 display_markdown(lsys)
 
 lres_org = LatticeResult('Initial', lsys)

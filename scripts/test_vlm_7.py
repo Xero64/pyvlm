@@ -1,11 +1,11 @@
 #%% Load Dependencies
 from pyvlm import LatticeResult, LatticeOptimum
-from pyvlm_files import load_package_file
+from pyvlm import latticesystem_from_json
 from pyvlm.tools import elliptical_lift_distribution
 
 #%% Create Lattice System
-jsonfilename = "Straight_Wing_Cosine_b100_c1.json"
-lsys = load_package_file(jsonfilename)
+jsonfilepath = r'..\files\Straight_Wing_Cosine_b100_c1.json'
+lsys = latticesystem_from_json(jsonfilepath)
 print(lsys)
 
 #%% Create Elliptical Distribution

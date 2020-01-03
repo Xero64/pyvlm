@@ -1,10 +1,10 @@
 #%% Load Dependencies
 from pyvlm import LatticeResult
-from pyvlm_files import load_package_file
+from pyvlm import latticesystem_from_json
 
 #%% Create Lattice System
-jsonfilename = "Test_straight.json"
-lsys = load_package_file(jsonfilename)
+jsonfilepath = r'..\files\Test_straight.json'
+lsys = latticesystem_from_json(jsonfilepath)
 
 #%% Print Lattice System
 print(lsys)
