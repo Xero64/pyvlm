@@ -1,6 +1,10 @@
-from math import atan2, tan, pi, cos
+from math import pi, sin, cos, acos, degrees
+from numpy.linalg import lstsq
+from numpy.matlib import zeros
 from matplotlib.pyplot import figure
-from pygeom.geom2d import CubicSpline2D, Point2D, InfLine2D, Vector2D
+from pygeom.geom2d import CubicSpline2D, Point2D
+from .spacing import full_cosine_spacing
+from pygeom.geom1d import CubicSpline
 
 class Airfoil(object):
     name = None
@@ -11,26 +15,19 @@ class Airfoil(object):
     xle = None
     yle = None
     ile = None
-    # slp = None
     crd = None
     xn = None
     yn = None
-    # rngt = None
-    # rngb = None
-    mte = None
     spline = None
+    splinec = None
+    mle = None
     mte = None
-    # dydx = None
-    # xu = None
-    # yu = None
-    # xl = None
-    # yl = None
     def __init__(self, name: str, x: list, y: list):
         self.name = name
         self.x = x
         self.y = y
         self.update()
-    def update(self):
+    def update(self, num: int=80):
         self.xte = (self.x[0]+self.x[-1])/2
         self.yte = (self.y[0]+self.y[-1])/2
         self.xle = min(self.x)
@@ -42,75 +39,38 @@ class Airfoil(object):
         self.crd = self.xte-self.xle
         self.xn = [(xi-self.xle)/self.crd for xi in self.x]
         self.yn = [(yi-self.yle)/self.crd for yi in self.y]
-        # self.slp = (yn[0]+yn[-1])/2
-        # self.yn = [yn[i]-xi*self.slp for i, xi in enumerate(self.xn)]
-
-        # num = len(self.xn)
-        # area1 = 0.0
-        # for i in range(0, self.ile):
-        #     area1 -= (self.yn[i+1]+self.yn[i])/2*(self.xn[i+1]-self.xn[i])
-        # area2 = 0.0
-        # for i in range(self.ile, num-1):
-        #     area2 -= (self.yn[i+1]+self.yn[i])/2*(self.xn[i+1]-self.xn[i])
-        # if area1 > area2:
-        #     self.rngt = range(1, self.ile)
-        #     self.rngb = range(self.ile+1, num-1)
-        # else:
-        #     self.rngb = range(1, self.ile)
-        #     self.rngt = range(self.ile+1, num-1)
-
-        pnts = [Point2D(self.xn[i], self.yn[i]) for i in range(len(self.xn))]
+        pnts = [Point2D(xi, yi) for xi, yi in zip(self.xn, self.yn)]
         self.spline = CubicSpline2D(pnts)
-
+        dxle = self.spline.dr[self.ile].x
+        dyle = self.spline.dr[self.ile].y
+        self.mle = -dxle/dyle
         dx1 = self.spline.dr[0].x
         dy1 = self.spline.dr[0].y
-
         dx2 = self.spline.dr[-1].x
         dy2 = self.spline.dr[-1].y
-        
-        # dx1 = self.xn[-1]-self.xn[-2]
-        # dy1 = self.yn[-1]-self.yn[-2]
-        # s1 = (dx1**2+dy1**2)**0.5
-        # dx1 = dx1/s1
-        # dy1 = dy1/s1
-        # dx2 = self.xn[0]-self.xn[1]
-        # dy2 = self.yn[0]-self.yn[1]
-        # s2 = (dx2**2+dy2**2)**0.5
-        # dx2 = dx2/s2
-        # dy2 = dy2/s2
-        self.mte = (dy1/dx1+dy2/dx2)/2
-        
-        # print(f'th = {th}')
-    def cosine_spline(self, num: int=40):
-        # self.dydx = [self.spline.dr[i].y/self.spline.dr[i].x for i in range(num)]
-        th = [i*pi/num for i in range(num+1)]
-        xu = []
-        xl = []
-        yu = []
-        yl = []
-        for i in range(1, num):
-            thi = th[i]
-            # print(f'\nthi = {thi}')
-            xi = 0.5*(1-cos(thi))
-            # print(f'xi = {xi}')
-            infln = InfLine2D(Point2D(xi, 0.0), Vector2D(0.0, 1.0))
-            pnts = self.spline.line_intersection_points(infln)
-            # print(len(pnts))
-            # print(pnts)
-            if len(pnts) == 2:
-                # if abs(pnts[0].y - pnts[1].y) < 1e-6:
-                #     pass
-                if pnts[0].y > pnts[1].y:
-                    pntu = pnts[0]
-                    pntl = pnts[1]
-                else:
-                    pntu = pnts[1]
-                    pntl = pnts[0]
-                xu.append(pntu.x)
-                yu.append(pntu.y)
-                xl.append(pntl.x)
-                yl.append(pntl.y)
-        return xu, yu, xl, yl
+        m1 = dy1/dx1
+        m2 = dy2/dx2
+        self.mte = (m1+m2)/2
+        cspc = full_cosine_spacing(num)
+        s = self.spline.arc_length()
+        sle = s[self.ile]
+        ste = s[-1]
+        s1 = sle
+        s2 = ste-sle
+        slst1 = [cspci*s1 for cspci in cspc]
+        slst2 = [cspci*s2+s1 for cspci in cspc]
+        x1, y1 = self.spline.interpolate_spline_points(slst1)
+        x2, y2 = self.spline.interpolate_spline_points(slst2)
+        x1.reverse()
+        y1.reverse()
+        xc = [(x1i+x2i)/2 for x1i, x2i in zip(x1, x2)]
+        yc = [(y1i+y2i)/2 for y1i, y2i in zip(y1, y2)]
+        xnc, ync = [], []
+        for xi, yi in zip(xc, yc):
+            if 0.0 <= xi <= 1.0:
+                xnc.append(xi)
+                ync.append(yi)
+        self.splinec = CubicSpline(xnc, ync)
     def plot_airfoil(self, ax=None):
         if ax is None:
             fig = figure(figsize=(12, 8))
@@ -127,6 +87,14 @@ class Airfoil(object):
             ax.set_aspect('equal')
         ax.plot(self.xn, self.yn, label=self.name)
         return ax
+    def return_camber(self, xc: float):
+        return self.splinec.single_interpolate_spline(xc)
+    def return_camber_slope(self, xc: float):
+        return self.splinec.single_interpolate_gradient(xc)
+    def return_camber_angle(self, xc: float):
+        from math import degrees, atan
+        dydx = self.return_camber_slope(xc)
+        return degrees(atan(dydx))
 
 def airfoil_from_dat(datfilepath: str):
     x = []
