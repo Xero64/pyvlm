@@ -1,0 +1,75 @@
+{
+    "name": "Prandtl-D2",
+    "mach": 0.0,
+    "sref": 0.94064328,
+    "cref": 0.2686,
+    "bref": 3.749,
+    "xref": 0.3270,
+    "yref": 0.0,
+    "zref": 0.0,
+    "surfaces": [
+        {
+            "name": "Wing",
+            "angle": 0.0,
+            "mirror": true,
+            "numc": 16,
+            "cspace": "cosine",
+            "sections": [
+                {
+                    "xle": 0.0,
+                    "yle": 0.0,
+                    "zle": 0.0,
+                    "chord": 0.40005,
+                    "numb": 40,
+                    "bspace": "cosine",
+                    "airfoil": "prandtl_root.dat"
+                },
+                {
+                    "xle": 0.83459,
+                    "yle": 1.87452,
+                    "zle": 0.08177,
+                    "chord": 0.10008,
+                    "airfoil": "prandtl_tip.dat"
+                }
+            ],
+            "functions": [
+                {
+                    "variable": "angle",
+                    "spacing": "equal",
+                    "interp": "cubic",
+                    "values": [
+                        8.3274,
+                        8.5524,
+                        8.7259,
+                        8.8441,
+                        8.9030,
+                        8.8984,
+                        8.8257,
+                        8.6801,
+                        8.4565,
+                        8.1492,
+                        7.7522,
+                        7.2592,
+                        6.6634,
+                        5.9579,
+                        5.1362,
+                        4.1927,
+                        3.1253,
+                        1.9394,
+                        0.6589,
+                        -0.6417,
+                        -1.6726
+                    ]
+                }
+            ]
+        }
+    ],
+    "cases": [
+        {
+            "name": "Design Point",
+            "alpha": 0.0,
+            "speed": 14.129667802639053,
+            "density": 1.1448386410124347
+        }
+    ]
+}

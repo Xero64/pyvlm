@@ -1,7 +1,7 @@
 {
     "name": "RhoFW",
     "mach": 0.0,
-    "sref": 0.9375,
+    "sref": 0.94064328,
     "cref": 0.2686,
     "bref": 3.749,
     "xref": 0.3270,
@@ -12,7 +12,7 @@
             "name": "Wing",
             "angle": 0.0,
             "mirror": true,
-            "numc": 4,
+            "numc": 16,
             "cspace": "cosine",
             "sections": [
                 {
@@ -20,18 +20,26 @@
                     "yle": 0.0,
                     "zle": 0.0,
                     "chord": 0.40005,
-                    "angle": 0.0,
-                    "numb": 50,
-                    "bspace": "semi-cosine"
+                    "numb": 40,
+                    "bspace": "cosine",
+                    "airfoil": "rhofw_root.dat"
                 },
                 {
                     "xle": 0.83459,
                     "yle": 1.87452,
                     "zle": 0.08177,
                     "chord": 0.10008,
-                    "angle": 0.0
+                    "airfoil": "rhofw_tip.dat"
                 }
-            ]            
+            ]
+        }
+    ],
+    "cases": [
+        {
+            "name": "Design Point",
+            "alpha": 0.0,
+            "speed": 14.129667802639053,
+            "density": 1.1448386410124347
         }
     ]
 }

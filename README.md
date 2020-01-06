@@ -13,7 +13,7 @@ pip install pyvlm
 pyvlm aircraft.json
 ```
 
-The above command generates a aircraft.md containing results.
+The above command generates a "aircraft.md" file containing results.
 
 **JSON Definition File:**
 
@@ -24,7 +24,7 @@ The above command generates a aircraft.md containing results.
     "sref": 1.358,
     "cref": 0.31,
     "bref": 4.5,
-    "xref": 0.96,
+    "xref": 1.175,
     "yref": 0.0,
     "zref": 0.0,
     "surfaces": [
@@ -34,11 +34,14 @@ The above command generates a aircraft.md containing results.
             "mirror": true,
             "numc": 8,
             "cspace": "cosine",
+            "xpos": 0.875,
+            "ypos": 0.0,
+            "zpos": 0.15,
             "sections": [
                 {
-                    "xle": 0.875,
+                    "xle": 0.0,
                     "yle": 0.0,
-                    "zle": 0.15,
+                    "zle": 0.0,
                     "chord": 0.35,
                     "angle": 0.0,
                     "numb": 3,
@@ -47,9 +50,9 @@ The above command generates a aircraft.md containing results.
                     "noload": true
                 },
                 {
-                    "xle": 0.875,
+                    "xle": null,
                     "yle": 0.21,
-                    "zle": 0.15,
+                    "zle": null,
                     "chord": 0.35,
                     "angle": 0.0,
                     "numb": 5,
@@ -57,21 +60,21 @@ The above command generates a aircraft.md containing results.
                     "airfoil": "NACA 2412"
                 },
                 {
-                    "xle": 0.875,
+                    "xle": null,
                     "yle": 0.8,
-                    "zle": 0.15,
-                    "chord": 0.35,
-                    "angle": 0.0,
+                    "zle": null,
+                    "chord": null,
+                    "angle": null,
                     "numb": 20,
                     "bspace": "semi-cosine",
                     "airfoil": "NACA 2412"
                 },
                 {
-                    "xle": 0.875,
+                    "xle": null,
                     "yle": 1.8,
-                    "zle": 0.15,
-                    "chord": 0.25,
-                    "angle": 0.0,
+                    "zle": null,
+                    "chord": null,
+                    "angle": null,
                     "numb": 15,
                     "bspace": "cosine",
                     "airfoil": "NACA 2412",
@@ -86,27 +89,29 @@ The above command generates a aircraft.md containing results.
                     }
                 },
                 {
-                    "xle": 0.875,
+                    "xle": 0.3,
                     "yle": 2.25,
-                    "zle": 0.15,
+                    "zle": 0.0,
                     "chord": 0.2,
-                    "angle": 0.0
+                    "angle": -1.5
                 }
             ]
         },
         {
             "name": "Horizontal Tail",
-            "angle": 0.0,
             "mirror": true,
             "numc": 8,
             "cspace": "cosine",
+            "xpos": 2.3,
+            "ypos": 0.0,
+            "zpos": 0.1,
+            "angle": -1.8,
             "sections": [
                 {
-                    "xle": 2.269,
+                    "xle": 0.0,
                     "yle": 0.0,
-                    "zle": 0.15,
+                    "zle": 0.0,
                     "chord": 0.22,
-                    "angle": -2.0,
                     "numb": 25,
                     "bspace": "cosine",
                     "controls": {
@@ -120,11 +125,10 @@ The above command generates a aircraft.md containing results.
                     }
                 },
                 {
-                    "xle": 2.314,
-                    "yle": 0.66,
-                    "zle": 0.15,
-                    "chord": 0.175,
-                    "angle": -2.0
+                    "xle": 0.1,
+                    "yle": 0.7,
+                    "zle": 0.0,
+                    "chord": 0.18
                 }
             ]
         },
@@ -133,21 +137,24 @@ The above command generates a aircraft.md containing results.
             "angle": 0.0,
             "numc": 5,
             "cspace": "cosine",
+            "xpos": 2.3,
+            "ypos": 0.0,
+            "zpos": 0.1,
             "sections": [
                 {
-                    "xle": 2.239,
+                    "xle": 0.0,
                     "yle": 0.0,
-                    "zle": 0.15,
+                    "zle": 0.0,
                     "chord": 0.25,
                     "angle": 0.0,
                     "numb": 15,
                     "bspace": "cosine"
                 },
                 {
-                    "xle": 2.344,
+                    "xle": 0.1,
                     "yle": 0.0,
-                    "zle": 0.56,
-                    "chord": 0.145,
+                    "zle": 0.4,
+                    "chord": 0.15,
                     "angle": 0.0
                 }
             ]
@@ -205,18 +212,18 @@ The above command generates a aircraft.md containing results.
 }
 ```
 
-**Typical Python Script File:**
+**Typical Python Script File "aircraft.py":**
 
 ```python
 #%% Import Dependencies
 from IPython.display import display_markdown
-from pyvlm_files import load_package_file
+from pyvlm import latticesystem_from_json
 from pyvlm.outputs.msh import latticeresult_to_msh
 from pyvlm.outputs.prf import latticeresult_to_prf
 
 #%% Import Geometry
-jsonfilepath = 'Test_aircraft.json'
-lsys = load_package_file(jsonfilepath)
+jsonfilepath = r'..\files\Aircraft.json'
+lsys = latticesystem_from_json(jsonfilepath)
 
 #%% Display System
 display_markdown(lsys)
@@ -228,10 +235,10 @@ for case in lsys.results:
 
 #%% Mesh File Output
 lres = lsys.results['Positive 1g Cruise + 15deg Side Slip']
-latticeresult_to_msh(lres, r'..\results\Test_aicraft.msh')
+latticeresult_to_msh(lres, r'..\results\Aircraft.msh')
 
 #%% Pessure File Output
-latticeresult_to_prf(lsys, r'..\results\Test_aicraft_pressures.json')
+latticeresult_to_prf(lsys, r'..\results\Aircraft_pressures.json')
 
 #%% 5g Trim Case
 ltrm = lsys.results['Positive 5g Dive']
@@ -257,4 +264,4 @@ display_markdown(ltrm.surface_loads)
 
 **Mesh File Output:**
 
-![](Readme.png)
+![](https://github.com/Xero64/pyvlm/raw/master/Readme.png)

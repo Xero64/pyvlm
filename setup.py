@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyvlm",
-    version="0.0.7",
+    version="0.0.8",
     author="Xero64",
     author_email="xero64@gmail.com",
     description="Vortex Lattice Method in Python",
@@ -18,6 +18,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ),
+    python_requires='>=3.7',
     entry_points = {
         'console_scripts': ['pyvlm=pyvlm.__main__:main',],
     }

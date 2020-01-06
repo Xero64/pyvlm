@@ -1,78 +1,92 @@
 #%% Import Dependencies
+from IPython.display import display_markdown
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm import latticesystem_from_json
 from pyvlm.tools import bell_lift_distribution
+from pyvlm.tools.trim import LevelTrim
+from pyvlm.tools import Bell
 
-#%% Parameters
-m = 6.577089 # kg
-g = 9.80655 # m/s**2
-W = m*g # N
-print(f'W = {W:.2f} N')
-
-S = 0.9375 # m**2
-print(f'S = {S:.4f} m**2')
-
-CL = 0.6
-print(f'CL = {CL:.1f}')
-rho = 1.206 # kg/m**3
-print(f'rho = {rho:.3f} kg/m**3')
-# rho = 1.0
-V = (W/S/rho/CL*2)**0.5
-print(f'V = {V:.4f} m/s')
-
-q = rho*V**2/2 # Pa
-print(f'q = {q:.2f} Pa')
-
-#%% Low AR Wing
+#%% Create Lattice System
 
 jsonfilepath = r'..\files\Test_rhofw.json'
 lsys = latticesystem_from_json(jsonfilepath)
-lsys_opt = latticesystem_from_json(jsonfilepath)
-lsys_bll = latticesystem_from_json(jsonfilepath)
-print(lsys)
+lsys.build()
+display_markdown(lsys)
 
-lres_org = LatticeResult('Initial', lsys)
-lres_org.set_state(speed=V)
-lres_org.set_density(rho=rho)
-print(lres_org)
+#%% Create Trim Scenario
+m = 6.577089 # kg
+CL = 0.6
+rho = 1.1448386410124347 # kg/m**3 at 704.3m altitude
 
-l = bell_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, W)
+trm = LevelTrim('CL = 0.6', lsys)
+trm.set_density(rho)
+trm.set_mass(m)
+trm.trim_speed_from_CL(CL)
+display_markdown(trm)
+
+#%%  Copy Lattice System
+lsys_opt = lsys.copy_from_source()
+lsys_bll = lsys.copy_from_source()
+# lsys_opt = latticesystem_from_json(jsonfilepath)
+# lsys_bll = latticesystem_from_json(jsonfilepath)
+
+#%% Create Lattice Result
+lres_org = trm.create_trim_result()
+lres_org.name = 'Initial'
+display_markdown(lres_org)
+
+#%% Create Bell Lift Distribution
+bll = Bell(lsys.bref, lsys.srfcs[0].strpy)
+bll.set_density(trm.density)
+bll.set_speed(trm.speed)
+bll.set_lift(trm.lift)
+
+lbll = bll.lift_distribution()
+
+l = bell_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, trm.lift)
 
 #%% Bell Shaped Lift Distribution
 
 lopt_bll = LatticeOptimum('Bell', lsys_bll)
-lopt_bll.set_conditions(speed=V, rho=rho)
-lopt_bll.set_lift_distribution(l, rho, V)
+lopt_bll.set_lift_distribution(l, trm.density, trm.speed)
 lopt_bll.add_record('l', strplst='Mirrored')
-print(lopt_bll)
+display_markdown(lopt_bll)
 
 lres_bll = LatticeResult('Bell', lsys)
-lres_bll.set_state(speed=V)
-lres_bll.set_density(rho=rho)
-lres_bll.set_lift_distribution(l, rho, V)
-print(lres_bll)
+lres_bll.set_lift_distribution(l, trm.density, trm.speed)
+display_markdown(lres_bll)
 
 #%% Plots
 
 axp = None
 axp = lres_org.plot_phi_distribution(ax=axp)
 axp = lres_bll.plot_phi_distribution(ax=axp)
+_ = axp.set_ylabel('Phi Distribution')
+_ = axp.set_xlabel('Span Position')
 
 axl = None
 axl = lres_org.plot_trefftz_lift_distribution(ax=axl)
+axl = lres_org.plot_strip_lift_distribution(ax=axl)
 axl = lres_bll.plot_trefftz_lift_distribution(ax=axl)
+_ = axl.set_ylabel('Lift Distribution')
+_ = axl.set_xlabel('Span Position')
 
 axd = None
 axd = lres_org.plot_trefftz_drag_distribution(ax=axd)
+axd = lres_org.plot_strip_drag_distribution(ax=axd)
 axd = lres_bll.plot_trefftz_drag_distribution(ax=axd)
+_ = axd.set_ylabel('Drag Distribution')
+_ = axd.set_xlabel('Span Position')
 
 axw = None
 axw = lres_org.plot_trefftz_wash_distribution(ax=axw)
 axw = lres_bll.plot_trefftz_wash_distribution(ax=axw)
+_ = axw.set_ylabel('Wash Distribution')
+_ = axw.set_xlabel('Span Position')
 
 #%% Optimal Strip Twist
 
-al_bll = lopt_bll.optimum_strip_twist(crit=1e-1)
+al_bll = lopt_bll.optimum_strip_twist(crit=1e-2)
 
 #%% Specified String Twist
 
@@ -95,50 +109,65 @@ yspec = ymirr+yspec
 
 #%% Bell Downwash
 
-w = [W/rho/V/lsys_bll.bref*3/2*((2*yi/lsys_bll.bref)**2-0.5) for yi in yspec]
+# w = bll.trefftz_wash_distribution()
+
+w = [trm.weight/rho/trm.speed/lsys_bll.bref*3/2*((2*yi/lsys_bll.bref)**2-0.5) for yi in yspec]
 
 print(min(w)/min(lres_bll.trres.trwsh))
 
 #%% Plots
 
+lres_org.reset()
+lres_bll.reset()
+
 axl = None
 axl = lres_org.plot_trefftz_lift_distribution(ax=axl)
+axl = lres_org.plot_strip_lift_distribution(ax=axl)
 axl = lres_bll.plot_trefftz_lift_distribution(ax=axl)
+axl = lres_bll.plot_strip_lift_distribution(ax=axl)
+_ = axl.set_ylabel('Lift Distribution')
+_ = axl.set_xlabel('Span Position')
 
 axd = None
 axd = lres_org.plot_trefftz_drag_distribution(ax=axd)
+axd = lres_org.plot_strip_drag_distribution(ax=axd)
 axd = lres_bll.plot_trefftz_drag_distribution(ax=axd)
+axd = lres_bll.plot_strip_drag_distribution(ax=axd)
+_ = axd.set_ylabel('Drag Distribution')
+_ = axd.set_xlabel('Span Position')
 
 axw = None
 axw = lres_org.plot_trefftz_wash_distribution(ax=axw)
 axw = lres_bll.plot_trefftz_wash_distribution(ax=axw)
 axw.plot(yspec, w, label='Bell Wash')
 axw.legend()
+_ = axw.set_ylabel('Wash Distribution')
+_ = axw.set_xlabel('Span Position')
 
 axa = lopt_bll.plot_strip_twist_distribution()
-axa.plot(lsys.srfcs[0].strpy, al_bll, label='alpha Bell')
+# axa.plot(lsys.srfcs[0].strpy, al_bll, label='alpha Bell')
 axa.plot(yspec, alspec, label='alpha Specified')
 leg = axa.legend()
 
 #%% Induced Angle
 
-from math import atan2, degrees, radians, pi
+from math import atan2, degrees, radians, pi, asin
 from matplotlib.pyplot import figure
-from pymath.function import Function
+from pygeom.geom1d import LinearSpline
 
-alf = Function(yspec, alspec)
-als = alf.linear_interp(lsys.srfcs[0].strpy)
+alf = LinearSpline(yspec, alspec)
+als = alf.list_interpolation(lsys.srfcs[0].strpy)
 
-ali = [degrees(atan2(lres_bll.trres.trwsh[i], V)) for i in range(len(lres_bll.trres.trwsh))]
-al0 = [1.0-abs(yi)*2/lsys_bll.bref for yi in lsys.srfcs[0].strpy]
+ali = [degrees(atan2(lres_bll.trres.trwsh[i], trm.speed)) for i in range(len(lres_bll.trres.trwsh))]
+# al0 = [1.0-abs(yi)*2/lsys_bll.bref for yi in lsys.srfcs[0].strpy]
 
-alp = [als[i]+ali[i]+al0[i] for i in range(len(lsys.srfcs[0].strpy))]
+alp = [als[i]+ali[i] for i in range(len(lsys.srfcs[0].strpy))]
 
 fig  = figure(figsize=(12, 8))
 ax = fig.gca()
 ax.grid(True)
 ax.plot(lsys.srfcs[0].strpy, ali, label='Induced Angle')
-ax.plot(lsys.srfcs[0].strpy, al0, label='Zero Lift Angle')
+# ax.plot(lsys.srfcs[0].strpy, al0, label='Zero Lift Angle')
 ax.plot(lsys.srfcs[0].strpy, als, label='Specified Angle')
 ax.plot(lsys.srfcs[0].strpy, alp, label='Total Angle')
 leg = ax.legend()
@@ -152,13 +181,14 @@ c = [cmax-abs(yi)*2/lsys_bll.bref*(cmax-cmin) for yi in lsys.srfcs[0].strpy]
 
 cla = 2*pi*0.91
 
-l = [cla*c[i]*radians(alp[i])*q for i in range(len(lsys.srfcs[0].strpy))]
+l = [cla*c[i]*radians(alp[i])*trm.dynpres for i in range(len(lsys.srfcs[0].strpy))]
 
 fig  = figure(figsize=(12, 8))
 ax = fig.gca()
 ax.grid(True)
 ax.plot(lsys.srfcs[0].strpy, l, label='Lift Distribution')
 ax = lres_bll.plot_trefftz_lift_distribution(ax=ax)
+ax = lres_bll.plot_strip_lift_distribution(ax=ax)
 leg = ax.legend()
 
 #%% Plot Specified Twist
@@ -173,26 +203,47 @@ _ = ax.set_ylabel('Geometric Twist Angle - $\\alpha_g$ - [deg]')
 
 #%% New Results
 
-lres_0deg = LatticeResult('0deg Result', lsys_bll)
-lres_0deg.set_state(alpha=0.0, speed=V)
-lres_0deg.set_density(rho=rho)
-print(lres_0deg)
+lres_1g = LatticeResult('1g Result', lsys_bll)
+lres_1g.set_state(alpha=0.0, speed=trm.speed)
+lres_1g.set_density(rho=rho)
+display_markdown(lres_1g)
 
-lres_14deg = LatticeResult('14deg Result', lsys_bll)
-lres_14deg.set_state(alpha=14.0, speed=V)
-lres_14deg.set_density(rho=rho)
-print(lres_14deg)
+CL0 = lres_1g.nfres.CL
+CLa = lres_1g.stres['alpha'].CL
+al3g = degrees(asin((3*CL-CL0)/CLa))
+
+lres_3g = LatticeResult(f'3g Result', lsys_bll)
+lres_3g.set_state(alpha=al3g, speed=trm.speed)
+lres_3g.set_density(rho=rho)
+display_markdown(lres_3g)
 
 #%% New Plots
 
 axl = None
-axl = lres_0deg.plot_trefftz_lift_distribution(ax=axl)
-axl = lres_14deg.plot_trefftz_lift_distribution(ax=axl)
+axl = lres_1g.plot_trefftz_lift_distribution(ax=axl)
+axl = lres_1g.plot_strip_lift_distribution(ax=axl)
+axl = lres_3g.plot_trefftz_lift_distribution(ax=axl)
+axl = lres_3g.plot_strip_lift_distribution(ax=axl)
+_ = axl.set_ylabel('Lift Distribution')
+_ = axl.set_xlabel('Span Position')
 
-axd = None
-axd = lres_0deg.plot_trefftz_drag_distribution(ax=axd)
-axd = lres_14deg.plot_trefftz_drag_distribution(ax=axd)
+axd0 = None
+axd0 = lres_1g.plot_trefftz_drag_distribution(ax=axd0)
+axd0 = lres_1g.plot_strip_drag_distribution(ax=axd0)
+_ = axd0.set_ylabel('Drag Distribution')
+_ = axd0.set_xlabel('Span Position')
+
+axd14 = None
+axd14 = lres_3g.plot_trefftz_drag_distribution(ax=axd14)
+axd14 = lres_3g.plot_strip_drag_distribution(ax=axd14)
+_ = axd14.set_ylabel('Drag Distribution')
+_ = axd14.set_xlabel('Span Position')
 
 axw = None
-axw = lres_0deg.plot_trefftz_wash_distribution(ax=axw)
-axw = lres_14deg.plot_trefftz_wash_distribution(ax=axw)
+axw = lres_1g.plot_trefftz_wash_distribution(ax=axw)
+axw = lres_3g.plot_trefftz_wash_distribution(ax=axw)
+_ = axw.set_ylabel('Wash Distribution')
+_ = axw.set_xlabel('Span Position')
+
+#%% Display Strip Geometry
+display_markdown(lsys_bll.strip_geometry)
