@@ -70,6 +70,7 @@ class Airfoil(object):
             if 0.0 <= xi <= 1.0:
                 xnc.append(xi)
                 ync.append(yi)
+        xnc[0], ync[0] = 0.0, 0.0
         self.splinec = CubicSpline(xnc, ync)
     def plot_airfoil(self, ax=None):
         if ax is None:

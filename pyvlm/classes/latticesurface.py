@@ -1,4 +1,4 @@
-from math import pi, cos
+from math import pi, cos, sqrt
 from .latticestrip import LatticeStrip
 from .latticesheet import LatticeSheet
 from .latticepanel import LatticePanel
@@ -12,10 +12,11 @@ class LatticeSurface(object):
     pnts = None
     pnls = None
     msect = None
-    def __init__(self, name: str, sects: list, mirror: bool):
+    def __init__(self, name: str, sects: list, mirror: bool, funcs:list):
         self.name = name
         self.sects = sects
         self.mirror = mirror
+        self.funcs = funcs
         self.update()
     def update(self):
         if self.mirror and self.sects[0].pnt.y == 0.0:
@@ -113,6 +114,25 @@ class LatticeSurface(object):
             sect.bpos = bpos[i]
         for sht in self.shts:
             sht.set_strip_bpos()
+        bmax = max(bpos)
+        for func in self.funcs:
+            func.set_spline(bmax)
+            var = func.var
+            if var == 'angle':
+                var = '_ang'
+            if self.mirror:
+                for i in range(hlfstrp):
+                    strp = self.strps[numstrp-1-i]
+                    mstrp = self.strps[i]
+                    bpos = strp.bpos
+                    val = func.interpolate(bpos)
+                    strp.__dict__[var] = val
+                    mstrp.__dict__[var] = val
+            else:
+                for strp in self.strps:
+                    bpos = strp.bpos
+                    val = func.interpolate(bpos)
+                    strp.__dict__[var] = val
         return lsid, lpid
     def point_xyz(self):
         from numpy.matlib import zeros
@@ -132,16 +152,16 @@ class LatticeSurface(object):
             for j in range(shp[1]):
                 pnls.append(self.pnls[i, j])
         return pnls
-    def print_geom(self):
-        print(f'Printing {self.name:s} geometry.')
-        print('Sections')
-        for i, sect in enumerate(self.sects):
-            print(f'{i:d}\t{sect.pnt:.5f}\t{sect.chord:.5f}')
-        print('Sheets')
-        for i, sht in enumerate(self.shts):
-            print(f'{i:d}')
-            print(f'{sht.sect1.pnt:.5f}\t{sht.sect1.chord:.5f}')
-            print(f'{sht.sect2.pnt:.5f}\t{sht.sect2.chord:.5f}')
+    # def print_geom(self):
+    #     print(f'Printing {self.name:s} geometry.')
+    #     print('Sections')
+    #     for i, sect in enumerate(self.sects):
+    #         print(f'{i:d}\t{sect.pnt:.5f}\t{sect.chord:.5f}')
+    #     print('Sheets')
+    #     for i, sht in enumerate(self.shts):
+    #         print(f'{i:d}')
+    #         print(f'{sht.sect1.pnt:.5f}\t{sht.sect1.chord:.5f}')
+    #         print(f'{sht.sect2.pnt:.5f}\t{sht.sect2.chord:.5f}')
     @property
     def strpb(self):
         return [strp.bpos for strp in self.strps]
@@ -172,11 +192,61 @@ def latticesurface_from_json(surfdata: dict, display: bool=False):
     else:
         mirror = False
     if display: print(f'Loading Surface: {name:s}')
+    # Read Section Variables
     sects = []
     for sectdata in surfdata['sections']:
         sect = latticesecttion_from_json(sectdata)
         sects.append(sect)
-    surf = LatticeSurface(name, sects, mirror)
+    # Linear Interpolate Missing Variables
+    x, y, z, c, a = [], [], [], [], []
+    for sect in sects:
+        x.append(sect.pnt.x)
+        y.append(sect.pnt.y)
+        z.append(sect.pnt.z)
+        c.append(sect.chord)
+        a.append(sect.angle)
+    if None in y:
+        if None is z:
+            return ValueError
+        else:
+            y = linear_interpolate_none(z, y)
+    else:
+        z = linear_interpolate_none(y, z)
+    lensects = len(sects)
+    b = [0.0]
+    for i in range(lensects-1):
+        bi = b[i]+sqrt((y[i+1]-y[i])**2+(z[i+1]-z[i])**2)
+        b.append(bi)
+    x = linear_interpolate_none(b, x)
+    c = linear_interpolate_none(b, c)
+    a = linear_interpolate_none(b, a)
+    for i, sect in enumerate(sects):
+        sect.pnt.x = x[i]
+        sect.pnt.y = y[i]
+        sect.pnt.z = z[i]
+        sect.chord = c[i]
+        sect.angle = a[i]
+    # Read in Function Data
+    funcs = []
+    if 'functions' in surfdata:
+        for funcdata in surfdata['functions']:
+            func = surffunc_from_json(funcdata)
+            funcs.append(func)
+    # Entire Surface Position
+    xpos, ypos, zpos = 0.0, 0.0, 0.0
+    if 'xpos' in surfdata:
+        xpos = surfdata['xpos']
+    if 'ypos' in surfdata:
+        ypos = surfdata['ypos']
+    if 'zpos' in surfdata:
+        zpos = surfdata['zpos']
+    angle = 0.0
+    if 'angle' in surfdata:
+        angle = surfdata['angle']
+    for sect in sects:
+        sect.offset_position(xpos, ypos, zpos)
+        sect.offset_angle(angle)
+    surf = LatticeSurface(name, sects, mirror, funcs)
     if 'numc' in surfdata and 'cspace' in surfdata:
         numc = surfdata['numc']
         cspace = surfdata['cspace']
@@ -185,3 +255,59 @@ def latticesurface_from_json(surfdata: dict, display: bool=False):
         elif cspace == 'cosine':
             surf.set_chord_cosine_distribution(numc)
     return surf
+
+def linear_interpolate_none(x: list, y: list):
+    for i, yi in enumerate(y):
+        if yi is None:
+            for j in range(i, -1, -1):
+                if y[j] is not None:
+                    a = j
+                    break
+            for j in range(i, len(y)):
+                if y[j] is not None:
+                    b = j
+                    break
+            xa, xb = x[a], x[b]
+            ya, yb = y[a], y[b]
+            y[i] = (yb-ya)/(xb-xa)*(x[i]-xa)+ya
+    return y
+
+class SurfaceFunction(object):
+    var = None
+    dist = None
+    interp = None
+    values = None
+    spline = None
+    def __init__(self, var: str, spacing: str, interp: str, values: list):
+        self.var = var
+        self.spacing = spacing
+        self.interp = interp
+        self.values = values
+    def set_spline(self, bmax: float):
+        if self.spacing == 'equal':
+            num = len(self.values)
+            from pyvlm.tools import equal_spacing
+            nspc = equal_spacing(num-1)
+            spc = [bmax*nspci for nspci in nspc]
+        if self.interp == 'linear':
+            from pygeom.geom1d import LinearSpline
+            self.spline = LinearSpline(spc, self.values)
+        elif self.interp == 'cubic':
+            from pygeom.geom1d import CubicSpline
+            self.spline = CubicSpline(spc, self.values)
+    def interpolate(self, b: float):
+        return self.spline.single_interpolate_spline(b)
+    
+
+def surffunc_from_json(funcdata: dict):
+    var = funcdata["variable"]
+    if "spacing" in funcdata:
+        spacing = funcdata["spacing"]
+    else:
+        spacing = "equal"
+    if "interp" in funcdata:
+        interp = funcdata["interp"]
+    else:
+        interp = "linear"
+    values = funcdata["values"]
+    return SurfaceFunction(var, spacing, interp, values)

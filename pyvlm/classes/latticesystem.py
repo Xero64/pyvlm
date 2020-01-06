@@ -5,6 +5,7 @@ from pygeom.geom3d import Point, Vector, ihat, jhat, zero_vector
 from pygeom.matrix3d import zero_matrix_vector
 
 class LatticeSystem(object):
+    source = None
     name = None
     srfcs = None
     strps = None
@@ -44,7 +45,7 @@ class LatticeSystem(object):
         self.results = {}
         self.mesh()
         self.inherit()
-        self.build()
+        # self.build()
     def mesh(self):
         lsid = 0
         lpid = 0
@@ -337,6 +338,13 @@ class LatticeSystem(object):
             dx = pnl.crd
             table.add_row([j, x, y, z, dx])
         return table
+    def copy_from_source(self):
+        lsys = latticesystem_from_json(self.source, build=False)
+        for attr in self.__dict__:
+            if attr[0] == '_':
+                lsys.__dict__[attr] = self.__dict__[attr].copy()
+        lsys.build()
+        return lsys
     def __repr__(self):
         return '<LatticeSystem: {:s}>'.format(self.name)
     def __str__(self):
@@ -360,7 +368,7 @@ class LatticeSystem(object):
     def _repr_markdown_(self):
         return self.__str__()
 
-def latticesystem_from_json(jsonfilepath: str):
+def latticesystem_from_json(jsonfilepath: str, build: bool=True):
     from .latticesurface import latticesurface_from_json
     from .latticeresult import latticeresult_from_json
     from .latticetrim import latticetrim_from_json
@@ -368,6 +376,22 @@ def latticesystem_from_json(jsonfilepath: str):
 
     with open(jsonfilepath, 'rt') as jsonfile:
         data = load(jsonfile)
+    
+    from os.path import dirname, join, exists
+
+    path = dirname(jsonfilepath)
+
+    for surfdata in data['surfaces']:
+        for sectdata in surfdata['sections']:
+            if 'airfoil' in sectdata:
+                airfoil = sectdata['airfoil']
+                if airfoil[-4:] == '.dat':
+                    airfoil = join(path, airfoil)
+                    if not exists(airfoil):
+                        print(f'Airfoil {airfoil} does not exist.')
+                        del sectdata['airfoil']
+                    else:
+                        sectdata['airfoil'] = airfoil
     
     name = data['name']
     sfcs = []
@@ -383,7 +407,7 @@ def latticesystem_from_json(jsonfilepath: str):
     rref = Point(xref, yref, zref)
     lsys = LatticeSystem(name, sfcs, bref, cref, sref, rref)
 
-    if 'cases' in data:
+    if 'cases' in data and build:
         lsys.build()
         for i in range(len(data['cases'])):
             resdata = data['cases'][i]
@@ -392,4 +416,6 @@ def latticesystem_from_json(jsonfilepath: str):
             else:
                 latticeresult_from_json(lsys, resdata)
     
+    lsys.source = jsonfilepath
+
     return lsys

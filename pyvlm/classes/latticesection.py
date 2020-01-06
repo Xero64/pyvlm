@@ -26,6 +26,12 @@ class LatticeSection(object):
         self.camber = FlatPlate()
         self.ctrls = {}
         self.cdo = 0.0
+    def offset_position(self, xpos: float, ypos: float, zpos: float):
+        self.pnt.x = self.pnt.x+xpos
+        self.pnt.y = self.pnt.y+ypos
+        self.pnt.z = self.pnt.z+zpos
+    def offset_angle(self, angle: float):
+        self.angle = self.angle+angle
     def set_span_equal_spacing(self, numb: int):
         from pyvlm.tools import equal_spacing
         bsp = equal_spacing(2*numb)
@@ -49,6 +55,10 @@ class LatticeSection(object):
                 from ..tools.camber import NACA6Series
                 self.camber = NACA6Series(code)
                 self.airfoil = airfoil
+        elif airfoil[-4:].lower() == '.dat':
+            from ..tools.airfoil import airfoil_from_dat
+            self.camber = airfoil_from_dat(airfoil)
+            self.airfoil = airfoil
     def set_noload(self, noload: bool):
         self.noload = noload
     def set_cdo(self, cdo: float):
@@ -75,16 +85,28 @@ class LatticeSection(object):
         return '<LatticeSection>'
 
 def latticesecttion_from_json(sectdata: dict):
-    xle = sectdata['xle']
-    yle = sectdata['yle']
-    zle = sectdata['zle']
-    crd = sectdata['chord']
-    if 'angle' in sectdata:
-        ang = sectdata['angle']
+    if 'xle' in sectdata:
+        xle = sectdata['xle']
     else:
-        ang = 0.0
-    pnt = Point(xle, yle, zle)
-    sect = LatticeSection(pnt, crd, ang)
+        return ValueError
+    if 'yle' in sectdata:
+        yle = sectdata['yle']
+    else:
+        return ValueError
+    if 'zle' in sectdata:
+        zle = sectdata['zle']
+    else:
+        return ValueError
+    point = Point(xle, yle, zle)
+    if 'chord' in sectdata:
+        chord = sectdata['chord']
+    else:
+        return ValueError
+    if 'angle' in sectdata:
+        angle = sectdata['angle']
+    else:
+        angle = 0.0
+    sect = LatticeSection(point, chord, angle)
     if 'cdo' in sectdata:
         sect.set_cdo(sectdata['cdo'])
     if 'noload' in sectdata:
