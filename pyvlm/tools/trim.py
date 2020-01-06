@@ -87,7 +87,7 @@ class LoopingTrim(object):
         return self._qco2V
     def __str__(self):
         from py2md.classes import MDTable
-        outstr = '# Trim State '+self.name+' for '+self.sys.name+'\n'
+        outstr = '# Looping Trim State '+self.name+' for '+self.sys.name+'\n'
         table = MDTable()
         table.add_column('Speed', '.3f', data=[self.speed])
         table.add_column('Density', '.3f', data=[self.density])
@@ -225,7 +225,7 @@ class TurningTrim(object):
         return self._rbo2V
     def __str__(self):
         from py2md.classes import MDTable
-        outstr = '# Trim State '+self.name+' for '+self.sys.name+'\n'
+        outstr = '# Turning Trim State '+self.name+' for '+self.sys.name+'\n'
         table = MDTable()
         table.add_column('Speed', '.3f', data=[self.speed])
         table.add_column('Density', '.3f', data=[self.density])
@@ -247,6 +247,90 @@ class TurningTrim(object):
         table.add_column('Turn Radius', '.3f', data=[self.rad])
         table.add_column('Pitch Rate', '.5f', data=[self.prate])
         table.add_column('Roll Rate', '.5f', data=[self.rrate])
+        outstr += table._repr_markdown_()
+        return outstr
+    def _repr_markdown_(self):
+        return self.__str__()
+
+class LevelTrim(object):
+    name = None
+    sys = None
+    gravacc = None
+    speed = None
+    density = None
+    mass = None
+    _weight = None
+    _lift = None
+    _dynpres = None
+    _CL = None
+    def __init__(self, name: str, sys: LatticeSystem):
+        self.name = name
+        self.sys = sys
+        self.gravacc = 9.80665
+    def reset(self):
+        for attr in self.__dict__:
+            if attr[0] == '_':
+                self.__dict__[attr] = None
+    def set_gravitational_acceleration(self, gravacc: float):
+        self.gravacc = gravacc
+        self.reset()
+    def set_density(self, density: float):
+        self.density = density
+        self.reset()
+    def set_speed(self, speed: float):
+        self.speed = speed
+        self.reset()
+    def set_mass(self, mass: float):
+        self.mass = mass
+        self.reset()
+    def create_trim_result(self):
+        lres = LatticeTrim(self.name, self.sys)
+        lres.set_density(rho=self.density)
+        lres.set_state(speed=self.speed)
+        return lres
+    @property
+    def weight(self):
+        if self._weight is None:
+            self._weight = self.mass*self.gravacc
+        return self._weight
+    @property
+    def lift(self):
+        if self._lift is None:
+            self._lift = self.weight
+        return self._lift
+    @property
+    def dynpres(self):
+        if self._dynpres is None:
+            self._dynpres = self.density*self.speed**2/2
+        return self._dynpres
+    @property
+    def CL(self):
+        if self._CL is None:
+            self._CL = self.lift/self.dynpres/self.sys.sref
+        return self._CL
+    def trim_speed_from_CL(self, CL: float):
+        if self.mass is not None and self.density is not None:
+            W = self.weight
+            S = self.sys.sref
+            rho = self.density
+            self.speed = (W/S/rho/CL*2)**0.5
+            self._CL = CL
+    def __str__(self):
+        from py2md.classes import MDTable
+        outstr = '# Level Trim State '+self.name+' for '+self.sys.name+'\n'
+        table = MDTable()
+        table.add_column('Speed', '.3f', data=[self.speed])
+        table.add_column('Density', '.3f', data=[self.density])
+        table.add_column('Dyn. Press.', '.3f', data=[self.dynpres])
+        outstr += table._repr_markdown_()
+        table = MDTable()
+        table.add_column('Mass', '.3f', data=[self.mass])
+        table.add_column('Grav. Acc.', '.5f', data=[self.gravacc])
+        table.add_column('Weight', '.3f', data=[self.weight])
+        outstr += table._repr_markdown_()
+        table = MDTable()
+        table.add_column('Lift', '.3f', data=[self.lift])
+        table.add_column('CL', '.5f', data=[self.CL])
         outstr += table._repr_markdown_()
         return outstr
     def _repr_markdown_(self):
