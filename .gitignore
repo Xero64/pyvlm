@@ -32,6 +32,9 @@ symbolic/
 notebooks/
 results/*
 
+# Shell scripts
+*.sh
+
 # py2md files
 *.py.*
 
