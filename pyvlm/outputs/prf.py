@@ -35,7 +35,9 @@ def latticeresult_to_prf(lsys: LatticeSystem, prffilepath: str):
     for case in lsys.results:
         result = lsys.results[case]
         dynprs = result.qfs
-        casedata = []
+        casedata = {}
+        casedata['name'] = case
+        casedata['surfaces'] = []
         for srfc in lsys.srfcs:
             prtop = zeros(srfc.pnls.shape)
             prbot = zeros(srfc.pnls.shape)
@@ -52,7 +54,7 @@ def latticeresult_to_prf(lsys: LatticeSystem, prffilepath: str):
             srfresdata['name'] = srfc.name
             srfresdata['top pressure [Pa]'] = prtop.tolist()
             srfresdata['bottom pressure [Pa]'] = prbot.tolist()
-            casedata.append(srfresdata)
+            casedata['surfaces'].append(srfresdata)
         resultlist.append(casedata)
     data['results'] = resultlist
     with open(prffilepath, 'wt') as prffile:
