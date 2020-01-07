@@ -400,7 +400,7 @@ class LatticeResult(object):
                     srfcs.append(srfc)
         for srfc in srfcs:
             label = self.name+' for '+srfc.name
-            l = [self.stripres.stfrc.z[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+            l = [self.stripres.lift[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             if axis == 'b':
                 b = srfc.strpb
                 ax.plot(b, l, label=label)
@@ -428,7 +428,7 @@ class LatticeResult(object):
                     srfcs.append(srfc)
         for srfc in srfcs:
             label = self.name+' for '+srfc.name
-            f = [self.stripres.stfrc.y[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+            f = [self.stripres.side[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             if axis == 'b':
                 b = srfc.strpb
                 ax.plot(b, f, label=label)
@@ -456,7 +456,7 @@ class LatticeResult(object):
                     srfcs.append(srfc)
         for srfc in srfcs:
             label = self.name+' for '+srfc.name
-            d = [self.stripres.stfrc.x[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+            d = [self.stripres.drag[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             if axis == 'b':
                 b = srfc.strpb
                 ax.plot(b, d, label=label)

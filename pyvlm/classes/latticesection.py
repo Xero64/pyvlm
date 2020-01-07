@@ -8,6 +8,7 @@ class LatticeSection(object):
     chord = None
     angle = None
     camber = None
+    airfoil = None
     bspace = None
     yspace = None
     mirror = None
@@ -45,7 +46,11 @@ class LatticeSection(object):
         bsp = semi_cosine_spacing(2*numb)
         self.bspace = [tuple(bsp[i*2:i*2+3]) for i in range(numb)]
     def set_airfoil(self, airfoil: str):
-        if airfoil[0:4].lower() == 'naca':
+        if airfoil[-4:].lower() == '.dat':
+            from ..tools.airfoil import airfoil_from_dat
+            self.camber = airfoil_from_dat(airfoil)
+            self.airfoil = airfoil
+        elif airfoil[0:4].lower() == 'naca':
             code = airfoil[4:].strip()
             if len(code) == 4:
                 from ..tools.camber import NACA4
@@ -55,10 +60,6 @@ class LatticeSection(object):
                 from ..tools.camber import NACA6Series
                 self.camber = NACA6Series(code)
                 self.airfoil = airfoil
-        elif airfoil[-4:].lower() == '.dat':
-            from ..tools.airfoil import airfoil_from_dat
-            self.camber = airfoil_from_dat(airfoil)
-            self.airfoil = airfoil
     def set_noload(self, noload: bool):
         self.noload = noload
     def set_cdo(self, cdo: float):

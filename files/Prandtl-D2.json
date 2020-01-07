@@ -21,7 +21,7 @@
                     "zle": 0.0,
                     "chord": 0.40005,
                     "numb": 40,
-                    "bspace": "cosine",
+                    "bspace": "semi-cosine",
                     "airfoil": "prandtl_root.dat"
                 },
                 {

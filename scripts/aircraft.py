@@ -28,9 +28,15 @@ ltrm = lsys.results['Positive 5g Dive']
 
 #%% Plot Lift Distribution
 axl = ltrm.plot_trefftz_lift_distribution()
+axl = ltrm.plot_strip_lift_distribution(ax=axl)
 
 #%% Plot Y Force Distribution
 axy = ltrm.plot_trefftz_yforce_distribution()
+axy = ltrm.plot_strip_yforce_distribution(ax=axy)
+
+#%% Plot Drag Distribution
+axd = ltrm.plot_trefftz_drag_distribution()
+axd = ltrm.plot_strip_drag_distribution(ax=axd)
 
 #%% Print Strip Forces
 display_markdown(ltrm.strip_forces)
