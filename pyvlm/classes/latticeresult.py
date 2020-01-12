@@ -606,11 +606,11 @@ class LatticeResult(object):
         table.add_column('Mz', '.3f')
         for srfc in self.sys.srfcs:
             ind = srfc.pnli
-            frc = self.nfres.nffrc[ind, 0].sumall()
-            mom = self.nfres.nfmom[ind, 0].sumall()
+            frc = self.nfres.nffrc[ind, 0].sum()
+            mom = self.nfres.nfmom[ind, 0].sum()
             table.add_row([srfc.name, frc.x, frc.y, frc.z, mom.x, mom.y, mom.z])
-        frc = self.nfres.nffrc.sumall()
-        mom = self.nfres.nfmom.sumall()
+        frc = self.nfres.nffrc.sum()
+        mom = self.nfres.nfmom.sum()
         table.add_row(['Total', frc.x, frc.y, frc.z, mom.x, mom.y, mom.z])
         return table
     @property
@@ -977,7 +977,7 @@ class GammaResult(object):
     def nffrc(self):
         if self._nffrc is None:
             tmp = self.res.sys.afg*self.gamma+self.res.afv
-            self._nffrc = elementwise_multiply(self.rhogamma, tmp)
+            self._nffrc = elementwise_multiply(tmp, self.rhogamma)
         return self._nffrc
     @property
     def nfmom(self):
@@ -987,12 +987,12 @@ class GammaResult(object):
     @property
     def nffrctot(self):
         if self._nffrctot is None:
-            self._nffrctot = self.nffrc.sumall()
+            self._nffrctot = self.nffrc.sum()
         return self._nffrctot
     @property
     def nfmomtot(self):
         if self._nfmomtot is None:
-            self._nfmomtot = self.nfmom.sumall()
+            self._nfmomtot = self.nfmom.sum()
         return self._nfmomtot
     @property
     def Cx(self):
@@ -1172,12 +1172,12 @@ class PhiResult(object):
     @property
     def trfrctot(self):
         if self._trfrctot is None:
-            self._trfrctot = self.trfrc.sumall()
+            self._trfrctot = self.trfrc.sum()
         return self._trfrctot
     @property
     def trmomtot(self):
         if self._trmomtot is None:
-            self._trmomtot = self.trmom.sumall()
+            self._trmomtot = self.trmom.sum()
         return self._trmomtot
     @property
     def CDi(self):
@@ -1253,7 +1253,7 @@ class ParasiticDragResult(object):
     def pdfrc(self):
         if self._pdfrc is None:
             dynpr = (self.res.rho/2)*elementwise_dot_product(self.res.bvv, self.res.bvv)
-            self._pdfrc = elementwise_multiply(self.res.sys.bda, dynpr*self.res.acs.dirx)
+            self._pdfrc = elementwise_multiply(dynpr*self.res.acs.dirx, self.res.sys.bda)
         return self._pdfrc
     @property
     def pdmom(self):
@@ -1263,12 +1263,12 @@ class ParasiticDragResult(object):
     @property
     def pdfrctot(self):
         if self._pdfrctot is None:
-            self._pdfrctot = self.pdfrc.sumall()
+            self._pdfrctot = self.pdfrc.sum()
         return self._pdfrctot
     @property
     def pdmomtot(self):
         if self._pdmomtot is None:
-            self._pdmomtot = self.pdmom.sumall()
+            self._pdmomtot = self.pdmom.sum()
         return self._pdmomtot
     @property
     def CDo(self):

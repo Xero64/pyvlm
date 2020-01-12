@@ -1,8 +1,12 @@
 from time import perf_counter
 from math import pi, atan2
-from numpy.matlib import zeros
+from numpy.matlib import zeros, matrix, multiply, divide, fill_diagonal, seterr
 from pygeom.geom3d import Point, Vector, ihat, jhat, zero_vector
-from pygeom.matrix3d import zero_matrix_vector
+from pygeom.matrix3d import zero_matrix_vector, MatrixVector
+from pygeom.matrix3d import elementwise_dot_product, elementwise_cross_product
+from pygeom.matrix3d import elementwise_multiply, elementwise_divide
+
+seterr(divide='ignore', invalid='ignore')
 
 class LatticeSystem(object):
     source = None
@@ -17,6 +21,10 @@ class LatticeSystem(object):
     sref = None
     rref = None
     ctrls = None
+    _ra = None
+    _rb = None
+    _rc = None
+    _rg = None
     _gam = None
     _avg = None
     _afg = None
@@ -89,6 +97,10 @@ class LatticeSystem(object):
                         self.ctrls[control] = (ind, ind+1, ind+2, ind+3)
                         ind += 4
     def build(self):
+        self.ra
+        self.rb
+        self.rc
+        self.rg
         self.avc
         self.aic
         self.afs
@@ -105,20 +117,46 @@ class LatticeSystem(object):
             if attr[0] == '_':
                 self.__dict__[attr] = None
     @property
-    def avc(self):
-        if self._avc is None:
-            print('Building Control Velocity Matrix.')
-            start = perf_counter()
+    def ra(self):
+        if self._ra is None:
             num = len(self.pnls)
-            self._avc = zero_matrix_vector((num, num))
+            self._ra = zero_matrix_vector((num, num))
+            for pnlj in self.pnls:
+                j = pnlj.lpid
+                self._ra[:, j] = pnlj.pnta
+        return self._ra
+    @property
+    def rb(self):
+        if self._rb is None:
+            num = len(self.pnls)
+            self._rb = zero_matrix_vector((num, num))
+            for pnlj in self.pnls:
+                j = pnlj.lpid
+                self._rb[:, j] = pnlj.pntb
+        return self._rb
+    @property
+    def rc(self):
+        if self._rc is None:
+            num = len(self.pnls)
+            self._rc = zero_matrix_vector((num, num))
             for pnli in self.pnls:
                 i = pnli.lpid
-                for pnlj in self.pnls:
-                    j = pnlj.lpid
-                    self._avc[i, j] = pnlj.velocity(pnli.pntc)
-            finish = perf_counter()
-            elapsed = finish-start
-            print(f'Built Control Velocity Matrix in {elapsed:.3f} seconds.')
+                self._rc[i, :] = pnli.pntc
+        return self._rc
+    @property
+    def rg(self):
+        if self._rg is None:
+            num = len(self.pnls)
+            self._rg = zero_matrix_vector((num, num))
+            for pnli in self.pnls:
+                i = pnli.lpid
+                self._rg[i, :] = pnli.pnti
+        return self._rg
+    @property
+    def avc(self):
+        if self._avc is None:
+            veli, vela, velb = velocity_matrix(self.ra, self.rb, self.rc)
+            self._avc = (veli+vela-velb)/(4*pi)
         return self._avc
     @property
     def aic(self):
@@ -159,28 +197,16 @@ class LatticeSystem(object):
     def gam(self):
         if self._gam is None:
             from pygeom.matrix3d import solve_matrix_vector
-            print('Solving System.')
-            start = perf_counter()
             self._gam = -solve_matrix_vector(self.aic, self.afs)
-            finish = perf_counter()
-            elapsed = finish-start
-            print(f'System Solved in {elapsed:.3f} seconds.')
         return self._gam
     @property
     def avg(self):
         if self._avg is None:
-            print('Building Induced Velocity Matrix.')
-            start = perf_counter()
-            num = len(self.pnls)
-            self._avg = zero_matrix_vector((num, num))
-            for pnli in self.pnls:
-                i = pnli.lpid
-                for pnlj in self.pnls:
-                    j = pnlj.lpid
-                    self._avg[i, j] = pnlj.induced_velocity(pnli.pnti)
-            finish = perf_counter()
-            elapsed = finish-start
-            print(f'Built Induced Velocity Matrix in {elapsed:.3f} seconds.')
+            veli, vela, velb = velocity_matrix(self.ra, self.rb, self.rg)
+            fill_diagonal(veli.x, 0.0)
+            fill_diagonal(veli.y, 0.0)
+            fill_diagonal(veli.z, 0.0)
+            self._avg = (veli+vela-velb)/(4*pi)
         return self._avg
     @property
     def afg(self):
@@ -419,3 +445,43 @@ def latticesystem_from_json(jsonfilepath: str, build: bool=True):
     lsys.source = jsonfilepath
 
     return lsys
+
+def velocity_matrix(ra: matrix, rb: matrix, rc: matrix):
+    
+    a = rc-ra
+    b = rc-rb
+
+    am = a.return_magnitude()
+    bm = b.return_magnitude()
+
+    # Velocity from Bound Vortex
+    adb = elementwise_dot_product(a, b)
+    abm = multiply(am, bm)
+    dm = multiply(abm, abm+adb)
+    axb = elementwise_cross_product(a, b)
+    axbm = axb.return_magnitude()
+    chki = (axbm == 0.0)
+    veli = elementwise_multiply(axb, divide(am+bm, dm))
+    veli.x[chki] = 0.0
+    veli.y[chki] = 0.0
+    veli.z[chki] = 0.0
+
+    # Velocity from Trailing Vortex A
+    axx = MatrixVector(zeros(a.shape), a.z, -a.y)
+    axxm = axx.return_magnitude()
+    chka = (axxm == 0.0)
+    vela = elementwise_divide(axx, multiply(am, am-a.x))
+    vela.x[chka] = 0.0
+    vela.y[chka] = 0.0
+    vela.z[chka] = 0.0
+
+    # Velocity from Trailing Vortex B
+    bxx = MatrixVector(zeros(b.shape), b.z, -b.y)
+    bxxm = bxx.return_magnitude()
+    chkb = (bxxm == 0.0)
+    velb = elementwise_divide(bxx, multiply(bm, bm-b.x))
+    velb.x[chkb] = 0.0
+    velb.y[chkb] = 0.0
+    velb.z[chkb] = 0.0
+
+    return veli, vela, velb
