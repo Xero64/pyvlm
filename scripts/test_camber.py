@@ -1,30 +1,45 @@
 #%% Load Dependencies
+from IPython.display import display_markdown
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm import latticesystem_from_json
 
 #%% Create Lattice System
 jsonfilepath = r'..\files\Test_camber.json'
 lsys = latticesystem_from_json(jsonfilepath)
-print(lsys)
+display_markdown(lsys)
 
 #%% Original Strip Geometry
-print(lsys.strip_geometry)
+display_markdown(lsys.strip_geometry)
 
 #%% Original Strip Geometry
-print(lsys.panel_geometry)
+display_markdown(lsys.panel_geometry)
 
 #%% Original Case
 lres_org = LatticeResult('Baseline', lsys)
 lres_org.set_state(alpha=3.0)
 
 #%% Print Result
-print(lres_org)
+display_markdown(lres_org)
 
 #%% Original Strip Forces
-print(lres_org.strip_forces)
+display_markdown(lres_org.strip_forces)
 
 #%% Original Strip Coefficients
-print(lres_org.strip_coefficients)
+display_markdown(lres_org.strip_coefficients)
 
 #%% Original Panel Forces
-print(lres_org.panel_forces)
+display_markdown(lres_org.panel_forces)
+
+#%% Plot Lift Distribution
+axl = None
+axl = lres_org.plot_trefftz_lift_distribution(ax=axl)
+axl = lres_org.plot_strip_lift_distribution(ax=axl)
+
+#%% Plot Drag Distribution
+axd = None
+axd = lres_org.plot_trefftz_drag_distribution(ax=axd)
+axd = lres_org.plot_strip_drag_distribution(ax=axd)
+
+#%% Plot Wash Distribution
+axw = None
+axw = lres_org.plot_trefftz_wash_distribution(ax=axw)
