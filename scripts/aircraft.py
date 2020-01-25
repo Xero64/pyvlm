@@ -3,6 +3,7 @@ from IPython.display import display_markdown
 from pyvlm import latticesystem_from_json
 from pyvlm.outputs.msh import latticeresult_to_msh
 from pyvlm.outputs.prf import latticeresult_to_prf
+from pyvlm.classes import LatticeTrim
 
 #%% Import Geometry
 jsonfilepath = r'..\files\Aircraft.json'
@@ -49,3 +50,14 @@ display_markdown(ltrm.panel_forces)
 
 #%% Print Total Loads
 display_markdown(ltrm.surface_loads)
+
+#%% Trim CL to 0.8
+CLt = 0.8
+CYt = 0.0
+
+ltrm2 = LatticeTrim(f'CL = {CLt}, CY = {CYt}', lsys)
+ltrm2.set_targets(CLt = CLt, CYt = CYt)
+ltrm2.set_trim_loads(trmmom=False)
+ltrm2.trim()
+
+display_markdown(ltrm2)
