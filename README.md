@@ -264,4 +264,19 @@ display_markdown(ltrm.surface_loads)
 
 **Mesh File Output:**
 
+You can generate a Gmsh mesh file (*.msh) directly from a Python script using the following code snippet.
+
+```python
+lres = lsys.results['Positive 1g Cruise + 15deg Side Slip']
+latticeresult_to_msh(lres, r'..\results\Aircraft.msh')
+```
+
+This will output a mesh file to the specified location, which can then be viewed in Gmsh. The latest version of Gmsh can be downloaded at:
+
+http://gmsh.info/
+
+Use File > Open in Gmsh to open the mesh file with the pressure results.
+
+A sample of the aircraft shown in Gmsh is captured below. Consult Gmsh help to operate Gmsh.
+
 ![](https://github.com/Xero64/pyvlm/raw/master/Readme.png)
