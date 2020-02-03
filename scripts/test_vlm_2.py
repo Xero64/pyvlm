@@ -1,16 +1,24 @@
+'''
+This script performs the span load optimization.
+The low aspect ratio wing gives an elliptical spanload under optimisation.
+The high aspect ratio wing is constrained to give the same root bending moment,
+as that for the low aspect ratio wing resulting in the R.T. Jones distribution.
+'''
+
 #%% Import Dependencies
+from IPython.display import display
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm import latticesystem_from_json
 
 #%% Low AR Wing
 jsonfilepath1 = r'..\files\Sweep_Low_AR_100.json'
 lsys1 = latticesystem_from_json(jsonfilepath1)
-print(lsys1)
+display(lsys1)
 
 #%% High AR Wing
 jsonfilepath2 = r'..\files\Sweep_High_AR_100.json'
 lsys2 = latticesystem_from_json(jsonfilepath2)
-print(lsys2)
+display(lsys2)
 
 #%% Low AR Wing Optimum
 lopt1 = LatticeOptimum('Low AR Wing', lsys1)
@@ -18,12 +26,12 @@ lopt1.set_conditions()
 lopt1.add_constraint('L', 1.0)
 lopt1.add_record('l', strplst='Mirrored')
 phi1, lam1 = lopt1.optimum_lift_distribution()
-print(lopt1)
+display(lopt1)
 
 lres1 = LatticeResult('Low AR Wing', lsys1)
 lres1.set_state()
 lres1.set_phi(phi1)
-print(lres1)
+display(lres1)
 
 #%% Constrained Root Bending Moment
 l = lopt1.record[0].evaluate(lopt1.pmat)
@@ -34,12 +42,12 @@ lopt2.set_conditions()
 lopt2.add_constraint('L', 1.0)
 lopt2.add_constraint('l', l, strplst='Mirrored')
 phi2, lam2 = lopt2.optimum_lift_distribution()
-print(lopt2)
+display(lopt2)
 
 lres2 = LatticeResult('High AR Wing Constrained', lsys2)
 lres2.set_state()
 lres2.set_phi(phi2)
-print(lres2)
+display(lres2)
 
 #%% Print Drag Ratio
 

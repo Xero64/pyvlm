@@ -1,28 +1,29 @@
 #%% Import Dependencies
-from IPython.display import display_markdown
+from IPython.display import display
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm import latticesystem_from_json
 from pyvlm.tools import bell_lift_distribution
 from pyvlm.tools.trim import LevelTrim
-from pyvlm.tools import Bell
+from pyvlm.tools import Bell, Mass
 
 #%% Create Lattice System
 
 jsonfilepath = r'..\files\Test_rhofw.json'
 lsys = latticesystem_from_json(jsonfilepath)
 lsys.build()
-display_markdown(lsys)
+display(lsys)
 
 #%% Create Trim Scenario
 m = 6.577089 # kg
+mass = Mass('Test Mass', m, lsys.rref.x, lsys.rref.y, lsys.rref.z)
 CL = 0.6
 rho = 1.1448386410124347 # kg/m**3 at 704.3m altitude
 
 trm = LevelTrim('CL = 0.6', lsys)
 trm.set_density(rho)
-trm.set_mass(m)
+trm.set_mass(mass)
 trm.trim_speed_from_CL(CL)
-display_markdown(trm)
+display(trm)
 
 #%%  Copy Lattice System
 lsys_opt = lsys.copy_from_source()
@@ -33,7 +34,7 @@ lsys_bll = lsys.copy_from_source()
 #%% Create Lattice Result
 lres_org = trm.create_trim_result()
 lres_org.name = 'Initial'
-display_markdown(lres_org)
+display(lres_org)
 
 #%% Create Bell Lift Distribution
 bll = Bell(lsys.bref, lsys.srfcs[0].strpy)
@@ -50,11 +51,11 @@ l = bell_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, trm.lift)
 lopt_bll = LatticeOptimum('Bell', lsys_bll)
 lopt_bll.set_lift_distribution(l, trm.density, trm.speed)
 lopt_bll.add_record('l', strplst='Mirrored')
-display_markdown(lopt_bll)
+display(lopt_bll)
 
 lres_bll = LatticeResult('Bell', lsys)
 lres_bll.set_lift_distribution(l, trm.density, trm.speed)
-display_markdown(lres_bll)
+display(lres_bll)
 
 #%% Plots
 
@@ -206,7 +207,7 @@ _ = ax.set_ylabel('Geometric Twist Angle - $\\alpha_g$ - [deg]')
 lres_1g = LatticeResult('1g Result', lsys_bll)
 lres_1g.set_state(alpha=0.0, speed=trm.speed)
 lres_1g.set_density(rho=rho)
-display_markdown(lres_1g)
+display(lres_1g)
 
 CL0 = lres_1g.nfres.CL
 CLa = lres_1g.stres['alpha'].CL
@@ -215,7 +216,7 @@ al3g = degrees(asin((3*CL-CL0)/CLa))
 lres_3g = LatticeResult(f'3g Result', lsys_bll)
 lres_3g.set_state(alpha=al3g, speed=trm.speed)
 lres_3g.set_density(rho=rho)
-display_markdown(lres_3g)
+display(lres_3g)
 
 #%% New Plots
 
@@ -246,4 +247,4 @@ _ = axw.set_ylabel('Wash Distribution')
 _ = axw.set_xlabel('Span Position')
 
 #%% Display Strip Geometry
-display_markdown(lsys_bll.strip_geometry)
+display(lsys_bll.strip_geometry)

@@ -1,5 +1,5 @@
 #%% Import Dependencies
-from IPython.display import display_markdown
+from IPython.display import display
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm import latticesystem_from_json
 from pyvlm.tools import bell_lift_distribution
@@ -30,12 +30,12 @@ jsonfilepath = r'..\files\Test_rhofw.json'
 lsys = latticesystem_from_json(jsonfilepath)
 lsys_opt = latticesystem_from_json(jsonfilepath)
 lsys_bll = latticesystem_from_json(jsonfilepath)
-display_markdown(lsys)
+display(lsys)
 
 lres_org = LatticeResult('Initial', lsys)
 lres_org.set_state(speed=V)
 lres_org.set_density(rho=rho)
-display_markdown(lres_org)
+display(lres_org)
 
 l = bell_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, W)
 
@@ -45,13 +45,13 @@ lopt_bll = LatticeOptimum('Bell', lsys_bll)
 lopt_bll.set_conditions(speed=V, rho=rho)
 lopt_bll.set_lift_distribution(l, rho, V)
 lopt_bll.add_record('l', strplst='Mirrored')
-display_markdown(lopt_bll)
+display(lopt_bll)
 
 lres_bll = LatticeResult('Bell', lsys)
 lres_bll.set_state(speed=V)
 lres_bll.set_density(rho=rho)
 lres_bll.set_lift_distribution(l, rho, V)
-display_markdown(lres_bll)
+display(lres_bll)
 
 #%% Optimal Lift Distribution
 
@@ -61,13 +61,13 @@ lopt.add_constraint('L', W)
 lopt.add_constraint('l', 20.566097, strplst='Mirrored')
 # lopt.add_record('l', strplst='Mirrored')
 lopt.optimum_lift_distribution()
-display_markdown(lopt)
+display(lopt)
 
 lres_opt = LatticeResult('Optimal', lsys)
 lres_opt.set_state(speed=V)
 lres_opt.set_density(rho=rho)
 lres_opt.set_phi(lopt.phi)
-display_markdown(lres_opt)
+display(lres_opt)
 
 #%% Plots
 
@@ -218,5 +218,3 @@ trcdi = trdrg/lopt.res.qfs/lsys.sref
 
 print(f'stcdi = {stcdi:g}')
 print(f'trcdi = {trcdi:g}')
-
-# %%

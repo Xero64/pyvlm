@@ -1,17 +1,18 @@
 #%% Import Dependencies
+from IPython.display import display
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm import latticesystem_from_json
 
 #%% Low AR Wing
 jsonfilepath = r'..\files\Test.json'
 lsys = latticesystem_from_json(jsonfilepath)
-print(lsys)
+display(lsys)
 
 lsys_new = latticesystem_from_json(jsonfilepath)
 
 lres_org = LatticeResult('Initial', lsys)
 lres_org.set_state(alpha=3.0)
-print(lres_org)
+display(lres_org)
 
 Lspec = lres_org.trres.CL*lres_org.qfs*lsys.sref
 
@@ -21,12 +22,12 @@ lopt = LatticeOptimum('Optimal', lsys_new)
 lopt.set_conditions()
 lopt.add_constraint('L', Lspec)
 phi, lam = lopt.optimum_lift_distribution()
-print(lopt)
+display(lopt)
 
 lres_opt = LatticeResult('Optimal', lsys)
 lres_opt.set_state(alpha=3.0)
 lres_opt.set_phi(phi)
-print(lres_opt)
+display(lres_opt)
 
 #%% Plots
 
@@ -73,11 +74,11 @@ axa.legend()
 
 lres_0deg = LatticeResult('0deg Result', lsys_new)
 lres_0deg.set_state(alpha=0.0, speed=1.0)
-print(lres_0deg)
+display(lres_0deg)
 
 lres_6deg = LatticeResult('6deg Result', lsys_new)
 lres_6deg.set_state(alpha=6.0, speed=1.0)
-print(lres_6deg)
+display(lres_6deg)
 
 #%% New Plots
 
@@ -92,5 +93,3 @@ axd = lres_6deg.plot_trefftz_drag_distribution(ax=axd)
 axw = None
 axw = lres_0deg.plot_trefftz_wash_distribution(ax=axw)
 axw = lres_6deg.plot_trefftz_wash_distribution(ax=axw)
-
-#%%

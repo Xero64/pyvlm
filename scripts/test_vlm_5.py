@@ -1,4 +1,5 @@
 #%% Import Dependencies
+from IPython.display import display
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm.tools import bell_lift_distribution, elliptical_lift_distribution
 from pyvlm import latticesystem_from_json
@@ -11,12 +12,12 @@ V = 12.9173511047957 # m/s
 #%% Low AR Wing
 jsonfilepath1 = r'..\files\Test_rhofw_elliptical.json'
 lsys1 = latticesystem_from_json(jsonfilepath1)
-print(lsys1)
+display(lsys1)
 
 #%% High AR Wing
 jsonfilepath2 = r'..\files\Test_rhofw_bell.json'
 lsys2 = latticesystem_from_json(jsonfilepath2)
-print(lsys2)
+display(lsys2)
 
 #%% Low AR Wing Optimum
 lres1 = LatticeResult('Low AR Wing Elliptical', lsys1)
@@ -25,12 +26,12 @@ lres1.set_density(rho=rho)
 
 l1 = elliptical_lift_distribution(lsys1.srfcs[0].strpy, lsys1.bref, L)
 lres1.set_lift_distribution(l1, rho=rho, speed=V)
-print(lres1)
+display(lres1)
 
 lopt1 = LatticeOptimum('Low AR Wing Elliptical', lsys1)
 lopt1.set_lift_distribution(l1, rho=rho, speed=V)
 lopt1.add_record('l', strplst='Mirrored')
-print(lopt1)
+display(lopt1)
 
 #%% High AR Wing Constrained Optimum
 lres2 = LatticeResult('High AR Wing Bell', lsys2)
@@ -39,12 +40,12 @@ lres2.set_density(rho=rho)
 
 l2 = bell_lift_distribution(lsys2.srfcs[0].strpy, lsys2.bref, L)
 lres2.set_lift_distribution(l2, rho=rho, speed=V)
-print(lres2)
+display(lres2)
 
 lopt2 = LatticeOptimum('High AR Wing Bell', lsys2)
 lopt2.set_lift_distribution(l2, rho=rho, speed=V)
 lopt2.add_record('l', strplst='Mirrored')
-print(lopt2)
+display(lopt2)
 
 #%% Print Drag Ratio
 Di1 = lopt1.return_induced_drag()

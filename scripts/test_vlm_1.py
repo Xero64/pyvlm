@@ -1,17 +1,18 @@
 #%% Load Dependencies
+from IPython.display import display
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm import latticesystem_from_json
 
 #%% Create Lattice System
 jsonfilepath = r'..\files\Straight_Wing_Cosine_100.json'
 lsys = latticesystem_from_json(jsonfilepath)
-print(lsys)
+display(lsys)
 
 #%% Original Strip Geometry
-print(lsys.strip_geometry)
+display(lsys.strip_geometry)
 
 #%% Original Strip Geometry
-print(lsys.panel_geometry)
+display(lsys.panel_geometry)
 
 #%% Original Case
 
@@ -20,19 +21,19 @@ beta = 0.0 # degrees
 
 lres_org = LatticeResult('Baseline', lsys)
 lres_org.set_state(alpha=alpha, beta=beta)
-print(lres_org)
+display(lres_org)
 
 # lres_org.print_total_loads()
 # lres_org.print_aerodynamic_coefficients()
 
 #%% Original Strip Forces
-print(lres_org.strip_forces)
+display(lres_org.strip_forces)
 
 #%% Original Strip Coefficients
-print(lres_org.strip_coefficients)
+display(lres_org.strip_coefficients)
 
 #%% Original Panel Forces
-print(lres_org.panel_forces)
+display(lres_org.panel_forces)
 
 #%% Equivalent Elliptical Lift
 from pyvlm.tools import elliptical_lift_distribution
@@ -44,7 +45,7 @@ lell = elliptical_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, L)
 lres_ell = LatticeResult('Equivalent Elliptical', lsys)
 lres_ell.set_state(alpha=alpha)
 lres_ell.set_lift_distribution(lell, rho=1.0, speed=1.0)
-print(lres_ell)
+display(lres_ell)
 
 # lres_ell.print_total_loads()
 # lres_ell.print_aerodynamic_coefficients()
@@ -64,12 +65,12 @@ lopt_opt1.set_conditions()
 lopt_opt1.add_constraint('L', L)
 lopt_opt1.add_record('l', strplst='Mirrored')
 phi1, lam1 = lopt_opt1.optimum_lift_distribution()
-print(lopt_opt1)
+display(lopt_opt1)
 
 lres_opt1 = LatticeResult('Unconstrained Optimised', lsys)
 lres_opt1.set_state(alpha=alpha)
 lres_opt1.set_phi(phi1)
-print(lres_opt1)
+display(lres_opt1)
 
 # lres_opt1.print_total_loads()
 # lres_opt1.print_aerodynamic_coefficients()
@@ -85,7 +86,7 @@ lopt_opt2.set_conditions()
 lopt_opt2.add_constraint('L', L)
 lopt_opt2.add_constraint('l', lspec, strplst='Mirrored')
 phi2, lam2 = lopt_opt2.optimum_lift_distribution()
-print(lopt_opt2)
+display(lopt_opt2)
 
 # print(f'Di2 = {Di2}')
 # print(f'L2 = {L2}')
@@ -94,7 +95,7 @@ print(lopt_opt2)
 lres_opt2 = LatticeResult('Constrained Optimised', lsys)
 lres_opt2.set_state(alpha=alpha)
 lres_opt2.set_phi(phi2)
-print(lres_opt2)
+display(lres_opt2)
 
 # lres_opt2.print_total_loads()
 # lres_opt2.print_aerodynamic_coefficients()
