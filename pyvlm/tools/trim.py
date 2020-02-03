@@ -1,5 +1,7 @@
 from pyvlm.classes import LatticeSystem
 from pyvlm.classes import LatticeTrim
+from .mass import Mass, MassCollection
+from pygeom.geom3d import Point
 
 class LoopingTrim(object):
     name = None
@@ -32,8 +34,16 @@ class LoopingTrim(object):
         self.speed = speed
         self.density = density
         self.reset()
-    def set_mass_and_load_factor(self, mass: float, loadfac: float):
-        self.mass = mass
+    def set_mass(self, mass):
+        if isinstance(mass, str):
+            self.mass = self.sys.masses[mass]
+        elif isinstance(mass, float):
+            self.mass = Mass(self.name + ' Mass', mass,
+                             self.sys.xref, self.sys.yref, self.sys.zref)
+        elif isinstance(mass, (Mass, MassCollection)):
+            self.mass = mass
+        self.reset()
+    def set_load_factor(self, loadfac: float):
         self.loadfac = loadfac
         self.reset()
     def create_trim_result(self):
@@ -41,11 +51,13 @@ class LoopingTrim(object):
         ltrm.set_density(rho=self.density)
         ltrm.set_state(speed=self.speed, qco2V=self.qco2V)
         ltrm.set_targets(CLt=self.CL)
+        rcg = Point(self.mass.xcm, self.mass.ycm, self.mass.zcm)
+        ltrm.set_cg(rcg)
         return ltrm
     @property
     def weight(self):
         if self._weight is None:
-            self._weight = self.mass*self.gravacc
+            self._weight = self.mass.mass*self.gravacc
         return self._weight
     @property
     def lift(self):
@@ -94,7 +106,7 @@ class LoopingTrim(object):
         table.add_column('Dyn. Press.', '.3f', data=[self.dynpres])
         outstr += table._repr_markdown_()
         table = MDTable()
-        table.add_column('Mass', '.3f', data=[self.mass])
+        table.add_column('Mass', '.3f', data=[self.mass.mass])
         table.add_column('Grav. Acc.', '.5f', data=[self.gravacc])
         table.add_column('Weight', '.3f', data=[self.weight])
         outstr += table._repr_markdown_()
@@ -146,8 +158,16 @@ class TurningTrim(object):
         self.speed = speed
         self.density = density
         self.reset()
-    def set_mass_and_bank_angle(self, mass: float, bankang: float):
-        self.mass = mass
+    def set_mass(self, mass):
+        if isinstance(mass, str):
+            self.mass = self.sys.masses[mass]
+        elif isinstance(mass, float):
+            self.mass = Mass(self.name + ' Mass', mass,
+                             self.sys.xref, self.sys.yref, self.sys.zref)
+        elif isinstance(mass, (Mass, MassCollection)):
+            self.mass = mass
+        self.reset()
+    def set_bank_angle(self, bankang: float):
         self.bankang = bankang
         self.reset()
     def create_trim_result(self):
@@ -155,6 +175,8 @@ class TurningTrim(object):
         ltrm.set_density(rho=self.density)
         ltrm.set_state(speed=self.speed, qco2V=self.qco2V, rbo2V=self.rbo2V)
         ltrm.set_targets(CLt=self.CL)
+        rcg = Point(self.mass.xcm, self.mass.ycm, self.mass.zcm)
+        ltrm.set_cg(rcg)
         return ltrm
     @property
     def loadfac(self):
@@ -166,7 +188,7 @@ class TurningTrim(object):
     @property
     def weight(self):
         if self._weight is None:
-            self._weight = self.mass*self.gravacc
+            self._weight = self.mass.mass*self.gravacc
         return self._weight
     @property
     def lift(self):
@@ -232,7 +254,7 @@ class TurningTrim(object):
         table.add_column('Dyn. Press.', '.3f', data=[self.dynpres])
         outstr += table._repr_markdown_()
         table = MDTable()
-        table.add_column('Mass', '.3f', data=[self.mass])
+        table.add_column('Mass', '.3f', data=[self.mass.mass])
         table.add_column('Grav. Acc.', '.5f', data=[self.gravacc])
         table.add_column('Weight', '.3f', data=[self.weight])
         outstr += table._repr_markdown_()
@@ -280,8 +302,14 @@ class LevelTrim(object):
     def set_speed(self, speed: float):
         self.speed = speed
         self.reset()
-    def set_mass(self, mass: float):
-        self.mass = mass
+    def set_mass(self, mass):
+        if isinstance(mass, str):
+            self.mass = self.sys.masses[mass]
+        elif isinstance(mass, float):
+            self.mass = Mass(self.name + ' Mass', mass,
+                             self.sys.xref, self.sys.yref, self.sys.zref)
+        elif isinstance(mass, (Mass, MassCollection)):
+            self.mass = mass
         self.reset()
     def create_trim_result(self):
         lres = LatticeTrim(self.name, self.sys)
@@ -291,7 +319,7 @@ class LevelTrim(object):
     @property
     def weight(self):
         if self._weight is None:
-            self._weight = self.mass*self.gravacc
+            self._weight = self.mass.mass*self.gravacc
         return self._weight
     @property
     def lift(self):
@@ -324,7 +352,7 @@ class LevelTrim(object):
         table.add_column('Dyn. Press.', '.3f', data=[self.dynpres])
         outstr += table._repr_markdown_()
         table = MDTable()
-        table.add_column('Mass', '.3f', data=[self.mass])
+        table.add_column('Mass', '.3f', data=[self.mass.mass])
         table.add_column('Grav. Acc.', '.5f', data=[self.gravacc])
         table.add_column('Weight', '.3f', data=[self.weight])
         outstr += table._repr_markdown_()

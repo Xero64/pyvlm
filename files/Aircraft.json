@@ -1,5 +1,5 @@
 {
-    "name": "Test Aircraft",
+    "name": "Aircraft",
     "mach": 0.0,
     "sref": 1.358,
     "cref": 0.31,
@@ -7,6 +7,7 @@
     "xref": 1.175,
     "yref": 0.0,
     "zref": 0.0,
+    "masses": "Aircraft_Mass.json",
     "surfaces": [
         {
             "name": "Wing",
@@ -154,7 +155,7 @@
             "trim": "Looping Trim",
             "density": 0.945,
             "speed": 50.0,
-            "mass": 20.0,
+            "mass": "Nominal CG",
             "load factor": 5.0
         },
         {
@@ -162,15 +163,15 @@
             "trim": "Looping Trim",
             "density": 0.945,
             "speed": 50.0,
-            "mass": 20.0,
+            "mass": "Nominal CG",
             "load factor": -3.0
         },
         {
-            "name": "60deg Banked Turn Cruise",
+            "name": "60deg Banked Turn Dive",
             "trim": "Turning Trim",
             "density": 0.945,
-            "speed": 25.0,
-            "mass": 20.0,
+            "speed": 50.0,
+            "mass": "Forward CG",
             "bank angle": 60.0
         },
         {

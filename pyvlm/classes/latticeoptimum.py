@@ -228,8 +228,8 @@ class LatticeOptimum(object):
         from py2md.classes import MDTable
         outstr = '# '+self.name+'\n'
         table = MDTable()
-        table.add_column('Speed [m/s]', 'g', data=[self.speed])
-        table.add_column('Rho [kg/m**3]', 'g', data=[self.rho])
+        table.add_column('Speed', 'g', data=[self.speed])
+        table.add_column('Density', 'g', data=[self.rho])
         outstr += table._repr_markdown_()
         if self._phi is not None:
             table = MDTable()

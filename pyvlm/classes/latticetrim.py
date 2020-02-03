@@ -222,26 +222,23 @@ class LatticeTrim(LatticeResult):
                 return False
 
 def latticetrim_from_json(lsys: LatticeSystem, resdata: dict):
-    from pyvlm.tools.trim import LoopingTrim,TurningTrim
+    from pyvlm.tools.trim import LoopingTrim, TurningTrim
+    from pyvlm.tools.mass import Mass
     name = resdata['name']
-
-    m = 1.0
-    if 'mass' in resdata:
-        m = resdata['mass']
 
     if resdata['trim'] == 'Looping Trim':
         trim = LoopingTrim(name, lsys)
         n = 1.0
         if 'load factor' in resdata:
             n = resdata['load factor']
-        trim.set_mass_and_load_factor(m, n)
+        trim.set_load_factor(n)
     elif resdata['trim'] == 'Turning Trim':
         trim = TurningTrim(name, lsys)
         bang = 0.0
         if 'bank angle' in resdata:
             bang = resdata['bank angle']
-        trim.set_mass_and_bank_angle(m, bang)
-    
+        trim.set_bank_angle(bang)
+
     rho = 1.0
     if 'density' in resdata:
         rho = resdata['density']
@@ -254,12 +251,23 @@ def latticetrim_from_json(lsys: LatticeSystem, resdata: dict):
         g = resdata['gravacc']
         trim.set_gravitational_acceleration(g)
 
-    ltrm = trim.create_trim_result()
+    m = 1.0
+    xcm, ycm, zcm = lsys.rref.x, lsys.rref.y, lsys.rref.z
+    if 'mass' in resdata:
+        if isinstance(resdata['mass'], str):
+            mass = lsys.masses[resdata['mass']]
+        elif isinstance(resdata['mass'], float):
+            if 'rcg' in resdata:
+                rcgdata = resdata['rcg']
+                xcm, ycm, zcm = rcgdata['x'], rcgdata['y'], rcgdata['z']
+            m = resdata['mass']
+            mass = Mass(name + ' Mass', m, xcm, ycm, zcm)
+    else:
+        mass = Mass(name + ' Mass', m, xcm, ycm, zcm)
+    
+    trim.set_mass(mass)
 
-    if 'rcg' in resdata:
-        rcgdata = resdata['rcg']
-        rcg = Point(rcgdata['x'], rcgdata['y'], rcgdata['z'])
-        ltrm.set_cg(rcg)
+    ltrm = trim.create_trim_result()
 
     lsys.results[name] = ltrm
 

@@ -16,6 +16,10 @@ class LatticeStrip(object):
     leni = None
     pnti = None
     pntq = None
+    # pnta = None
+    # pntb = None
+    # teni = None
+    # pnte = None
     pnls = None
     msid = None
     sht = None
@@ -49,6 +53,10 @@ class LatticeStrip(object):
         pntb = self.pnt2+0.25*self.crd2*ihat
         vecab = pntb-pnta
         self.pntq = pnta+self.bfrc*vecab
+        # self.pnta = self.pnt1+self.crd1*ihat
+        # self.pntb = self.pnt2+self.crd2*ihat
+        # self.teni = self.pntb-self.pnta
+        # self.pnte = self.pnta+self.bfrc*self.teni+1.0*self.chord*ihat
     def set_angles(self, ang1: float, ang2: float):
         self.ang1 = ang1
         self.ang2 = ang2
@@ -73,16 +81,10 @@ class LatticeStrip(object):
         rb = Point(0.0, self.pnt2.y, self.pnt2.z)
         a = r-ra
         b = r-rb
-        # am = a.return_magnitude()
-        # bm = b.return_magnitude()
-        # x = ihat
-        # axx = a**x
-        # bxx = b**x
         axx = Vector(0.0, a.z, -a.y)
         bxx = Vector(0.0, b.z, -b.y)
         am2 = a*a
         bm2 = b*b
-        # vel = (axx/am**2-bxx/bm**2)/2/pi
         vel = (axx/am2-bxx/bm2)/2/pi
         return vel
     def trefftz_lift(self):

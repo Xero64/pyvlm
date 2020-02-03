@@ -28,7 +28,15 @@ class LatticeResult(object):
     _gamma = None
     _avv = None
     _afv = None
+    # _ava = None
+    # _afa = None
+    # _avb = None
+    # _afb = None
+    _avt = None
     _arm = None
+    # _arma = None
+    # _armb = None
+    _armt = None
     _phi = None
     _bvv = None
     _brm = None
@@ -74,16 +82,12 @@ class LatticeResult(object):
             self.alpha = alpha
         if beta is not None:
             self.beta = beta
-        # print(f'name = {self.name}')
         if pbo2V is not None:
             self.pbo2V = pbo2V
-            # print(f'pbo2V = {self.pbo2V}')
         if qco2V is not None:
             self.qco2V = qco2V
-            # print(f'qco2V = {self.qco2V}')
         if rbo2V is not None:
             self.rbo2V = rbo2V
-            # print(f'rbo2V = {self.rbo2V}')
         self.reset()
     def set_controls(self, **kwargs):
         for control in kwargs:
@@ -209,9 +213,8 @@ class LatticeResult(object):
             num = len(self.sys.strps)
             self._phi = zeros((num, 1))
             for strp in self.sys.strps:
-                i = strp.lsid
                 for pnl in strp.pnls:
-                    self._phi[i, 0] += self.gamma[pnl.lpid, 0]
+                    self._phi[strp.lsid, 0] += self.gamma[pnl.lpid, 0]
         return self._phi
     @property
     def vfs(self):
@@ -247,11 +250,35 @@ class LatticeResult(object):
             self._avv = zero_matrix_vector((num, 1))
             for pnl in self.sys.pnls:
                 i = pnl.lpid
-                if pnl.noload:
-                    self._avv[i, 0] = Vector(0.0, 0.0, 0.0)
-                else:
-                    self._avv[i, 0] = self.vfs-self.ofs**self.arm[i, 0]
+                self._avv[i, 0] = self.vfs-self.ofs**self.arm[i, 0]
         return self._avv
+    # @property
+    # def avt(self):
+    #     if self._avt is None:
+    #         num = len(self.sys.strps)
+    #         self._avt = zero_matrix_vector((num, 1))
+    #         for strp in self.sys.strps:
+    #             i = strp.lsid
+    #             self._avt[i, 0] = self.vfs-self.ofs**self.armt[i, 0]
+    #     return self._avt
+    # @property
+    # def ava(self):
+    #     if self._ava is None:
+    #         num = len(self.sys.pnls)
+    #         self._ava = zero_matrix_vector((num, 1))
+    #         for pnl in self.sys.pnls:
+    #             i = pnl.lpid
+    #             self._ava[i, 0] = self.vfs-self.ofs**self.arma[i, 0]
+    #     return self._ava
+    # @property
+    # def avb(self):
+    #     if self._avb is None:
+    #         num = len(self.sys.pnls)
+    #         self._avb = zero_matrix_vector((num, 1))
+    #         for pnl in self.sys.pnls:
+    #             i = pnl.lpid
+    #             self._avb[i, 0] = self.vfs-self.ofs**self.armb[i, 0]
+    #     return self._avb
     @property
     def bvv(self):
         if self._bvv is None:
@@ -271,11 +298,35 @@ class LatticeResult(object):
             self._arm = zero_matrix_vector((num, 1))
             for pnl in self.sys.pnls:
                 i = pnl.lpid
-                if pnl.noload:
-                    self._arm[i, 0] = Vector(0.0, 0.0, 0.0)
-                else:
-                    self._arm[i, 0] = pnl.pnti-self.rcg
+                self._arm[i, 0] = pnl.pnti-self.rcg
         return self._arm
+    # @property
+    # def armt(self):
+    #     if self._armt is None:
+    #         num = len(self.sys.strps)
+    #         self._armt = zero_matrix_vector((num, 1))
+    #         for strp in self.sys.strps:
+    #             i = strp.lsid
+    #             self._armt[i, 0] = strp.pnte-self.rcg
+    #     return self._armt
+    # @property
+    # def arma(self):
+    #     if self._arma is None:
+    #         num = len(self.sys.pnls)
+    #         self._arma = zero_matrix_vector((num, 1))
+    #         for pnl in self.sys.pnls:
+    #             i = pnl.lpid
+    #             self._arma[i, 0] = pnl.ptva-self.rcg
+    #     return self._arma
+    # @property
+    # def armb(self):
+    #     if self._armb is None:
+    #         num = len(self.sys.pnls)
+    #         self._armb = zero_matrix_vector((num, 1))
+    #         for pnl in self.sys.pnls:
+    #             i = pnl.lpid
+    #             self._armb[i, 0] = pnl.ptvb-self.rcg
+    #     return self._armb
     @property
     def brm(self):
         if self._brm is None:
@@ -283,10 +334,7 @@ class LatticeResult(object):
             self._brm = zero_matrix_vector((num, 1))
             for strp in self.sys.strps:
                 i = strp.lsid
-                if strp.noload:
-                    self._brm[i, 0] = Vector(0.0, 0.0, 0.0)
-                else:
-                    self._brm[i, 0] = strp.pntq-self.rcg
+                self._brm[i, 0] = strp.pntq-self.rcg
         return self._brm
     @property
     def afv(self):
@@ -294,9 +342,30 @@ class LatticeResult(object):
             num = len(self.sys.pnls)
             self._afv = zero_matrix_vector((num, 1))
             for pnl in self.sys.pnls:
-                i = pnl.lpid
-                self._afv[i, 0] = pnl.induced_force(self.avv[i, 0])
+                if not pnl.noload:
+                    i = pnl.lpid
+                    self._afv[i, 0] = self.avv[i, 0]**pnl.leni
         return self._afv
+    # @property
+    # def afa(self):
+    #     if self._afa is None:
+    #         num = len(self.sys.pnls)
+    #         self._afa = zero_matrix_vector((num, 1))
+    #         for pnl in self.sys.pnls:
+    #             if not pnl.noload:
+    #                 i = pnl.lpid
+    #                 self._afa[i, 0] = self.ava[i, 0]**pnl.ltva
+    #     return self._afa
+    # @property
+    # def afb(self):
+    #     if self._afb is None:
+    #         num = len(self.sys.pnls)
+    #         self._afb = zero_matrix_vector((num, 1))
+    #         for pnl in self.sys.pnls:
+    #             if not pnl.noload:
+    #                 i = pnl.lpid
+    #                 self._afb[i, 0] = self.avb[i, 0]**pnl.ltvb
+    #     return self._afb
     @property
     def nfres(self):
         if self._nfres is None:
@@ -568,7 +637,7 @@ class LatticeResult(object):
                     srfcs.append(srfc)
         for srfc in srfcs:
             label = self.name+' for '+srfc.name
-            w = [self.trres.trwsh[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+            w = [self.trres.trwsh[strp.lsid, 0] for strp in srfc.strps]
             if axis == 'b':
                 b = srfc.strpb
                 ax.plot(b, w, label=label)
@@ -581,6 +650,11 @@ class LatticeResult(object):
                 if max(z) > min(z):
                     ax.plot(w, z, label=label)
         ax.legend()
+        return ax
+    def plot_surfaces(self):
+        ax = None
+        for srfc in self.sys.srfcs:
+            srfc.plot_surface(ax=ax)
         return ax
     def to_result(self, name: str=''):
         if name == '':
@@ -946,8 +1020,14 @@ class GammaResult(object):
     gamma = None
     _rhogamma = None
     _nfvel = None
+    # _nfvela = None
+    # _nfvelb = None
     _nffrc = None
+    # _nffrca = None
+    # _nffrcb = None
     _nfmom = None
+    # _nfmoma = None
+    # _nfmomb = None
     _nffrctot = None
     _nfmomtot = None
     _Cx = None
@@ -973,26 +1053,58 @@ class GammaResult(object):
         if self._nfvel is None:
             self._nfvel = self.res.sys.avg*self.gamma+self.res.avv
         return self._nfvel
+    # @property
+    # def nfvela(self):
+    #     if self._nfvela is None:
+    #         self._nfvela = self.res.sys.ava*self.gamma+self.res.ava
+    #     return self._nfvela
+    # @property
+    # def nfvelb(self):
+    #     if self._nfvelb is None:
+    #         self._nfvelb = self.res.sys.avb*self.gamma+self.res.avb
+    #     return self._nfvelb
     @property
     def nffrc(self):
         if self._nffrc is None:
             tmp = self.res.sys.afg*self.gamma+self.res.afv
             self._nffrc = elementwise_multiply(tmp, self.rhogamma)
         return self._nffrc
+    # @property
+    # def nffrca(self):
+    #     if self._nffrca is None:
+    #         tmp = self.res.sys.afa*self.gamma+self.res.afa
+    #         self._nffrca = elementwise_multiply(tmp, self.rhogamma)
+    #     return self._nffrca
+    # @property
+    # def nffrcb(self):
+    #     if self._nffrcb is None:
+    #         tmp = self.res.sys.afb*self.gamma+self.res.afb
+    #         self._nffrcb = elementwise_multiply(tmp, self.rhogamma)
+    #     return self._nffrcb
     @property
     def nfmom(self):
         if self._nfmom is None:
             self._nfmom = elementwise_cross_product(self.res.arm, self.nffrc)
         return self._nfmom
+    # @property
+    # def nfmoma(self):
+    #     if self._nfmoma is None:
+    #         self._nfmoma = elementwise_cross_product(self.res.arma, self.nffrca)
+    #     return self._nfmoma
+    # @property
+    # def nfmomb(self):
+    #     if self._nfmomb is None:
+    #         self._nfmomb = elementwise_cross_product(self.res.armb, self.nffrcb)
+    #     return self._nfmomb
     @property
     def nffrctot(self):
         if self._nffrctot is None:
-            self._nffrctot = self.nffrc.sum()
+            self._nffrctot = self.nffrc.sum()#+self.nffrca.sum()+self.nffrcb.sum()
         return self._nffrctot
     @property
     def nfmomtot(self):
         if self._nfmomtot is None:
-            self._nfmomtot = self.nfmom.sum()
+            self._nfmomtot = self.nfmom.sum()#+self.nfmoma.sum()+self.nfmomb.sum()
         return self._nfmomtot
     @property
     def Cx(self):

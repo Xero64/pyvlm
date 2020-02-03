@@ -2,6 +2,8 @@ from math import pi, cos, sqrt
 from .latticestrip import LatticeStrip
 from .latticesheet import LatticeSheet
 from .latticepanel import LatticePanel
+from pygeom.matrix3d import zero_matrix_vector
+from matplotlib.pyplot import figure
 
 class LatticeSurface(object):
     name = None
@@ -152,16 +154,14 @@ class LatticeSurface(object):
             for j in range(shp[1]):
                 pnls.append(self.pnls[i, j])
         return pnls
-    # def print_geom(self):
-    #     print(f'Printing {self.name:s} geometry.')
-    #     print('Sections')
-    #     for i, sect in enumerate(self.sects):
-    #         print(f'{i:d}\t{sect.pnt:.5f}\t{sect.chord:.5f}')
-    #     print('Sheets')
-    #     for i, sht in enumerate(self.shts):
-    #         print(f'{i:d}')
-    #         print(f'{sht.sect1.pnt:.5f}\t{sht.sect1.chord:.5f}')
-    #         print(f'{sht.sect2.pnt:.5f}\t{sht.sect2.chord:.5f}')
+    def plot_surface(self, ax=None):
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca(projection='3d')
+            ax.grid(True)
+        x, y, z = self.point_xyz()
+        ax.plot_surface(x, y, z, label=self.name)
+        return ax
     @property
     def strpb(self):
         return [strp.bpos for strp in self.strps]
@@ -298,7 +298,6 @@ class SurfaceFunction(object):
     def interpolate(self, b: float):
         return self.spline.single_interpolate_spline(b)
     
-
 def surffunc_from_json(funcdata: dict):
     var = funcdata["variable"]
     if "spacing" in funcdata:

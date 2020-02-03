@@ -19,6 +19,10 @@ class LatticePanel(object):
     strp = None
     crd = None
     area = None
+    # ltva = None
+    # ltvb = None
+    # ptva = None
+    # ptvb = None
     def __init__(self, lpid: int, pnts: list, cspc: float, strp: LatticeStrip):
         self.lpid = lpid
         self.pnts = pnts
@@ -26,8 +30,8 @@ class LatticePanel(object):
         self.strp = strp
         self.update()
     def update(self):
-        self.cfra = (self.cspc[1]-self.cspc[0])/(self.cspc[4]-self.cspc[0])
-        self.cfrb = (self.cspc[3]-self.cspc[0])/(self.cspc[4]-self.cspc[0])
+        self.cfr1 = (self.cspc[1]-self.cspc[0])/(self.cspc[4]-self.cspc[0])
+        self.cfr2 = (self.cspc[3]-self.cspc[0])/(self.cspc[4]-self.cspc[0])
         self.strp.add_panel(self)
         pnt1 = self.pnts[0]
         pnt2 = self.pnts[1]
@@ -35,8 +39,8 @@ class LatticePanel(object):
         pnt4 = self.pnts[3]
         veca = pnt3-pnt1
         vecb = pnt4-pnt2
-        self.pnta = pnt1+self.cfra*veca
-        self.pntb = pnt2+self.cfra*vecb
+        self.pnta = pnt1+self.cfr1*veca
+        self.pntb = pnt2+self.cfr1*vecb
         self.leni = self.pntb-self.pnta
         self.pntg = self.pnta+0.5*self.leni
         self.pnti = self.pnta+self.strp.bfrc*self.leni
@@ -49,10 +53,14 @@ class LatticePanel(object):
         al1 = self.sht.sect1.camber.return_camber_angle(self.cspc[3])
         al2 = self.sht.sect2.camber.return_camber_angle(self.cspc[3])
         self.alpha = self.strp.bspc[1]*(al2-al1)+al1
-        pnta = pnt1+self.cfrb*veca
-        pntb = pnt2+self.cfrb*vecb
+        pnta = pnt1+self.cfr2*veca
+        pntb = pnt2+self.cfr2*vecb
         lenc = pntb-pnta
         self.pntc = pnta+self.strp.bfrc*lenc
+        # self.ltva = self.pnta-self.strp.pnta
+        # self.ltvb = self.strp.pntb-self.pntb
+        # self.ptva = self.pnta-0.5*self.ltva
+        # self.ptvb = self.pntb+0.5*self.ltvb
     def return_panel_point(self):
         pnt1 = self.pnts[0]
         pnt2 = self.pnts[1]
@@ -121,11 +129,11 @@ class LatticePanel(object):
             vel -= bxx/den/bm
         vel = vel/(4*pi)
         return vel
-    def induced_force(self, vel: Vector):
-        if self.noload:
-            return Vector(0.0, 0.0, 0.0)
-        else:
-            return vel**self.leni
+    # def induced_force(self, vel: Vector):
+    #     if self.noload:
+    #         return Vector(0.0, 0.0, 0.0)
+    #     else:
+    #         return vel**self.leni
     def __repr__(self):
         return '<LatticePanel {:d}>'.format(self.lpid)
     def __str__(self):
