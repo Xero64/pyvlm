@@ -175,6 +175,12 @@ class LatticeSurface(object):
     def strpi(self):
         return [strp.lsid for strp in self.strps]
     @property
+    def lstrpi(self):
+        return [strp.lsid for strp in self.strps if strp.msid is None]
+    @property
+    def mstrpi(self):
+        return [strp.lsid for strp in self.strps if strp.msid is not None]
+    @property
     def pnli(self):
         lpids = []
         for i in range(self.pnls.shape[0]):

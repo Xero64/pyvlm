@@ -15,56 +15,58 @@ jsonfilepath1 = r'..\files\Sweep_Low_AR_100.json'
 lsys1 = latticesystem_from_json(jsonfilepath1)
 display(lsys1)
 
+lstrpi1 = lsys1.lstrpi
+mstrpi1 = lsys1.mstrpi
+
 #%% High AR Wing
 jsonfilepath2 = r'..\files\Sweep_High_AR_100.json'
 lsys2 = latticesystem_from_json(jsonfilepath2)
 display(lsys2)
 
+lstrpi2 = lsys2.lstrpi
+mstrpi2 = lsys2.mstrpi
+
 #%% Low AR Wing Optimum
 lopt1 = LatticeOptimum('Low AR Wing', lsys1)
-lopt1.set_conditions()
+lopt1.set_state()
 lopt1.add_constraint('L', 1.0)
-lopt1.add_record('l', strplst='Mirrored')
+lopt1.add_record('l', strplst=lstrpi1)
+lopt1.add_record('l', strplst=mstrpi1)
 phi1, lam1 = lopt1.optimum_lift_distribution()
 display(lopt1)
 
-lres1 = LatticeResult('Low AR Wing', lsys1)
-lres1.set_state()
-lres1.set_phi(phi1)
-display(lres1)
-
-#%% Constrained Root Bending Moment
-l = lopt1.record[0].evaluate(lopt1.pmat)
-
 #%% High AR Wing Constrained Optimum
 lopt2 = LatticeOptimum('High AR Wing Constrained', lsys2)
-lopt2.set_conditions()
+lopt2.set_state()
 lopt2.add_constraint('L', 1.0)
-lopt2.add_constraint('l', l, strplst='Mirrored')
+lopt2.add_constraint('l', lopt1.record[0].value, strplst=lstrpi2)
+lopt2.add_constraint('l', lopt1.record[1].value, strplst=mstrpi2)
 phi2, lam2 = lopt2.optimum_lift_distribution()
 display(lopt2)
-
-lres2 = LatticeResult('High AR Wing Constrained', lsys2)
-lres2.set_state()
-lres2.set_phi(phi2)
-display(lres2)
 
 #%% Print Drag Ratio
 
 Di1 = lopt1.return_induced_drag()
 Di2 = lopt2.return_induced_drag()
-print(f'\nDrag Ratio = {Di2/Di1*100:.2f}%')
+print(f'Drag Ratio = {Di2/Di1*100:.2f}%')
 
-#%% Plots
-
+#%% Lift Distribution Plot
 axl = None
-axl = lres1.plot_trefftz_lift_distribution(ax=axl)
-axl = lres2.plot_trefftz_lift_distribution(ax=axl)
+axl = lopt1.plot_trefftz_lift_distribution(ax=axl)
+axl = lopt2.plot_trefftz_lift_distribution(ax=axl)
+_ = axl.set_ylabel('Lift Distribution')
+_ = axl.set_xlabel('Span Position')
 
+#%% Drag Distribution Plot
 axd = None
-axd = lres1.plot_trefftz_drag_distribution(ax=axd)
-axd = lres2.plot_trefftz_drag_distribution(ax=axd)
+axd = lopt1.plot_trefftz_drag_distribution(ax=axd)
+axd = lopt2.plot_trefftz_drag_distribution(ax=axd)
+_ = axd.set_ylabel('Drag Distribution')
+_ = axd.set_xlabel('Span Position')
 
+#%% Wash Distribution Plot
 axw = None
-axw = lres1.plot_trefftz_wash_distribution(ax=axw)
-axw = lres2.plot_trefftz_wash_distribution(ax=axw)
+axw = lopt1.plot_trefftz_wash_distribution(ax=axw)
+axw = lopt2.plot_trefftz_wash_distribution(ax=axw)
+_ = axw.set_ylabel('Wash Distribution')
+_ = axw.set_xlabel('Span Position')

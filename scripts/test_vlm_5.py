@@ -3,6 +3,7 @@ from IPython.display import display
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm.tools import bell_lift_distribution, elliptical_lift_distribution
 from pyvlm import latticesystem_from_json
+from matplotlib.pyplot import subplots
 
 #%% Inputs
 L = 64.498 # N
@@ -30,7 +31,8 @@ display(lres1)
 
 lopt1 = LatticeOptimum('Low AR Wing Elliptical', lsys1)
 lopt1.set_lift_distribution(l1, rho=rho, speed=V)
-lopt1.add_record('l', strplst='Mirrored')
+lopt1.add_record('L')
+lopt1.add_record('l', strplst=lsys1.mstrpi)
 display(lopt1)
 
 #%% High AR Wing Constrained Optimum
@@ -44,7 +46,8 @@ display(lres2)
 
 lopt2 = LatticeOptimum('High AR Wing Bell', lsys2)
 lopt2.set_lift_distribution(l2, rho=rho, speed=V)
-lopt2.add_record('l', strplst='Mirrored')
+lopt2.add_record('L')
+lopt2.add_record('l', strplst=lsys2.mstrpi)
 display(lopt2)
 
 #%% Print Drag Ratio
@@ -53,8 +56,8 @@ Di2 = lopt2.return_induced_drag()
 
 print(f'\nDrag Ratio = {Di2/Di1*100:.2f}%')
 
-bm1 = lopt1.record[0].evaluate(lopt1.pmat)
-bm2 = lopt2.record[0].evaluate(lopt2.pmat)
+bm1 = lopt1.record[1].value
+bm2 = lopt2.record[1].value
 
 print(f'Elliptical Root Bending Moment = {bm1:.2f} N.m')
 print(f'Bell Root Bending Moment = {bm2:.2f} N.m')
@@ -62,9 +65,7 @@ print(f'Bell Root Bending Moment = {bm2:.2f} N.m')
 print(f'Elliptical Centre of Lift = {bm1/(L/2):.3f} m')
 print(f'Bell Centre of Lift = {bm2/(L/2):.3f} m')
 
-#%% Plots
-from matplotlib.pyplot import subplots
-
+#%% Subplots Plots
 fig, (axl, axd, axw) = subplots(nrows=3, figsize=(12, 8))
 
 axl.grid(True)

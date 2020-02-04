@@ -18,7 +18,10 @@ lopt_ell.set_lift_distribution(lell, rho=1.0, speed=100.0)
 display(lopt_ell)
 
 #%% Determine Optimal Twist
-al_ell = lopt_ell.optimum_strip_twist(crit=1e-1)
+al_ell = lopt_ell.optimum_strip_twist(crit=1e-6)
+
+#%% Plot Optimum Twist
+axs = lopt_ell.plot_strip_twist_distribution()
 
 #%% Print Result
 display(lopt_ell.res)

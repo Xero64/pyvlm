@@ -1,6 +1,6 @@
 #%% Load Dependencies
 from IPython.display import display
-from pyvlm import LatticeResult, LatticeOptimum
+from pyvlm import LatticeResult
 from pyvlm import latticesystem_from_json
 
 #%% Create Lattice System
@@ -18,9 +18,6 @@ display(lsys.panel_geometry)
 lres_org = LatticeResult('Baseline', lsys)
 lres_org.set_state(alpha=3.0)#, pbo2V=0.002)
 display(lres_org)
-
-# lres_org.print_total_loads()
-# lres_org.print_aerodynamic_coefficients()
 
 #%% Original Strip Forces
 display(lres_org.strip_forces)

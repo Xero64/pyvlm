@@ -1,6 +1,6 @@
 #%% Load Dependencies
 from IPython.display import display
-from pyvlm import LatticeResult, LatticeOptimum
+from pyvlm import LatticeResult
 from pyvlm import latticesystem_from_json
 
 #%% Create Lattice System
@@ -50,7 +50,7 @@ display(lres_org.control_derivatives)
 #%% Plot Aileron Drag Derivative
 ctres = lres_org.ctresp['aileron']
 
-#%% Plot Surface Plots
+#%% Plot Aileron Deflection Plots
 from pygeom.geom3d import Vector
 from matplotlib.pyplot import figure
 

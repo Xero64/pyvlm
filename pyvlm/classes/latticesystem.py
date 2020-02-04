@@ -398,6 +398,12 @@ class LatticeSystem(object):
         if self._ar is None:
             self._ar = self.bref**2/self.sref
         return self._ar
+    @property
+    def lstrpi(self):
+        return [strp.lsid for strp in self.strps if strp.msid is None]
+    @property
+    def mstrpi(self):
+        return [strp.lsid for strp in self.strps if strp.msid is not None]
     def set_strip_alpha(self, alpha: list):
         for i, strp in enumerate(self.strps):
             strp._ang = alpha[i]
