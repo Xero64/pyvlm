@@ -56,6 +56,31 @@
         {
             "name": "Test rbo2V",
             "rbo2V": 0.01
+        },
+        {
+            "name": "Test Alpha Mach",
+            "alpha": 3.0,
+            "mach": 0.4
+        },
+        {
+            "name": "Test Beta Mach",
+            "beta": 3.0,
+            "mach": 0.4
+        },
+        {
+            "name": "Test pbo2V Mach",
+            "pbo2V": 0.01,
+            "mach": 0.4
+        },
+        {
+            "name": "Test qco2V Mach",
+            "qco2V": 0.01,
+            "mach": 0.4
+        },
+        {
+            "name": "Test rbo2V Mach",
+            "rbo2V": 0.01,
+            "mach": 0.4
         }
     ]
 }

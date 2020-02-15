@@ -187,6 +187,19 @@ class LatticeSurface(object):
             for j in range(self.pnls.shape[1]):
                 lpids.append(self.pnls[i, j].lpid)
         return lpids
+    def vortex_line_points(self, indp: int, nump: int):
+        nums = len(self.strps)
+        num = nums*nump+1
+        rpt = zero_matrix_vector((num, 1))
+        j = 0
+        for strp in self.strps:
+            pnl = strp.pnls[indp]
+            for i in range(nump):
+                pnt = pnl.pnta+i/nump*pnl.leni
+                rpt[j, 0] = pnt
+                j += 1
+        rpt[j, 0] = pnl.pntb
+        return rpt
     def __repr__(self):
         return '<LatticeSurface {:s}>'.format(self.name)
 
