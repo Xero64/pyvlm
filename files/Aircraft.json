@@ -25,8 +25,8 @@
                     "zle": 0.0,
                     "chord": 0.35,
                     "angle": 0.0,
-                    "numb": 3,
-                    "bspace": "equal",
+                    "numb": 6,
+                    "bspace": "semi-cosine",
                     "airfoil": "NACA 2412",
                     "noload": true
                 },
@@ -36,7 +36,7 @@
                     "zle": null,
                     "chord": 0.35,
                     "angle": 0.0,
-                    "numb": 5,
+                    "numb": 10,
                     "bspace": "semi-cosine",
                     "airfoil": "NACA 2412"
                 },
@@ -46,7 +46,7 @@
                     "zle": null,
                     "chord": null,
                     "angle": null,
-                    "numb": 20,
+                    "numb": 40,
                     "bspace": "semi-cosine",
                     "airfoil": "NACA 2412"
                 },
@@ -56,7 +56,7 @@
                     "zle": null,
                     "chord": null,
                     "angle": null,
-                    "numb": 15,
+                    "numb": 30,
                     "bspace": "cosine",
                     "airfoil": "NACA 2412",
                     "controls": {
@@ -94,7 +94,7 @@
                     "zle": 0.0,
                     "chord": 0.22,
                     "numb": 25,
-                    "bspace": "cosine",
+                    "bspace": "semi-cosine",
                     "controls": {
                         "elevator": {
                             "xhinge": 0.7,
@@ -128,8 +128,17 @@
                     "zle": 0.0,
                     "chord": 0.25,
                     "angle": 0.0,
-                    "numb": 15,
-                    "bspace": "cosine"
+                    "numb": 30,
+                    "bspace": "cosine",
+                    "controls": {
+                        "rudder": {
+                            "xhinge": 0.7,
+                            "posgain": 1.0,
+                            "neggain": 1.0,
+                            "reverse": false,
+                            "hvec": {"x": 0.0, "y": 0.0, "z": 0.0}
+                        }
+                    }
                 },
                 {
                     "xle": 0.1,

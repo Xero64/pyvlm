@@ -61,3 +61,11 @@ ltrm2.set_trim_loads(trmmom=False)
 ltrm2.trim()
 
 display_markdown(ltrm2)
+
+#%% Neutral Point
+for case in lsys.results:
+    lres = lsys.results[case]
+    print(f'Case: {case:s}')
+    print(f'Neutral Point: {lres.stres.neutral_point():.3f}')
+
+display_markdown(lres.stability_derivatives)

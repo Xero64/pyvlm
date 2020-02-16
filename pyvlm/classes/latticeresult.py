@@ -164,33 +164,6 @@ class LatticeResult(object):
                     self._gamma += vector_matrix_dot(self.ungam[:, indv], self.vfs*ctrlrad)
                     self._gamma += vector_matrix_dot(self.ungam[:, indo], self.ofs*ctrlrad)
         return self._gamma
-    def galpha(self):
-        vfs = dufsdal_sa(radians(self.alpha))*self.speed
-        vfs, ofs = dalpha(self.speed, self.alpha, self.beta,
-                          self.pbo2V, self.qco2V, self.rbo2V,
-                          self.sys.bref, self.sys.cref)
-        gmat = vector_matrix_dot(self.ungam[:, 0], vfs)
-        gmat += vector_matrix_dot(self.ungam[:, 1], ofs)
-        return gmat
-    def gbeta(self):
-        vfs, ofs = dbeta(self.speed, self.alpha, self.beta,
-                         self.pbo2V, self.qco2V,
-                         self.sys.bref, self.sys.cref)
-        gmat = vector_matrix_dot(self.ungam[:, 0], vfs)
-        gmat += vector_matrix_dot(self.ungam[:, 1], ofs)
-        return gmat
-    def gpb02V(self):
-        ofs = dpbo2V(self.speed, self.alpha, self.beta, self.sys.bref)
-        gmat = vector_matrix_dot(self.ungam[:, 1], ofs)
-        return gmat
-    def gqc02V(self):
-        ofs = dqco2V(self.speed, self.alpha, self.beta, self.sys.cref)
-        gmat = vector_matrix_dot(self.ungam[:, 1], ofs)
-        return gmat
-    def grb02V(self):
-        ofs = drbo2V(self.speed, self.alpha, self.sys.bref)
-        gmat = vector_matrix_dot(self.ungam[:, 1], ofs)
-        return gmat
     def gctrlp_single(self, control: str):
         indv = self.sys.ctrls[control][0]
         gmat = vector_matrix_dot(self.ungam[:, indv], self.vfs)
@@ -329,24 +302,9 @@ class LatticeResult(object):
             self._stripres = StripResult(self.nfres)
         return self._stripres
     @property
-    def stgam(self):
-        if self._stgam is None:
-            self._stgam = {}
-            self._stgam['alpha'] = self.galpha()
-            self._stgam['beta'] = self.gbeta()
-            self._stgam['pbo2V'] = self.gpb02V()
-            self._stgam['qco2V'] = self.gqc02V()
-            self._stgam['rbo2V'] = self.grb02V()
-        return self._stgam
-    @property
     def stres(self):
         if self._stres is None:
-            self._stres = {}
-            self._stres['alpha'] = GammaResult(self, self.stgam['alpha'])
-            self._stres['beta'] = GammaResult(self, self.stgam['beta'])
-            self._stres['pbo2V'] = GammaResult(self, self.stgam['pbo2V'])
-            self._stres['qco2V'] = GammaResult(self, self.stgam['qco2V'])
-            self._stres['rbo2V'] = GammaResult(self, self.stgam['rbo2V'])
+            self._stres = StabilityResult(self)
         return self._stres
     @property
     def ctgamp(self):
@@ -761,47 +719,7 @@ class LatticeResult(object):
         return table
     @property
     def stability_derivatives(self):
-        from py2md.classes import MDTable, MDHeading, MDReport
-        from . import sfrm
-        report = MDReport()
-        heading = MDHeading('Stability Derivatives', 1)
-        report.add_object(heading)
-        table = MDTable()
-        table.add_column('CLa', sfrm, data=[self.stres['alpha'].CL])
-        table.add_column('CYa', sfrm, data=[self.stres['alpha'].CY])
-        table.add_column('Cla', sfrm, data=[self.stres['alpha'].Cl])
-        table.add_column('Cma', sfrm, data=[self.stres['alpha'].Cm])
-        table.add_column('Cna', sfrm, data=[self.stres['alpha'].Cn])
-        report.add_object(table)
-        table = MDTable()
-        table.add_column('CLb', sfrm, data=[self.stres['beta'].CL])
-        table.add_column('CYb', sfrm, data=[self.stres['beta'].CY])
-        table.add_column('Clb', sfrm, data=[self.stres['beta'].Cl])
-        table.add_column('Cmb', sfrm, data=[self.stres['beta'].Cm])
-        table.add_column('Cnb', sfrm, data=[self.stres['beta'].Cn])
-        report.add_object(table)
-        table = MDTable()
-        table.add_column('CLp', sfrm, data=[self.stres['pbo2V'].CL])
-        table.add_column('CYp', sfrm, data=[self.stres['pbo2V'].CY])
-        table.add_column('Clp', sfrm, data=[self.stres['pbo2V'].Cl])
-        table.add_column('Cmp', sfrm, data=[self.stres['pbo2V'].Cm])
-        table.add_column('Cnp', sfrm, data=[self.stres['pbo2V'].Cn])
-        report.add_object(table)
-        table = MDTable()
-        table.add_column('CLq', sfrm, data=[self.stres['qco2V'].CL])
-        table.add_column('CYq', sfrm, data=[self.stres['qco2V'].CY])
-        table.add_column('Clq', sfrm, data=[self.stres['qco2V'].Cl])
-        table.add_column('Cmq', sfrm, data=[self.stres['qco2V'].Cm])
-        table.add_column('Cnq', sfrm, data=[self.stres['qco2V'].Cn])
-        report.add_object(table)
-        table = MDTable()
-        table.add_column('CLr', sfrm, data=[self.stres['rbo2V'].CL])
-        table.add_column('CYr', sfrm, data=[self.stres['rbo2V'].CY])
-        table.add_column('Clr', sfrm, data=[self.stres['rbo2V'].Cl])
-        table.add_column('Cmr', sfrm, data=[self.stres['rbo2V'].Cm])
-        table.add_column('Cnr', sfrm, data=[self.stres['rbo2V'].Cn])
-        report.add_object(table)
-        return report
+        return self.stres.stability_derivatives
     @property
     def control_derivatives(self):
         from py2md.classes import MDTable, MDHeading, MDReport
@@ -900,63 +818,6 @@ class LatticeResult(object):
         return f'<LatticeResult: {self.name}>'
     def _repr_markdown_(self):
         return self.__str__()
-
-def trig_angle(angle: float):
-    '''Calculates cos(angle) and sin(angle) with angle in degrees.'''
-    angrad = radians(angle)
-    cosang = cos(angrad)
-    sinang = sin(angrad)
-    return cosang, sinang
-
-def dufsdal(cosal: float, sinal: float, cosbt: float, sinbt: float):
-    return Vector(-sinal*cosbt, 0.0, cosal*cosbt)
-
-def dufsdbt(cosal: float, sinal: float, cosbt: float, sinbt: float):
-    return Vector(-sinbt*cosal, -cosbt, -sinal*sinbt)
-
-def dufsdal_sa(alpha: float):
-    return Vector(-alpha, 0.0, 1.0)
-
-def dufsdbt_sa(beta: float):
-    return Vector(-beta, -1.0, 0.0)
-
-def dalpha(V: float, al: float, bt: float, p: float, q: float, r: float, b: float, c: float):
-    cosal, sinal = trig_angle(al)
-    cosbt, sinbt = trig_angle(bt)
-    val = Vector(-V*sinal*cosbt, 0.0, V*cosal*cosbt)
-    oal = Vector(2*V*(q*sinal*sinbt/c + p*sinal*cosbt/b + r*cosal/b), 0.0,
-                 -2*V*(q*sinbt*cosal/c + p*cosal*cosbt/b - r*sinal/b))
-    return val, oal
-
-def dbeta(V: float, al: float, bt: float, p: float, q: float, b: float, c: float):
-    cosal, sinal = trig_angle(al)
-    cosbt, sinbt = trig_angle(bt)
-    vbt = Vector(-V*sinbt*cosal, -V*cosbt, -V*sinal*sinbt)
-    obt = Vector(2*V*(-q*cosbt/c + p*sinbt/b)*cosal,
-                 -2*V*(q*sinbt/c + p*cosbt/b),
-                 -2*V*(q*cosbt/c - p*sinbt/b)*sinal)
-    return vbt, obt
-
-def dpbo2V(V: float, al: float, bt: float, b: float):
-    cosal, sinal = trig_angle(al)
-    cosbt, sinbt = trig_angle(bt)
-    return Vector(-2*V*cosal*cosbt/b, -2*V*sinbt/b, -2*V*sinal*cosbt/b)
-
-def dqco2V(V: float, al: float, bt: float, c: float):
-    cosal, sinal = trig_angle(al)
-    cosbt, sinbt = trig_angle(bt)
-    return Vector(-2*V*sinbt*cosal/c, 2*V*cosbt/c, -2*V*sinal*sinbt/c)
-
-def drbo2V(V: float, al: float, b: float):
-    cosal, sinal = trig_angle(al)
-    return Vector(2*V*sinal/b, 0.0, -2*V*cosal/b)
-
-def vector_matrix_dot(mat: matrix, vec: Vector):
-    outmat = zeros(mat.shape)
-    for i in range(mat.shape[0]):
-        for j in range(mat.shape[1]):
-            outmat[i, j] += mat[i, j]*vec
-    return outmat
 
 class GammaResult(object):
     res = None
@@ -1380,3 +1241,163 @@ def latticeresult_from_json(lsys: LatticeSystem, resdata: dict):
             lres.set_cg(rcg)
     lsys.results[name] = lres
     return lres
+
+def trig_angle(angle: float):
+    '''Calculates cos(angle) and sin(angle) with angle in degrees.'''
+    angrad = radians(angle)
+    cosang = cos(angrad)
+    sinang = sin(angrad)
+    return cosang, sinang
+
+def vector_matrix_dot(mat: matrix, vec: Vector):
+    outmat = zeros(mat.shape)
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            outmat[i, j] += mat[i, j]*vec
+    return outmat
+
+def dalpha(V: float, al: float, bt: float, p: float, q: float, r: float, b: float, c: float):
+    cosal, sinal = trig_angle(al)
+    cosbt, sinbt = trig_angle(bt)
+    val = Vector(-V*sinal*cosbt, 0.0, V*cosal*cosbt)
+    oal = Vector(2*V*(q*sinal*sinbt/c + p*sinal*cosbt/b + r*cosal/b), 0.0,
+                 -2*V*(q*sinbt*cosal/c + p*cosal*cosbt/b - r*sinal/b))
+    return val, oal
+
+def dbeta(V: float, al: float, bt: float, p: float, q: float, b: float, c: float):
+    cosal, sinal = trig_angle(al)
+    cosbt, sinbt = trig_angle(bt)
+    vbt = Vector(-V*sinbt*cosal, -V*cosbt, -V*sinal*sinbt)
+    obt = Vector(2*V*(-q*cosbt/c + p*sinbt/b)*cosal,
+                 -2*V*(q*sinbt/c + p*cosbt/b),
+                 -2*V*(q*cosbt/c - p*sinbt/b)*sinal)
+    return vbt, obt
+
+def dpbo2V(V: float, al: float, bt: float, b: float):
+    cosal, sinal = trig_angle(al)
+    cosbt, sinbt = trig_angle(bt)
+    return Vector(-2*V*cosal*cosbt/b, -2*V*sinbt/b, -2*V*sinal*cosbt/b)
+
+def dqco2V(V: float, al: float, bt: float, c: float):
+    cosal, sinal = trig_angle(al)
+    cosbt, sinbt = trig_angle(bt)
+    return Vector(-2*V*sinbt*cosal/c, 2*V*cosbt/c, -2*V*sinal*sinbt/c)
+
+def drbo2V(V: float, al: float, b: float):
+    cosal, sinal = trig_angle(al)
+    return Vector(2*V*sinal/b, 0.0, -2*V*cosal/b)
+
+class StabilityResult(object):
+    res = None
+    _alpha = None
+    _beta = None
+    _pbo2V = None
+    _qco2V = None
+    _rbo2V = None
+    def __init__(self, res: LatticeResult):
+        self.res = res
+    @property
+    def alpha(self):
+        if self._alpha is None:
+            vfs, ofs = dalpha(self.res.speed, self.res.alpha, self.res.beta,
+                              self.res.pbo2V, self.res.qco2V, self.res.rbo2V,
+                              self.res.sys.bref, self.res.sys.cref)
+            gamalpha = vector_matrix_dot(self.res.ungam[:, 0], vfs)
+            gamalpha += vector_matrix_dot(self.res.ungam[:, 1], ofs)
+            self._alpha = GammaResult(self.res, gamalpha)
+        return self._alpha
+    @property
+    def beta(self):
+        if self._beta is None:
+            vfs, ofs = dbeta(self.res.speed, self.res.alpha, self.res.beta,
+                            self.res.pbo2V, self.res.qco2V,
+                            self.res.sys.bref, self.res.sys.cref)
+            gambeta = vector_matrix_dot(self.res.ungam[:, 0], vfs)
+            gambeta += vector_matrix_dot(self.res.ungam[:, 1], ofs)
+            self._beta = GammaResult(self.res, gambeta)
+        return self._beta
+    @property
+    def pbo2V(self):
+        if self._pbo2V is None:
+            V = self.res.speed
+            b = self.res.sys.bref
+            cosal, sinal = trig_angle(self.res.alpha)
+            cosbt, sinbt = trig_angle(self.res.beta)
+            ofs = Vector(-2*V*cosal*cosbt/b, -2*V*sinbt/b, -2*V*sinal*cosbt/b)
+            gampbo2V = vector_matrix_dot(self.res.ungam[:, 1], ofs)
+            self._pbo2V = GammaResult(self.res, gampbo2V)
+        return self._pbo2V
+    @property
+    def qco2V(self):
+        if self._qco2V is None:
+            V = self.res.speed
+            c = self.res.sys.cref
+            cosal, sinal = trig_angle(self.res.alpha)
+            cosbt, sinbt = trig_angle(self.res.beta)
+            ofs = Vector(-2*V*sinbt*cosal/c, 2*V*cosbt/c, -2*V*sinal*sinbt/c)
+            gamqco2V = vector_matrix_dot(self.res.ungam[:, 1], ofs)
+            self._qco2V = GammaResult(self.res, gamqco2V)
+        return self._qco2V
+    @property
+    def rbo2V(self):
+        if self._rbo2V is None:
+            V = self.res.speed
+            b = self.res.sys.bref
+            cosal, sinal = trig_angle(self.res.alpha)
+            ofs = Vector(2*V*sinal/b, 0.0, -2*V*cosal/b)
+            gamrbo2V = vector_matrix_dot(self.res.ungam[:, 1], ofs)
+            self._rbo2V = GammaResult(self.res, gamrbo2V)
+        return self._rbo2V
+    def neutral_point(self):
+        dCzdal = self.alpha.Cz
+        dCmdal = self.alpha.Cm
+        dxoc = dCmdal/dCzdal
+        xnp = dxoc*self.res.sys.cref+self.res.rcg.x
+        return xnp
+    @property
+    def stability_derivatives(self):
+        from py2md.classes import MDTable, MDHeading, MDReport
+        from . import sfrm
+        report = MDReport()
+        heading = MDHeading('Stability Derivatives', 1)
+        report.add_object(heading)
+        table = MDTable()
+        table.add_column('CLa', sfrm, data=[self.alpha.CL])
+        table.add_column('CYa', sfrm, data=[self.alpha.CY])
+        table.add_column('Cla', sfrm, data=[self.alpha.Cl])
+        table.add_column('Cma', sfrm, data=[self.alpha.Cm])
+        table.add_column('Cna', sfrm, data=[self.alpha.Cn])
+        report.add_object(table)
+        table = MDTable()
+        table.add_column('CLb', sfrm, data=[self.beta.CL])
+        table.add_column('CYb', sfrm, data=[self.beta.CY])
+        table.add_column('Clb', sfrm, data=[self.beta.Cl])
+        table.add_column('Cmb', sfrm, data=[self.beta.Cm])
+        table.add_column('Cnb', sfrm, data=[self.beta.Cn])
+        report.add_object(table)
+        table = MDTable()
+        table.add_column('CLp', sfrm, data=[self.pbo2V.CL])
+        table.add_column('CYp', sfrm, data=[self.pbo2V.CY])
+        table.add_column('Clp', sfrm, data=[self.pbo2V.Cl])
+        table.add_column('Cmp', sfrm, data=[self.pbo2V.Cm])
+        table.add_column('Cnp', sfrm, data=[self.pbo2V.Cn])
+        report.add_object(table)
+        table = MDTable()
+        table.add_column('CLq', sfrm, data=[self.qco2V.CL])
+        table.add_column('CYq', sfrm, data=[self.qco2V.CY])
+        table.add_column('Clq', sfrm, data=[self.qco2V.Cl])
+        table.add_column('Cmq', sfrm, data=[self.qco2V.Cm])
+        table.add_column('Cnq', sfrm, data=[self.qco2V.Cn])
+        report.add_object(table)
+        table = MDTable()
+        table.add_column('CLr', sfrm, data=[self.rbo2V.CL])
+        table.add_column('CYr', sfrm, data=[self.rbo2V.CY])
+        table.add_column('Clr', sfrm, data=[self.rbo2V.Cl])
+        table.add_column('Cmr', sfrm, data=[self.rbo2V.Cm])
+        table.add_column('Cnr', sfrm, data=[self.rbo2V.Cn])
+        report.add_object(table)
+        return report
+    def __str__(self):
+        return self.stability_derivatives._repr_markdown_()
+    def _repr_markdown_(self):
+        return self.__str__()        

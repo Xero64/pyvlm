@@ -107,18 +107,16 @@ class LatticeTrim(LatticeResult):
         num = numc+2
         if self.trmfrc and self.trmmom:
             H = zeros((5, num), dtype=float)
-            alres = GammaResult(self, self.galpha())
-            H[0, 0] = alres.CL
-            H[1, 0] = alres.CY
-            H[2, 0] = alres.Cl
-            H[3, 0] = alres.Cm
-            H[4, 0] = alres.Cn
-            btres = GammaResult(self, self.gbeta())
-            H[0, 1] = btres.CL
-            H[1, 1] = btres.CY
-            H[2, 1] = btres.Cl
-            H[3, 1] = btres.Cm
-            H[4, 1] = btres.Cn
+            H[0, 0] = self.stres.alpha.CL
+            H[1, 0] = self.stres.alpha.CY
+            H[2, 0] = self.stres.alpha.Cl
+            H[3, 0] = self.stres.alpha.Cm
+            H[4, 0] = self.stres.alpha.Cn
+            H[0, 1] = self.stres.beta.CL
+            H[1, 1] = self.stres.beta.CY
+            H[2, 1] = self.stres.beta.Cl
+            H[3, 1] = self.stres.beta.Cm
+            H[4, 1] = self.stres.beta.Cn
             ctgam = {}
             c = 0
             for control in self.ctrls:
@@ -135,22 +133,18 @@ class LatticeTrim(LatticeResult):
                 c += 1
         elif self.trmfrc:
             H = zeros((2, num), dtype=float)
-            alres = GammaResult(self, self.galpha())
-            H[0, 0] = alres.CL
-            H[1, 0] = alres.CY
-            btres = GammaResult(self, self.gbeta())
-            H[0, 1] = btres.CL
-            H[1, 1] = btres.CY
+            H[0, 0] = self.stres.alpha.CL
+            H[1, 0] = self.stres.alpha.CY
+            H[0, 1] = self.stres.beta.CL
+            H[1, 1] = self.stres.beta.CY
         elif self.trmmom:
             H = zeros((3, num), dtype=float)
-            alres = GammaResult(self, self.galpha())
-            H[0, 0] = alres.Cl
-            H[1, 0] = alres.Cm
-            H[2, 0] = alres.Cn
-            btres = GammaResult(self, self.gbeta())
-            H[0, 1] = btres.Cl
-            H[1, 1] = btres.Cm
-            H[2, 1] = btres.Cn
+            H[0, 0] = self.stres.alpha.Cl
+            H[1, 0] = self.stres.alpha.Cm
+            H[2, 0] = self.stres.alpha.Cn
+            H[0, 1] = self.stres.beta.Cl
+            H[1, 1] = self.stres.beta.Cm
+            H[2, 1] = self.stres.beta.Cn
             ctgam = {}
             c = 0
             for control in self.ctrls:
