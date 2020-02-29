@@ -148,8 +148,8 @@ class LatticeResult(object):
     @property
     def gamma(self):
         if self._gamma is None:
-            self._gamma = vector_matrix_dot(self.ungam[:, 0], self.vfs)
-            self._gamma += vector_matrix_dot(self.ungam[:, 1], self.ofs)
+            self._gamma = self.ungam[:, 0]*self.vfs
+            self._gamma += self.ungam[:, 1]*self.ofs
             for control in self.ctrls:
                 if control in self.sys.ctrls:
                     ctrl = self.ctrls[control]
@@ -161,15 +161,13 @@ class LatticeResult(object):
                     else:
                         indv = index[2]
                         indo = index[3]
-                    self._gamma += vector_matrix_dot(self.ungam[:, indv], self.vfs*ctrlrad)
-                    self._gamma += vector_matrix_dot(self.ungam[:, indo], self.ofs*ctrlrad)
+                    self._gamma += ctrlrad*(self.ungam[:, indv]*self.vfs)
+                    self._gamma += ctrlrad*(self.ungam[:, indo]*self.ofs)
         return self._gamma
     def gctrlp_single(self, control: str):
         indv = self.sys.ctrls[control][0]
-        gmat = vector_matrix_dot(self.ungam[:, indv], self.vfs)
         indo = self.sys.ctrls[control][1]
-        gmat += vector_matrix_dot(self.ungam[:, indo], self.ofs)
-        return gmat
+        return self.ungam[:, indv]*self.vfs+self.ungam[:, indo]*self.ofs
     def gctrlp(self, control: str=''):
         gmats = {}
         for control in self.sys.ctrls:
@@ -177,10 +175,8 @@ class LatticeResult(object):
         return gmats
     def gctrln_single(self, control: str):
         indv = self.sys.ctrls[control][2]
-        gmat = vector_matrix_dot(self.ungam[:, indv], self.vfs)
         indo = self.sys.ctrls[control][3]
-        gmat += vector_matrix_dot(self.ungam[:, indo], self.ofs)
-        return gmat
+        return self.ungam[:, indv]*self.vfs+self.ungam[:, indo]*self.ofs
     def gctrln(self):
         gmats = {}
         for control in self.sys.ctrls:
@@ -568,8 +564,11 @@ class LatticeResult(object):
         return res
     @property
     def surface_loads(self):
-        from py2md.classes import MDTable
+        from py2md.classes import MDTable, MDReport, MDHeading
         from math import atan
+        report = MDReport()
+        heading = MDHeading('Surface Loads', 2)
+        report.add_object(heading)
         table = MDTable()
         table.add_column('Name', 's')
         table.add_column('Fx', '.3f')
@@ -586,7 +585,8 @@ class LatticeResult(object):
         frc = self.nfres.nffrc.sum()
         mom = self.nfres.nfmom.sum()
         table.add_row(['Total', frc.x, frc.y, frc.z, mom.x, mom.y, mom.z])
-        return table
+        report.add_object(table)
+        return report
     @property
     def strip_forces(self):
         from py2md.classes import MDTable
@@ -1249,46 +1249,14 @@ def trig_angle(angle: float):
     sinang = sin(angrad)
     return cosang, sinang
 
-def vector_matrix_dot(mat: matrix, vec: Vector):
-    outmat = zeros(mat.shape)
-    for i in range(mat.shape[0]):
-        for j in range(mat.shape[1]):
-            outmat[i, j] += mat[i, j]*vec
-    return outmat
-
-def dalpha(V: float, al: float, bt: float, p: float, q: float, r: float, b: float, c: float):
-    cosal, sinal = trig_angle(al)
-    cosbt, sinbt = trig_angle(bt)
-    val = Vector(-V*sinal*cosbt, 0.0, V*cosal*cosbt)
-    oal = Vector(2*V*(q*sinal*sinbt/c + p*sinal*cosbt/b + r*cosal/b), 0.0,
-                 -2*V*(q*sinbt*cosal/c + p*cosal*cosbt/b - r*sinal/b))
-    return val, oal
-
-def dbeta(V: float, al: float, bt: float, p: float, q: float, b: float, c: float):
-    cosal, sinal = trig_angle(al)
-    cosbt, sinbt = trig_angle(bt)
-    vbt = Vector(-V*sinbt*cosal, -V*cosbt, -V*sinal*sinbt)
-    obt = Vector(2*V*(-q*cosbt/c + p*sinbt/b)*cosal,
-                 -2*V*(q*sinbt/c + p*cosbt/b),
-                 -2*V*(q*cosbt/c - p*sinbt/b)*sinal)
-    return vbt, obt
-
-def dpbo2V(V: float, al: float, bt: float, b: float):
-    cosal, sinal = trig_angle(al)
-    cosbt, sinbt = trig_angle(bt)
-    return Vector(-2*V*cosal*cosbt/b, -2*V*sinbt/b, -2*V*sinal*cosbt/b)
-
-def dqco2V(V: float, al: float, bt: float, c: float):
-    cosal, sinal = trig_angle(al)
-    cosbt, sinbt = trig_angle(bt)
-    return Vector(-2*V*sinbt*cosal/c, 2*V*cosbt/c, -2*V*sinal*sinbt/c)
-
-def drbo2V(V: float, al: float, b: float):
-    cosal, sinal = trig_angle(al)
-    return Vector(2*V*sinal/b, 0.0, -2*V*cosal/b)
-
 class StabilityResult(object):
     res = None
+    _u = None
+    _v = None
+    _w = None
+    _p = None
+    _q = None
+    _r = None
     _alpha = None
     _beta = None
     _pbo2V = None
@@ -1297,55 +1265,106 @@ class StabilityResult(object):
     def __init__(self, res: LatticeResult):
         self.res = res
     @property
+    def u(self):
+        if self._u is None:
+            uvw = Vector(1.0, 0.0, 0.0)
+            gamu = self.res.ungam[:, 0]*uvw
+            self._u = GammaResult(self.res, gamu)
+        return self._u
+    @property
+    def v(self):
+        if self._v is None:
+            uvw = Vector(0.0, 1.0, 0.0)
+            gamv = self.res.ungam[:, 0]*uvw
+            self._v = GammaResult(self.res, gamv)
+        return self._v
+    @property
+    def w(self):
+        if self._w is None:
+            uvw = Vector(0.0, 0.0, 1.0)
+            gamw = self.res.ungam[:, 0]*uvw
+            self._w = GammaResult(self.res, gamw)
+        return self._w
+    @property
+    def p(self):
+        if self._p is None:
+            pqr = Vector(1.0, 0.0, 0.0)
+            ofs = self.res.wcs.vector_to_global(pqr)
+            gamp = self.res.ungam[:, 1]*ofs
+            self._p = GammaResult(self.res, gamp)
+        return self._p
+    @property
+    def q(self):
+        if self._q is None:
+            pqr = Vector(0.0, 1.0, 0.0)
+            ofs = self.res.wcs.vector_to_global(pqr)
+            gamq = self.res.ungam[:, 1]*ofs
+            self._q = GammaResult(self.res, gamq)
+        return self._q
+    @property
+    def r(self):
+        if self._r is None:
+            pqr = Vector(0.0, 0.0, 1.0)
+            ofs = self.res.wcs.vector_to_global(pqr)
+            gamr = self.res.ungam[:, 1]*ofs
+            self._r = GammaResult(self.res, gamr)
+        return self._r
+    @property
     def alpha(self):
         if self._alpha is None:
-            vfs, ofs = dalpha(self.res.speed, self.res.alpha, self.res.beta,
-                              self.res.pbo2V, self.res.qco2V, self.res.rbo2V,
-                              self.res.sys.bref, self.res.sys.cref)
-            gamalpha = vector_matrix_dot(self.res.ungam[:, 0], vfs)
-            gamalpha += vector_matrix_dot(self.res.ungam[:, 1], ofs)
+            V = self.res.speed
+            c = self.res.sys.cref
+            b = self.res.sys.bref
+            pbo2V = self.res.pbo2V
+            qco2V = self.res.qco2V
+            rbo2V = self.res.rbo2V
+            cosal, sinal = trig_angle(self.res.alpha)
+            cosbt, sinbt = trig_angle(self.res.beta)
+            vfs = Vector(-V*cosbt*sinal, 0, V*cosal*cosbt)
+            ofs = Vector(2*V*(qco2V*sinal*sinbt/c - cosal*rbo2V/b - cosbt*pbo2V*sinal/b), 0.0,
+                         2*V*(cosal*cosbt*pbo2V/b - cosal*qco2V*sinbt/c - rbo2V*sinal/b))
+            gamalpha = self.res.ungam[:, 0]*vfs+self.res.ungam[:, 1]*ofs
             self._alpha = GammaResult(self.res, gamalpha)
         return self._alpha
     @property
     def beta(self):
         if self._beta is None:
-            vfs, ofs = dbeta(self.res.speed, self.res.alpha, self.res.beta,
-                            self.res.pbo2V, self.res.qco2V,
-                            self.res.sys.bref, self.res.sys.cref)
-            gambeta = vector_matrix_dot(self.res.ungam[:, 0], vfs)
-            gambeta += vector_matrix_dot(self.res.ungam[:, 1], ofs)
+            V = self.res.speed
+            c = self.res.sys.cref
+            b = self.res.sys.bref
+            pbo2V = self.res.pbo2V
+            qco2V = self.res.qco2V
+            cosal, sinal = trig_angle(self.res.alpha)
+            cosbt, sinbt = trig_angle(self.res.beta)
+            vfs = Vector(-V*cosal*sinbt, -V*cosbt, -V*sinal*sinbt)
+            ofs = Vector(-2*V*cosal*(cosbt*qco2V/c + pbo2V*sinbt/b),
+                         2*V*(cosbt*pbo2V/b - qco2V*sinbt/c),
+                         -2*V*sinal*(cosbt*qco2V/c + pbo2V*sinbt/b))
+            gambeta = self.res.ungam[:, 0]*vfs+self.res.ungam[:, 1]*ofs
             self._beta = GammaResult(self.res, gambeta)
         return self._beta
     @property
     def pbo2V(self):
         if self._pbo2V is None:
-            V = self.res.speed
-            b = self.res.sys.bref
-            cosal, sinal = trig_angle(self.res.alpha)
-            cosbt, sinbt = trig_angle(self.res.beta)
-            ofs = Vector(-2*V*cosal*cosbt/b, -2*V*sinbt/b, -2*V*sinal*cosbt/b)
-            gampbo2V = vector_matrix_dot(self.res.ungam[:, 1], ofs)
+            pqr = Vector(2*self.res.speed/self.res.sys.bref, 0.0, 0.0)
+            ofs = self.res.wcs.vector_to_global(pqr)
+            gampbo2V = self.res.ungam[:, 1]*ofs
             self._pbo2V = GammaResult(self.res, gampbo2V)
         return self._pbo2V
     @property
     def qco2V(self):
         if self._qco2V is None:
-            V = self.res.speed
-            c = self.res.sys.cref
-            cosal, sinal = trig_angle(self.res.alpha)
-            cosbt, sinbt = trig_angle(self.res.beta)
-            ofs = Vector(-2*V*sinbt*cosal/c, 2*V*cosbt/c, -2*V*sinal*sinbt/c)
-            gamqco2V = vector_matrix_dot(self.res.ungam[:, 1], ofs)
+            pqr = Vector(0.0, 2*self.res.speed/self.res.sys.cref, 0.0)
+            ofs = self.res.wcs.vector_to_global(pqr)
+            gamqco2V = self.res.ungam[:, 1]*ofs
             self._qco2V = GammaResult(self.res, gamqco2V)
         return self._qco2V
     @property
     def rbo2V(self):
         if self._rbo2V is None:
-            V = self.res.speed
-            b = self.res.sys.bref
-            cosal, sinal = trig_angle(self.res.alpha)
-            ofs = Vector(2*V*sinal/b, 0.0, -2*V*cosal/b)
-            gamrbo2V = vector_matrix_dot(self.res.ungam[:, 1], ofs)
+            pqr = Vector(0.0, 0.0, 2*self.res.speed/self.res.sys.bref)
+            ofs = self.res.wcs.vector_to_global(pqr)
+            gamrbo2V = self.res.ungam[:, 1]*ofs
             self._rbo2V = GammaResult(self.res, gamrbo2V)
         return self._rbo2V
     def neutral_point(self):
@@ -1354,12 +1373,39 @@ class StabilityResult(object):
         dxoc = dCmdal/dCzdal
         xnp = dxoc*self.res.sys.cref+self.res.rcg.x
         return xnp
+    def system_aerodynamic_matrix(self):
+        A = zeros((6, 6))
+        F = self.u.nffrctot
+        A[0, 0], A[1, 0], A[2, 0] = F.x, F.y, F.z
+        M = self.res.wcs.vector_to_local(self.u.nfmomtot)
+        A[3, 0], A[4, 0], A[5, 0] = M.x, M.y, M.z
+        F = self.v.nffrctot
+        A[0, 1], A[1, 1], A[2, 1] = F.x, F.y, F.z
+        M = self.res.wcs.vector_to_local(self.v.nfmomtot)
+        A[3, 1], A[4, 1], A[5, 1] = M.x, M.y, M.z
+        F = self.w.nffrctot
+        A[0, 2], A[1, 2], A[2, 2] = F.x, F.y, F.z
+        M = self.res.wcs.vector_to_local(self.w.nfmomtot)
+        A[3, 2], A[4, 2], A[5, 2] = M.x, M.y, M.z
+        F = self.p.nffrctot
+        A[0, 3], A[1, 3], A[2, 3] = F.x, F.y, F.z
+        M = self.res.wcs.vector_to_local(self.p.nfmomtot)
+        A[3, 3], A[4, 3], A[5, 3] = M.x, M.y, M.z
+        F = self.q.nffrctot
+        A[0, 4], A[1, 4], A[2, 4] = F.x, F.y, F.z
+        M = self.res.wcs.vector_to_local(self.q.nfmomtot)
+        A[3, 4], A[4, 4], A[5, 4] = M.x, M.y, M.z
+        F = self.r.nffrctot
+        A[0, 5], A[1, 5], A[2, 5] = F.x, F.y, F.z
+        M = self.res.wcs.vector_to_local(self.r.nfmomtot)
+        A[3, 5], A[4, 5], A[5, 5] = M.x, M.y, M.z
+        return A
     @property
     def stability_derivatives(self):
         from py2md.classes import MDTable, MDHeading, MDReport
         from . import sfrm
         report = MDReport()
-        heading = MDHeading('Stability Derivatives', 1)
+        heading = MDHeading('Stability Derivatives', 2)
         report.add_object(heading)
         table = MDTable()
         table.add_column('CLa', sfrm, data=[self.alpha.CL])

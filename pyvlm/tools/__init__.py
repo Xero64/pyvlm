@@ -6,6 +6,7 @@ from .spacing import full_cosine_spacing, full_elliptical_spacing
 from .elliptical import Elliptical
 from .bell import Bell
 from .mass import Mass, MassCollection, masses_from_json, masses_from_data
+from .stability import StabilityApproximation
 from math import pi
 
 def elliptical_lift_distribution(y: list, b: float, L: float):

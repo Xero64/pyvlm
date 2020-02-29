@@ -14,6 +14,7 @@ class LatticeTrim(LatticeResult):
     Cnt = None
     trmfrc = None
     trmmom = None
+    trmlft = None
     def __init__(self, name: str, sys: LatticeSystem):
         super(LatticeTrim, self).__init__(name, sys)
         self.set_trim_loads()
@@ -24,15 +25,19 @@ class LatticeTrim(LatticeResult):
         self.Clt = Clt
         self.Cmt = Cmt
         self.Cnt = Cnt
-    def set_trim_loads(self, trmfrc: bool=True, trmmom: bool=True):
+    def set_trim_loads(self, trmfrc: bool=True, trmmom: bool=True, trmlft: bool=False):
         self.trmfrc = trmfrc
         self.trmmom = trmmom
+        self.trmlft = trmlft
     def delta_C(self):
         Ctgt = self.target_Cmat()
         Ccur = self.current_Cmat()
         return Ctgt-Ccur
     def target_Cmat(self):
-        if self.trmfrc and self.trmmom:
+        if self.trmlft:
+            Ctgt = zeros((1, 1), dtype=float)
+            Ctgt[0, 0] = self.CLt
+        elif self.trmfrc and self.trmmom:
             Ctgt = zeros((5, 1), dtype=float)
             Ctgt[0, 0] = self.CLt
             Ctgt[1, 0] = self.CYt
@@ -52,7 +57,10 @@ class LatticeTrim(LatticeResult):
             Ctgt = zeros((0, 1), dtype=float)
         return Ctgt
     def current_Cmat(self):
-        if self.trmfrc and self.trmmom:
+        if self.trmlft:
+            Ccur = zeros((1, 1), dtype=float)
+            Ccur[0, 0] = self.nfres.CL
+        elif self.trmfrc and self.trmmom:
             Ccur = zeros((5, 1), dtype=float)
             Ccur[0, 0] = self.nfres.CL
             Ccur[1, 0] = self.nfres.CY
@@ -89,10 +97,14 @@ class LatticeTrim(LatticeResult):
             numc = len(self.sys.ctrls)
         else:
             numc = 0
-        num = numc+2
-        Dcur = zeros((num, 1), dtype=float)
-        Dcur[0, 0] = radians(self.alpha)
-        Dcur[1, 0] = radians(self.beta)
+        if self.trmlft:
+            Dcur = zeros((1, 1), dtype=float)
+            Dcur[0, 0] = radians(self.alpha)
+        else:
+            num = numc+2
+            Dcur = zeros((num, 1), dtype=float)
+            Dcur[0, 0] = radians(self.alpha)
+            Dcur[1, 0] = radians(self.beta)
         if self.trmmom:
             c = 0
             for control in self.ctrls:
@@ -105,7 +117,10 @@ class LatticeTrim(LatticeResult):
         else:
             numc = 0
         num = numc+2
-        if self.trmfrc and self.trmmom:
+        if self.trmlft:
+            H = zeros((1, 1), dtype=float)
+            H[0, 0] = self.stres.alpha.CL
+        elif self.trmfrc and self.trmmom:
             H = zeros((5, num), dtype=float)
             H[0, 0] = self.stres.alpha.CL
             H[1, 0] = self.stres.alpha.CY
@@ -192,7 +207,10 @@ class LatticeTrim(LatticeResult):
             if Dcur is False:
                 return
             alpha = degrees(Dcur[0, 0])
-            beta = degrees(Dcur[1, 0])
+            if self.trmlft:
+                beta = self.beta
+            else:
+                beta = degrees(Dcur[1, 0])
             if self.trmmom:
                 ctrls = {}
                 c = 0
