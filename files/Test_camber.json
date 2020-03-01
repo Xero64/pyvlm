@@ -39,48 +39,85 @@
     "cases": [
         {
             "name": "Test Alpha",
-            "alpha": 3.0
+            "alpha": 3.0,
+            "outputs": [
+                "stability derivatives"
+            ]
         },
         {
             "name": "Test Beta",
-            "beta": 3.0
+            "beta": 3.0,
+            "outputs": [
+                "stability derivatives"
+            ]
         },
         {
             "name": "Test pbo2V",
-            "pbo2V": 0.01
+            "pbo2V": 0.01,
+            "outputs": [
+                "stability derivatives"
+            ]
         },
         {
             "name": "Test qco2V",
-            "qco2V": 0.01
+            "qco2V": 0.01,
+            "outputs": [
+                "stability derivatives"
+            ]
         },
         {
             "name": "Test rbo2V",
-            "rbo2V": 0.01
+            "rbo2V": 0.01,
+            "outputs": [
+                "stability derivatives"
+            ]
         },
         {
             "name": "Test Alpha Mach",
             "alpha": 3.0,
-            "mach": 0.4
+            "mach": 0.4,
+            "outputs": [
+                "stability derivatives"
+            ]
         },
         {
             "name": "Test Beta Mach",
             "beta": 3.0,
-            "mach": 0.4
+            "mach": 0.4,
+            "outputs": [
+                "stability derivatives"
+            ]
         },
         {
             "name": "Test pbo2V Mach",
             "pbo2V": 0.01,
-            "mach": 0.4
+            "mach": 0.4,
+            "outputs": [
+                "stability derivatives"
+            ]
         },
         {
             "name": "Test qco2V Mach",
             "qco2V": 0.01,
-            "mach": 0.4
+            "mach": 0.4,
+            "outputs": [
+                "stability derivatives"
+            ]
         },
         {
             "name": "Test rbo2V Mach",
             "rbo2V": 0.01,
-            "mach": 0.4
+            "mach": 0.4,
+            "outputs": [
+                "stability derivatives"
+            ]
+        },
+        {
+            "name": "Test Zero",
+            "alpha": 0.0,
+            "outputs": [
+                "stability derivatives"
+            ]
         }
     ]
 }

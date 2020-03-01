@@ -7,6 +7,8 @@ from math import radians, cos, sin
 from matplotlib.pyplot import figure
 from .latticesystem import LatticeSystem
 
+# use_scs = False
+
 class LatticeResult(object):
     name = None
     sys = None
@@ -120,7 +122,9 @@ class LatticeResult(object):
         return self._scs
     @property
     def wcs(self):
-        if self._wcs is None:
+        # if use_scs:
+        #     return self.scs
+        if self._wcs is None:    
             pnt = self.sys.rref
             dirx = -1.0*self.acs.dirx
             diry = self.acs.diry

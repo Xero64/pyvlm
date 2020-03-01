@@ -388,20 +388,32 @@ class LatticeSystem(object):
         return self.__str__()
 
 def latticesystem_from_json(jsonfilepath: str, mesh: bool=True):
+    from json import load
+
+    with open(jsonfilepath, 'rt') as jsonfile:
+        sysdct = load(jsonfile)
+
+    sysdct['source'] = jsonfilepath
+
+    sys = latticesystem_from_dict(sysdct)
+
+    if mesh and sys.pnls is None:
+        sys.mesh()
+
+    return sys
+
+def latticesystem_from_dict(sysdct: dict):
     from .latticesurface import latticesurface_from_json
     from .latticeresult import latticeresult_from_json
     from .latticetrim import latticetrim_from_json
     from pyvlm.tools import masses_from_json, masses_from_data
-    from json import load
-
-    with open(jsonfilepath, 'rt') as jsonfile:
-        data = load(jsonfile)
-    
     from os.path import dirname, join, exists
+
+    jsonfilepath = sysdct['source']
 
     path = dirname(jsonfilepath)
 
-    for surfdata in data['surfaces']:
+    for surfdata in sysdct['surfaces']:
         for sectdata in surfdata['sections']:
             if 'airfoil' in sectdata:
                 airfoil = sectdata['airfoil']
@@ -413,41 +425,39 @@ def latticesystem_from_json(jsonfilepath: str, mesh: bool=True):
                     else:
                         sectdata['airfoil'] = airfoil
     
-    name = data['name']
+    name = sysdct['name']
     sfcs = []
-    for surfdata in data['surfaces']:
+    for surfdata in sysdct['surfaces']:
         sfc = latticesurface_from_json(surfdata)
         sfcs.append(sfc)
-    bref = data['bref']
-    cref = data['cref']
-    sref = data['sref']
-    xref = data['xref']
-    yref = data['yref']
-    zref = data['zref']
+    bref = sysdct['bref']
+    cref = sysdct['cref']
+    sref = sysdct['sref']
+    xref = sysdct['xref']
+    yref = sysdct['yref']
+    zref = sysdct['zref']
     rref = Point(xref, yref, zref)
     lsys = LatticeSystem(name, sfcs, bref, cref, sref, rref)
 
     masses = {}
-    if 'masses' in data:
-        if isinstance(data['masses'], list):
-            masses = masses_from_data(data['masses'])
-        elif isinstance(data['masses'], str):
-            if data['masses'][-5:] == '.json':
-                massfilename = data['masses']
+    if 'masses' in sysdct:
+        if isinstance(sysdct['masses'], list):
+            masses = masses_from_data(sysdct['masses'])
+        elif isinstance(sysdct['masses'], str):
+            if sysdct['masses'][-5:] == '.json':
+                massfilename = sysdct['masses']
                 massfilepath = join(path, massfilename)
             masses = masses_from_json(massfilepath)
     lsys.masses = masses
 
-    if 'cases' in data and mesh:
+    if 'cases' in sysdct and sysdct:
         lsys.mesh()
-        for i in range(len(data['cases'])):
-            resdata = data['cases'][i]
+        for i in range(len(sysdct['cases'])):
+            resdata = sysdct['cases'][i]
             if 'trim' in resdata:
                 latticetrim_from_json(lsys, resdata)
             else:
                 latticeresult_from_json(lsys, resdata)
-    elif mesh:
-        lsys.mesh()
     
     lsys.source = jsonfilepath
 

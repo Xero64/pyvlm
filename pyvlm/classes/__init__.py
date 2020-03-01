@@ -1,4 +1,4 @@
-from .latticesystem import LatticeSystem, latticesystem_from_json
+from .latticesystem import LatticeSystem, latticesystem_from_dict
 from .latticesurface import LatticeSurface
 from .latticesection import LatticeSection
 from .latticesheet import LatticeSheet
