@@ -343,13 +343,19 @@ class LatticeSystem(object):
         table.add_column('Y', '.5f')
         table.add_column('Z', '.5f')
         table.add_column('DX', '.5f')
+        table.add_column('nx', '.5f')
+        table.add_column('ny', '.5f')
+        table.add_column('nz', '.5f')
         for pnl in self.pnls:
             j = pnl.lpid
             x = pnl.pntg.x
             y = pnl.pntg.y
             z = pnl.pntg.z
             dx = pnl.crd
-            table.add_row([j, x, y, z, dx])
+            nx = pnl.nrml.x
+            ny = pnl.nrml.y
+            nz = pnl.nrml.z            
+            table.add_row([j, x, y, z, dx, nx, ny, nz])
         return table
     def copy_from_source(self):
         lsys = latticesystem_from_json(self.source)
