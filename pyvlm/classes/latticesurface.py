@@ -14,6 +14,7 @@ class LatticeSurface(object):
     pnts = None
     pnls = None
     msect = None
+    area = None
     def __init__(self, name: str, sects: list, mirror: bool, funcs:list):
         self.name = name
         self.sects = sects
@@ -135,6 +136,10 @@ class LatticeSurface(object):
                     bpos = strp.bpos
                     val = func.interpolate(bpos)
                     strp.__dict__[var] = val
+        self.area = 0.0
+        for sht in self.shts:
+            if not sht.noload:
+                self.area += sht.area
         return lsid, lpid
     def point_xyz(self):
         from numpy.matlib import zeros

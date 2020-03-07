@@ -355,7 +355,8 @@ class LatticeResult(object):
         ax.plot(self.sys.srfcs[0].strpy, self.phi, label=self.name)
         ax.legend()
         return ax
-    def plot_strip_lift_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
+    def plot_strip_lift_distribution(self, ax=None, axis: str='b',
+                                     surfaces: list=[], normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -368,8 +369,11 @@ class LatticeResult(object):
                 if srfc.name in surfaces:
                     srfcs.append(srfc)
         for srfc in srfcs:
+            if normalise:
+                l = [self.stripres.lift[strp.lsid, 0]/strp.area/self.qfs for strp in srfc.strps]
+            else:
+                l = [self.stripres.lift[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             label = self.name+' for '+srfc.name
-            l = [self.stripres.lift[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             if axis == 'b':
                 b = srfc.strpb
                 ax.plot(b, l, label=label)
@@ -383,7 +387,8 @@ class LatticeResult(object):
                     ax.plot(l, z, label=label)
         ax.legend()
         return ax
-    def plot_strip_yforce_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
+    def plot_strip_yforce_distribution(self, ax=None, axis: str='b',
+                                       surfaces: list=[], normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -396,8 +401,11 @@ class LatticeResult(object):
                 if srfc.name in surfaces:
                     srfcs.append(srfc)
         for srfc in srfcs:
+            if normalise:
+                f = [self.stripres.side[strp.lsid, 0]/strp.area/self.qfs for strp in srfc.strps]
+            else:
+                f = [self.stripres.side[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             label = self.name+' for '+srfc.name
-            f = [self.stripres.side[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             if axis == 'b':
                 b = srfc.strpb
                 ax.plot(b, f, label=label)
@@ -411,7 +419,8 @@ class LatticeResult(object):
                     ax.plot(f, z, label=label)
         ax.legend()
         return ax
-    def plot_strip_drag_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
+    def plot_strip_drag_distribution(self, ax=None, axis: str='b',
+                                     surfaces: list=[], normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -424,8 +433,11 @@ class LatticeResult(object):
                 if srfc.name in surfaces:
                     srfcs.append(srfc)
         for srfc in srfcs:
+            if normalise:
+                d = [self.stripres.drag[strp.lsid, 0]/strp.area/self.qfs for strp in srfc.strps]
+            else:
+                d = [self.stripres.drag[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             label = self.name+' for '+srfc.name
-            d = [self.stripres.drag[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             if axis == 'b':
                 b = srfc.strpb
                 ax.plot(b, d, label=label)
@@ -439,7 +451,8 @@ class LatticeResult(object):
                     ax.plot(d, z, label=label)
         ax.legend()
         return ax
-    def plot_trefftz_lift_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
+    def plot_trefftz_lift_distribution(self, ax=None, axis: str='b',
+                                       surfaces: list=[], normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -452,8 +465,11 @@ class LatticeResult(object):
                 if srfc.name in surfaces:
                     srfcs.append(srfc)
         for srfc in srfcs:
+            if normalise:
+                l = [self.trres.trfrc.z[strp.lsid, 0]/strp.area/self.qfs for strp in srfc.strps]
+            else:
+                l = [self.trres.trfrc.z[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             label = self.name+' for '+srfc.name
-            l = [self.trres.trfrc.z[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             if axis == 'b':
                 b = srfc.strpb
                 ax.plot(b, l, label=label)
@@ -467,7 +483,8 @@ class LatticeResult(object):
                     ax.plot(l, z, label=label)
         ax.legend()
         return ax
-    def plot_trefftz_yforce_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
+    def plot_trefftz_yforce_distribution(self, ax=None, axis: str='b',
+                                         surfaces: list=[], normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -480,8 +497,11 @@ class LatticeResult(object):
                 if srfc.name in surfaces:
                     srfcs.append(srfc)
         for srfc in srfcs:
+            if normalise:
+                f = [self.trres.trfrc.y[strp.lsid, 0]/strp.area/self.qfs for strp in srfc.strps]
+            else:
+                f = [self.trres.trfrc.y[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             label = self.name+' for '+srfc.name
-            f = [self.trres.trfrc.y[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             if axis == 'b':
                 b = srfc.strpb
                 ax.plot(b, f, label=label)
@@ -495,7 +515,8 @@ class LatticeResult(object):
                     ax.plot(f, z, label=label)
         ax.legend()
         return ax
-    def plot_trefftz_drag_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
+    def plot_trefftz_drag_distribution(self, ax=None, axis: str='b',
+                                       surfaces: list=[], normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -508,8 +529,11 @@ class LatticeResult(object):
                 if srfc.name in surfaces:
                     srfcs.append(srfc)
         for srfc in srfcs:
+            if normalise:
+                d = [self.trres.trfrc.x[strp.lsid, 0]/strp.area/self.qfs for strp in srfc.strps]
+            else:
+                d = [self.trres.trfrc.x[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             label = self.name+' for '+srfc.name
-            d = [self.trres.trfrc.x[strp.lsid, 0]/strp.dst for strp in srfc.strps]
             if axis == 'b':
                 b = srfc.strpb
                 ax.plot(b, d, label=label)
@@ -523,7 +547,8 @@ class LatticeResult(object):
                     ax.plot(d, z, label=label)
         ax.legend()
         return ax
-    def plot_trefftz_wash_distribution(self, ax=None, axis: str='b', surfaces: list=[]):
+    def plot_trefftz_wash_distribution(self, ax=None, axis: str='b',
+                                       surfaces: list=[], normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -536,8 +561,11 @@ class LatticeResult(object):
                 if srfc.name in surfaces:
                     srfcs.append(srfc)
         for srfc in srfcs:
+            if normalise:
+                w = [self.trres.trwsh[strp.lsid, 0]/self.speed for strp in srfc.strps]
+            else:
+                w = [self.trres.trwsh[strp.lsid, 0] for strp in srfc.strps]
             label = self.name+' for '+srfc.name
-            w = [self.trres.trwsh[strp.lsid, 0] for strp in srfc.strps]
             if axis == 'b':
                 b = srfc.strpb
                 ax.plot(b, w, label=label)
@@ -574,22 +602,58 @@ class LatticeResult(object):
         heading = MDHeading('Surface Loads', 2)
         report.add_object(heading)
         table = MDTable()
-        table.add_column('Name', 's')
-        table.add_column('Fx', '.3f')
-        table.add_column('Fy', '.3f')
-        table.add_column('Fz', '.3f')
-        table.add_column('Mx', '.3f')
-        table.add_column('My', '.3f')
-        table.add_column('Mz', '.3f')
+        table.add_column('xref', '.3f', data=[self.rcg.x])
+        table.add_column('yref', '.3f', data=[self.rcg.y])
+        table.add_column('zref', '.3f', data=[self.rcg.z])
+        report.add_object(table)
+        table1 = MDTable()
+        table1.add_column('Name', 's')
+        table1.add_column('Fx', '.3f')
+        table1.add_column('Fy', '.3f')
+        table1.add_column('Fz', '.3f')
+        table1.add_column('Mx', '.3f')
+        table1.add_column('My', '.3f')
+        table1.add_column('Mz', '.3f')
+        table2 = MDTable()
+        table2.add_column('Name', 's')
+        table2.add_column('Area', '.3f')
+        table2.add_column('Di', '.3f')
+        table2.add_column('Y', '.3f')
+        table2.add_column('L', '.3f')
+        table2.add_column('CDi', '.7f')
+        table2.add_column('CY', '.5f')
+        table2.add_column('CL', '.5f')
+        Ditot = 0.0
+        Ytot = 0.0
+        Ltot = 0.0
         for srfc in self.sys.srfcs:
+            area = srfc.area
             ind = srfc.pnli
             frc = self.nfres.nffrc[ind, 0].sum()
             mom = self.nfres.nfmom[ind, 0].sum()
-            table.add_row([srfc.name, frc.x, frc.y, frc.z, mom.x, mom.y, mom.z])
+            table1.add_row([srfc.name, frc.x, frc.y, frc.z, mom.x, mom.y, mom.z])
+            if area > 0.0:
+                Di = frc*self.acs.dirx
+                Y = frc*self.acs.diry
+                L = frc*self.acs.dirz
+                CDi = Di/self.qfs/area
+                CY = Y/self.qfs/area
+                CL = L/self.qfs/area
+                table2.add_row([srfc.name, area, Di, Y, L, CDi, CY, CL])
+                Ditot += Di
+                Ytot += Y
+                Ltot += L
         frc = self.nfres.nffrc.sum()
         mom = self.nfres.nfmom.sum()
-        table.add_row(['Total', frc.x, frc.y, frc.z, mom.x, mom.y, mom.z])
+        table1.add_row(['Total', frc.x, frc.y, frc.z, mom.x, mom.y, mom.z])
+        report.add_object(table1)
+        table = MDTable()
+        table.add_column('Density', '.3f', data=[self.rho])
+        table.add_column('Speed', '.3f', data=[self.speed])
+        table.add_column('Dynamic Pressure', '.1f', data=[self.qfs])
         report.add_object(table)
+        table2.add_row(['Total', self.sys.sref, Ditot, Ytot, Ltot, self.nfres.CDi, self.nfres.CY, self.nfres.CL])
+        report.add_object(table2)
         return report
     @property
     def strip_forces(self):
