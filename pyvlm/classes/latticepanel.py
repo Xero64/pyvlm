@@ -15,14 +15,9 @@ class LatticePanel(object):
     pntb = None
     leni = None
     slope = None
-    mpid = None
     strp = None
     crd = None
     area = None
-    # ltva = None
-    # ltvb = None
-    # ptva = None
-    # ptvb = None
     def __init__(self, lpid: int, pnts: list, cspc: float, strp: LatticeStrip):
         self.lpid = lpid
         self.pnts = pnts
@@ -57,10 +52,6 @@ class LatticePanel(object):
         pntb = pnt2+self.cfr2*vecb
         lenc = pntb-pnta
         self.pntc = pnta+self.strp.bfrc*lenc
-        # self.ltva = self.pnta-self.strp.pnta
-        # self.ltvb = self.strp.pntb-self.pntb
-        # self.ptva = self.pnta-0.5*self.ltva
-        # self.ptvb = self.pntb+0.5*self.ltvb
     def return_panel_point(self):
         pnt1 = self.pnts[0]
         pnt2 = self.pnts[1]
@@ -129,11 +120,6 @@ class LatticePanel(object):
             vel -= bxx/den/bm
         vel = vel/(4*pi)
         return vel
-    # def induced_force(self, vel: Vector):
-    #     if self.noload:
-    #         return Vector(0.0, 0.0, 0.0)
-    #     else:
-    #         return vel**self.leni
     def __repr__(self):
         return '<LatticePanel {:d}>'.format(self.lpid)
     def __str__(self):
@@ -142,7 +128,7 @@ class LatticePanel(object):
         pnt2 = self.pnts[1]
         pnt3 = self.pnts[2]
         pnt4 = self.pnts[3]
-        return frmstr.format(self.lpid, pnt1, pnt2, pnt3, pnt4, self.mpid)
+        return frmstr.format(self.lpid, pnt1, pnt2, pnt3, pnt4)
     def __format__(self, format_spec: str):
         frmstr = 'LatticePanel\t{:d}\t{:'
         frmstr += format_spec
@@ -157,4 +143,4 @@ class LatticePanel(object):
         pnt2 = self.pnts[1]
         pnt3 = self.pnts[2]
         pnt4 = self.pnts[3]
-        return frmstr.format(self.lpid, pnt1, pnt2, pnt3, pnt4, self.mpid)
+        return frmstr.format(self.lpid, pnt1, pnt2, pnt3, pnt4)

@@ -11,3 +11,6 @@ def latticesystem_to_md(lsys: LatticeSystem, mdfilepath: str, outputs: dict={}):
                 if output == 'stability derivatives':
                     mdfile.write('\n')
                     mdfile.write(lres.stability_derivatives._repr_markdown_())
+                if output == 'stability derivatives body':
+                    mdfile.write('\n')
+                    mdfile.write(lres.stability_derivatives_body._repr_markdown_())

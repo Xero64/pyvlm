@@ -9,7 +9,8 @@ from matplotlib.pyplot import figure
 class LatticeOptimum(LatticeResult):
     constr = None
     record = None
-    _rhov = None
+    phiopt = None
+    lamopt = None
     _bdg = None
     _adg = None
     def __init__(self, name: str, sys: LatticeSystem):
@@ -24,11 +25,18 @@ class LatticeOptimum(LatticeResult):
             self.record = []
         record = Record(self, param, point, strplst)
         self.record.append(record)
-    @property
-    def rhov(self):
-        if self._rhov is None:
-            self._rhov = self.rho*self.speed
-        return self._rhov
+    def set_target_phi(self, phi: list):
+        if len(phi) != len(self.sys.strps):
+            raise Exception('The length of phi must equal the number of strips.')
+        self.phiopt = matrix([phi], dtype=float).transpose()
+        self._phi = self.phiopt
+    def set_target_lift_distribution(self, ltgt: list, rho: float, speed: float, mach: float=0.0):
+        if len(ltgt) != len(self.sys.strps):
+            raise Exception('The length of l must equal the number of strips.')
+        phitgt = [li/rho/speed for li in ltgt]
+        self.set_density(rho)
+        self.set_state(mach=mach, speed=speed)
+        self.set_target_phi(phitgt)
     @property
     def bdg(self):
         return self.sys.bdg
@@ -60,29 +68,29 @@ class LatticeOptimum(LatticeResult):
             phi_old = phi
             phi, lam = self.old_iteration(phi_old)
         self._phi = phi
-        self._lam = lam
+        self.phiopt = phi
+        self.lamopt = lam
         return phi, lam
     def optimum_strip_twist_iteration(self):
         
         nump = len(self.sys.pnls)
         nums = len(self.sys.strps)
 
-        popt = zeros((nums, 1))
-        for i, phi in enumerate(self.phi):
-            popt[i, 0] = phi
-
         dafsda = zeros((nump, nums))
         daicda = zeros((nump, nums))
+
+        aic = self.sys.aic(self.mach)
+        avc = self.sys.avc(self.mach)
 
         for i in range(nump):
             for j, strp in enumerate(self.sys.strps):
                 for pnl in strp.pnls:
                     k = pnl.lpid
                     if k == i:
-                        dafsda[i, j] += self.res.vfs*pnl.dnda
-                        daicda[i, j] += self.sys.avc[i, k]*pnl.dnda
+                        dafsda[i, j] += self.vfs*pnl.dnda
+                        daicda[i, j] += avc[i, k]*pnl.dnda
 
-        dgda = -solve(self.sys.aic, dafsda+daicda*self.res.phi)
+        dgda = -solve(aic, dafsda+daicda*self.phi)
 
         dpda = zeros((nums, nums))
         for i, strp in enumerate(self.sys.strps):
@@ -91,7 +99,9 @@ class LatticeOptimum(LatticeResult):
                     k = pnl.lpid
                     dpda[i, j] += dgda[k, j]
 
-        dal = solve(dpda, popt-self.res.phi)
+        dphi = self.phiopt-self.phi
+        
+        dal = solve(dpda, dphi)
 
         for i in range(nums):
             dal[i, 0] = degrees(dal[i, 0])
@@ -102,33 +112,39 @@ class LatticeOptimum(LatticeResult):
         alc = [al[i]+da[i] for i in range(nums)]
 
         self.sys.set_strip_alpha(alc)
+        self._ungam = None
+        self._gamma = None
+        self._phi = None
+        self._trres = None
 
         return dal
+
     def optimum_strip_twist(self, crit=1e-1):
-        self.res = LatticeResult(self.name, self.sys)
-        self.res.set_state(speed=self.speed)
-        self.res.set_density(rho=self.rho)
+        self._ungam = None
+        self._gamma = None
+        self._phi = None
+        self._trres = None
         dal = self.optimum_strip_twist_iteration()
         nrmdal = norm(dal)
         iteration = 0
-        self.res = LatticeResult(self.name, self.sys)
-        self.res.set_state(speed=self.speed)
-        self.res.set_density(rho=self.rho)
         dal = self.optimum_strip_twist_iteration()
         nrmdal = norm(dal)
         while nrmdal > crit:
             iteration += 1
-            print(f'Iteration {iteration} - Convergence {nrmdal}')
-            self.res = LatticeResult(self.name, self.sys)
-            self.res.set_state(speed=self.speed)
-            self.res.set_density(rho=self.rho)
+            print(f'Iteration {iteration} - Convergence alg {nrmdal}')
             dal = self.optimum_strip_twist_iteration()
+            # self.reset()
             nrmdal = norm(dal)
-        self.res = LatticeResult(self.name, self.sys)
-        self.res.set_state(speed=self.speed)
-        self.res.set_density(rho=self.rho)
         al = [strp.angle for i, strp in enumerate(self.sys.strps)]
         return al
+    def plot_target_phi_distribution(self, ax=None):
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        ax.plot(self.sys.srfcs[0].strpy, self.phi, label=self.name+' Target')
+        ax.legend()
+        return ax
     def plot_strip_twist_distribution(self, ax=None):
         if ax is None:
             fig = figure(figsize=(12, 8))
@@ -140,7 +156,8 @@ class LatticeOptimum(LatticeResult):
         ax.legend()
         return ax
     def return_induced_drag(self):
-        return self.rhov*(self.phi.transpose()*self.sys.bdg*self.phi)[0, 0]
+        temp = self.phi.transpose()*self.sys.bdg*self.phi
+        return self.rho*self.speed*temp[0, 0]
     def __repr__(self):
         return '<LatticeOptimum {:s}>'.format(self.name)
     def __str__(self):
@@ -176,6 +193,7 @@ class Record(object):
     strplst = None
     _bcv = None
     _bcm = None
+    _rhov = None
     _value = None
     def __init__(self, opt: LatticeOptimum, param: str, pnt: Point=None, strplst: list=None):
         self.opt = opt
@@ -194,11 +212,11 @@ class Record(object):
             if self.param == 'L':
                 self._bcv = zeros((num, 1))
                 for i in self.strplst:
-                    self._bcv[i, 0] += self.opt.rhov*self.opt.sys.blg[i, 0]
+                    self._bcv[i, 0] += self.rhov*self.opt.sys.blg[i, 0]
             elif self.param == 'Y':
                 self._bcv = zeros((num, 1))
                 for i in self.strplst:
-                    self._bcv[i, 0] += self.opt.rhov*self.opt.sys.bdg[i, 0]
+                    self._bcv[i, 0] += self.rhov*self.opt.sys.bdg[i, 0]
             elif self.param == 'l':
                 self._bcv = zeros((num, 1))
                 for i in self.strplst:
@@ -207,21 +225,21 @@ class Record(object):
                     byi = self.opt.sys.byg[i, 0]
                     ryi = strp.pnti.y-self.point.y
                     rzi = strp.pnti.z-self.point.z
-                    self._bcv[i, 0] += self.opt.rhov*(ryi*bli-rzi*byi)
+                    self._bcv[i, 0] += self.rhov*(ryi*bli-rzi*byi)
             elif self.param == 'm':
                 self._bcv = zeros((num, 1))
                 for i in self.strplst:
                     strp = self.opt.sys.strps[i]
                     bli = self.opt.sys.blg[i, 0]
                     rxi = strp.pnti.x-self.point.x
-                    self._bcv[i, 0] -= self.opt.rhov*rxi*bli
+                    self._bcv[i, 0] -= self.rhov*rxi*bli
             elif self.param == 'n':
                 self._bcv = zeros((num, 1))
                 for i in self.strplst:
                     strp = self.opt.sys.strps[i]
                     byi = self.opt.sys.byg[i, 0]
                     rxi = strp.pnti.x-self.point.x
-                    self._bcv[i, 0] += self.opt.rhov*rxi*byi
+                    self._bcv[i, 0] += self.rhov*rxi*byi
         return self._bcv
     @property
     def bcm(self):
@@ -234,7 +252,7 @@ class Record(object):
                     rzi = strpi.pnti.z-self.point.z
                     for strpj in self.opt.sys.strps:
                         j = strpj.lsid
-                        self._bcm[i, j] += self.opt.rhov*rzi*self.opt.sys.bdg[i, j]
+                        self._bcm[i, j] += self.rhov*rzi*self.opt.sys.bdg[i, j]
             elif self.param == 'n':
                 self._bcm = zeros((num, num))
                 for i in self.strplst:
@@ -242,8 +260,13 @@ class Record(object):
                     ryi = strpi.pnti.y-self.point.y
                     for strpj in self.opt.sys.strps:
                         j = strpj.lsid
-                        self._bcm[i, j] -= self.opt.rhov*ryi*self.opt.sys.bdg[i, j]
+                        self._bcm[i, j] -= self.rhov*ryi*self.opt.sys.bdg[i, j]
         return self._bcm
+    @property
+    def rhov(self):
+        if self._rhov is None:
+            self._rhov = self.opt.rho*self.opt.speed
+        return self._rhov
     def return_matrices(self, phi: matrix):
         ach = self.bcv.transpose()
         acv = self.bcv

@@ -25,18 +25,24 @@ display(lopt)
 
 #%% Original Lift Distribution Plot
 axl = lres_org.plot_trefftz_lift_distribution()
+axl = lopt.plot_trefftz_lift_distribution(ax=axl)
 _ = axl.set_ylabel('Lift Distribution')
 _ = axl.set_xlabel('Span Position')
+_ = axl.legend()
 
 #%% Original Drag Distribution Plot
 axd = lres_org.plot_trefftz_drag_distribution()
+axd = lopt.plot_trefftz_drag_distribution(ax=axd)
 _ = axd.set_ylabel('Drag Distribution')
 _ = axd.set_xlabel('Span Position')
+_ = axd.legend()
 
 #%% Original Wash Distribution Plot
 axw = lres_org.plot_trefftz_wash_distribution()
+axw = lopt.plot_trefftz_wash_distribution(ax=axw)
 _ = axw.set_ylabel('Wash Distribution')
 _ = axw.set_xlabel('Span Position')
+_ = axw.legend()
 
 #%% Optimal Strip Twist
 al1 = lopt.optimum_strip_twist(crit=1e-1)
@@ -67,7 +73,9 @@ _ = axw.set_xlabel('Span Position')
 axa = lopt.plot_strip_twist_distribution()
 axa.plot(lsys.srfcs[0].strpy, al1, label='al1')
 axa.plot(lsys.srfcs[0].strpy, al2, label='al2')
-axa.legend()
+_ = axw.set_ylabel('Strip Twist Distribution [deg]')
+_ = axw.set_xlabel('Span Position')
+_ = axa.legend()
 
 #%% New 0deg Results
 lres_0deg = LatticeResult('0deg Result', lsys_opt)

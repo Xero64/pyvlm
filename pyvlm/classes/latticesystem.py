@@ -13,9 +13,7 @@ class LatticeSystem(object):
     name = None # System Name
     srfcs = None # System Surfaces
     strps = None # System Strips
-    mstrp = None # Mirrored Strips
     pnls = None # System Panels
-    mpnl = None # Mirrored Panels
     bref = None # Reference Span
     cref = None # Reference Chord
     sref = None # Reference Area
@@ -63,35 +61,15 @@ class LatticeSystem(object):
         lpid = 0
         for srfc in self.srfcs:
             lsid, lpid = srfc.mesh(lsid, lpid)
-        strpdct = {}
-        pnldct = {}
-        istrp = 0
-        ipnl = 0
         self.strps = []
-        self.mstrp = []
         self.pnls = []
-        self.mpnl = []
         self.ctrls = {}
         for srfc in self.srfcs:
             for strp in srfc.strps:
                 self.strps.append(strp)
-                if strp.msid is None:
-                    strpind = istrp
-                    strpdct[strp.lsid] = istrp
-                else:
-                    strpind = strpdct[strp.msid]
-                self.mstrp.append(strpind)
-                istrp += 1
             pnls = srfc.return_panels()
             for pnl in pnls:
                 self.pnls.append(pnl)
-                if pnl.mpid is None:
-                    pnlind = ipnl
-                    pnldct[pnl.lpid] = ipnl
-                else:
-                    pnlind = pnldct[pnl.mpid]
-                self.mpnl.append(pnlind)
-                ipnl += 1
         self.nump = len(self.pnls)
         self.nums = len(self.strps)
         ind = 2
@@ -299,16 +277,22 @@ class LatticeSystem(object):
         return self._ar
     @property
     def lstrpi(self):
-        return [strp.lsid for strp in self.strps if strp.msid is None]
+        sgrp = []
+        for srfc in self.srfcs:
+            sgrp += srfc.sgrp[0]
+        return sgrp
     @property
     def mstrpi(self):
-        return [strp.lsid for strp in self.strps if strp.msid is not None]
+        sgrp = []
+        for srfc in self.srfcs:
+            sgrp += srfc.sgrp[1]
+        return sgrp
     def set_strip_alpha(self, alpha: list):
         for strp in self.strps:
             strp._ang = alpha[strp.lsid]
         self._aic = None
         self._afs = None
-        self._gam = None
+        self._ungam = None
     @property
     def strip_geometry(self):
         from py2md.classes import MDTable

@@ -7,8 +7,6 @@ from math import radians, cos, sin
 from matplotlib.pyplot import figure
 from .latticesystem import LatticeSystem
 
-# use_scs = False
-
 class LatticeResult(object):
     name = None
     sys = None
@@ -122,8 +120,6 @@ class LatticeResult(object):
         return self._scs
     @property
     def wcs(self):
-        # if use_scs:
-        #     return self.scs
         if self._wcs is None:    
             pnt = self.sys.rref
             dirx = -1.0*self.acs.dirx
@@ -131,19 +127,6 @@ class LatticeResult(object):
             dirz = -1.0*self.acs.dirz
             self._wcs = Coordinate(pnt, dirx, diry, dirz)
         return self._wcs
-    def set_gamma(self, gam: list):
-        self._gamma = matrix([gam], dtype=float).transpose()
-    def set_phi(self, phi: list):
-        if len(phi) != len(self.sys.strps):
-            raise Exception('The length of phi must equal the number of strips.')
-        self._phi = matrix([phi], dtype=float).transpose()
-    def set_lift_distribution(self, l: list, rho: float, speed: float):
-        if len(l) != len(self.sys.strps):
-            raise Exception('The length of l must equal the number of strips.')
-        phi = [li/rho/speed for li in l]
-        self.set_density(rho)
-        self.set_state(speed)
-        self.set_phi(phi)
     @property
     def ungam(self):
         if self._ungam is None:
@@ -789,6 +772,9 @@ class LatticeResult(object):
     def stability_derivatives(self):
         return self.stres.stability_derivatives
     @property
+    def stability_derivatives_body(self):
+        return self.stres.stability_derivatives_body
+    @property
     def control_derivatives(self):
         from py2md.classes import MDTable, MDHeading, MDReport
         from . import sfrm
@@ -899,6 +885,9 @@ class GammaResult(object):
     _Cx = None
     _Cy = None
     _Cz = None
+    _Cmx = None
+    _Cmy = None
+    _Cmz = None
     _CDi = None
     _CY = None
     _CL = None
@@ -959,6 +948,24 @@ class GammaResult(object):
             self._Cz = fix_zero(self._Cz)
         return self._Cz
     @property
+    def Cmx(self):
+        if self._Cmx is None:
+            self._Cmx = self.nfmomtot.x/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+            self._Cmx = fix_zero(self._Cmx)
+        return self._Cmx
+    @property
+    def Cmy(self):
+        if self._Cmy is None:
+            self._Cmy = self.nfmomtot.y/self.res.qfs/self.res.sys.sref/self.res.sys.cref
+            self._Cmy = fix_zero(self._Cmy)
+        return self._Cmy
+    @property
+    def Cmz(self):
+        if self._Cmz is None:
+            self._Cmz = self.nfmomtot.z/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+            self._Cmz = fix_zero(self._Cmz)
+        return self._Cmz
+    @property
     def CDi(self):
         if self._CDi is None:
             Di = self.res.acs.dirx*self.nffrctot
@@ -1012,6 +1019,27 @@ class GammaResult(object):
                 self._e = (self.CL**2+self.CY**2)/pi/self.res.sys.ar/self.CDi
                 self._e = fix_zero(self._e)
         return self._e
+    # def centre_of_pressure(self, plane: str, value: float=0.0):
+    #     f = self.nffrctot
+    #     m = self.nfmomtot
+    #     if plane == 'yz':
+    #         dx = value
+    #         dy = (dx*f.y - m.z)/f.x
+    #         dz = (dx*f.z + m.y)/f.x
+    #     elif plane == 'zx':
+    #         dy = value
+    #         dx = (dy*f.x + m.z)/f.y
+    #         dz = (dy*f.z - m.x)/f.y
+    #     elif plane == 'xy':
+    #         dz = value
+    #         dx = (dz*f.x - m.y)/f.z
+    #         dy = (dz*f.y + m.x)/f.z
+    #     else:
+    #         return ValueError()
+    #     x = self.res.rcg.x-dx
+    #     y = self.res.rcg.y-dy
+    #     z = self.res.rcg.z-dz
+    #     return x, y, z
 
 class StripResult(object):
     gamres = None
@@ -1330,6 +1358,9 @@ class StabilityResult(object):
     _pbo2V = None
     _qco2V = None
     _rbo2V = None
+    _pdbo2V = None
+    _qdco2V = None
+    _rdbo2V = None
     def __init__(self, res: LatticeResult):
         self.res = res
     @property
@@ -1435,12 +1466,32 @@ class StabilityResult(object):
             gamrbo2V = self.res.ungam[:, 1]*ofs
             self._rbo2V = GammaResult(self.res, gamrbo2V)
         return self._rbo2V
+    @property
+    def pdbo2V(self):
+        if self._pdbo2V is None:
+            ofs = Vector(2*self.res.speed/self.res.sys.bref, 0.0, 0.0)
+            gampdbo2V = self.res.ungam[:, 1]*ofs
+            self._pbo2V = GammaResult(self.res, gampdbo2V)
+        return self._pbo2V
+    @property
+    def qdco2V(self):
+        if self._qdco2V is None:
+            ofs = Vector(0.0, 2*self.res.speed/self.res.sys.cref, 0.0)
+            gamqdco2V = self.res.ungam[:, 1]*ofs
+            self._qdco2V = GammaResult(self.res, gamqdco2V)
+        return self._qdco2V
+    @property
+    def rdbo2V(self):
+        if self._rdbo2V is None:
+            ofs = Vector(0.0, 0.0, 2*self.res.speed/self.res.sys.bref)
+            gamrdbo2V = self.res.ungam[:, 1]*ofs
+            self._rdbo2V = GammaResult(self.res, gamrdbo2V)
+        return self._rdbo2V
     def neutral_point(self):
         dCzdal = self.alpha.Cz
         dCmdal = self.alpha.Cm
         dxoc = dCmdal/dCzdal
-        xnp = dxoc*self.res.sys.cref+self.res.rcg.x
-        return xnp
+        return self.res.rcg.x-dxoc*self.res.sys.cref
     def system_aerodynamic_matrix(self):
         A = zeros((6, 6))
         F = self.u.nffrctot
@@ -1509,6 +1560,62 @@ class StabilityResult(object):
         table.add_column('Clr', sfrm, data=[self.rbo2V.Cl])
         table.add_column('Cmr', sfrm, data=[self.rbo2V.Cm])
         table.add_column('Cnr', sfrm, data=[self.rbo2V.Cn])
+        report.add_object(table)
+        return report
+    @property
+    def stability_derivatives_body(self):
+        from py2md.classes import MDTable, MDHeading, MDReport
+        from . import sfrm
+        report = MDReport()
+        heading = MDHeading('Stability Derivatives Body Axis', 2)
+        report.add_object(heading)
+        table = MDTable()
+        table.add_column('Cxu', sfrm, data=[self.u.Cx])
+        table.add_column('Cyu', sfrm, data=[self.u.Cy])
+        table.add_column('Czu', sfrm, data=[self.u.Cz])
+        table.add_column('Clu', sfrm, data=[self.u.Cmx])
+        table.add_column('Cmu', sfrm, data=[self.u.Cmy])
+        table.add_column('Cnu', sfrm, data=[self.u.Cmz])
+        report.add_object(table)
+        table = MDTable()
+        table.add_column('Cxv', sfrm, data=[self.v.Cx])
+        table.add_column('Cyv', sfrm, data=[self.v.Cy])
+        table.add_column('Czv', sfrm, data=[self.v.Cz])
+        table.add_column('Clv', sfrm, data=[self.v.Cmx])
+        table.add_column('Cmv', sfrm, data=[self.v.Cmy])
+        table.add_column('Cnv', sfrm, data=[self.v.Cmz])
+        report.add_object(table)
+        table = MDTable()
+        table.add_column('Cxw', sfrm, data=[self.w.Cx])
+        table.add_column('Cyw', sfrm, data=[self.w.Cy])
+        table.add_column('Czw', sfrm, data=[self.w.Cz])
+        table.add_column('Clw', sfrm, data=[self.w.Cmx])
+        table.add_column('Cmw', sfrm, data=[self.w.Cmy])
+        table.add_column('Cnw', sfrm, data=[self.w.Cmz])
+        report.add_object(table)
+        table = MDTable()
+        table.add_column('Cxp', sfrm, data=[self.pdbo2V.Cx])
+        table.add_column('Cyp', sfrm, data=[self.pdbo2V.Cy])
+        table.add_column('Czp', sfrm, data=[self.pdbo2V.Cz])
+        table.add_column('Clp', sfrm, data=[self.pdbo2V.Cmx])
+        table.add_column('Cmp', sfrm, data=[self.pdbo2V.Cmy])
+        table.add_column('Cnp', sfrm, data=[self.pdbo2V.Cmz])
+        report.add_object(table)
+        table = MDTable()
+        table.add_column('Cxq', sfrm, data=[self.qdco2V.Cx])
+        table.add_column('Cyq', sfrm, data=[self.qdco2V.Cy])
+        table.add_column('Czq', sfrm, data=[self.qdco2V.Cz])
+        table.add_column('Clq', sfrm, data=[self.qdco2V.Cmx])
+        table.add_column('Cmq', sfrm, data=[self.qdco2V.Cmy])
+        table.add_column('Cnq', sfrm, data=[self.qdco2V.Cmz])
+        report.add_object(table)
+        table = MDTable()
+        table.add_column('Cxr', sfrm, data=[self.rdbo2V.Cx])
+        table.add_column('Cyr', sfrm, data=[self.rdbo2V.Cy])
+        table.add_column('Czr', sfrm, data=[self.rdbo2V.Cz])
+        table.add_column('Clr', sfrm, data=[self.rdbo2V.Cmx])
+        table.add_column('Cmr', sfrm, data=[self.rdbo2V.Cmy])
+        table.add_column('Cnr', sfrm, data=[self.rdbo2V.Cmz])
         report.add_object(table)
         return report
     def __str__(self):

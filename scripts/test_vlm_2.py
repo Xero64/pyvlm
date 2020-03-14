@@ -15,23 +15,17 @@ jsonfilepath1 = r'..\files\Sweep_Low_AR_100.json'
 lsys1 = latticesystem_from_json(jsonfilepath1)
 display(lsys1)
 
-lstrpi1 = lsys1.lstrpi
-mstrpi1 = lsys1.mstrpi
-
 #%% High AR Wing
 jsonfilepath2 = r'..\files\Sweep_High_AR_100.json'
 lsys2 = latticesystem_from_json(jsonfilepath2)
 display(lsys2)
 
-lstrpi2 = lsys2.lstrpi
-mstrpi2 = lsys2.mstrpi
-
 #%% Low AR Wing Optimum
 lopt1 = LatticeOptimum('Low AR Wing', lsys1)
 lopt1.set_state()
 lopt1.add_constraint('L', 1.0)
-lopt1.add_record('l', strplst=lstrpi1)
-lopt1.add_record('l', strplst=mstrpi1)
+lopt1.add_record('l', strplst=lsys1.lstrpi)
+lopt1.add_record('l', strplst=lsys1.mstrpi)
 phi1, lam1 = lopt1.optimum_lift_distribution()
 display(lopt1)
 
@@ -39,8 +33,8 @@ display(lopt1)
 lopt2 = LatticeOptimum('High AR Wing Constrained', lsys2)
 lopt2.set_state()
 lopt2.add_constraint('L', 1.0)
-lopt2.add_constraint('l', lopt1.record[0].value, strplst=lstrpi2)
-lopt2.add_constraint('l', lopt1.record[1].value, strplst=mstrpi2)
+lopt2.add_constraint('l', lopt1.record[0].value, strplst=lsys2.lstrpi)
+lopt2.add_constraint('l', lopt1.record[1].value, strplst=lsys2.mstrpi)
 phi2, lam2 = lopt2.optimum_lift_distribution()
 display(lopt2)
 

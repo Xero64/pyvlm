@@ -13,8 +13,8 @@ class LatticeSurface(object):
     strps = None
     pnts = None
     pnls = None
-    msect = None
     area = None
+    sgrp = None
     def __init__(self, name: str, sects: list, mirror: bool, funcs:list):
         self.name = name
         self.sects = sects
@@ -97,12 +97,20 @@ class LatticeSurface(object):
                 self.pnls[i, j] = pnl
                 lpid += 1
         if self.mirror:
+            self.sgrp = [[], []]
             numstrp = len(self.strps)
             hlfstrp = int(numstrp/2)
             for i in range(hlfstrp):
-                strp = self.strps[numstrp-1-i]
+                lstrp = self.strps[numstrp-1-i]
                 mstrp = self.strps[i]
-                strp.set_mirror(mstrp)
+                self.sgrp[0].append(lstrp.lsid)
+                self.sgrp[1].append(mstrp.lsid)
+        else:
+            self.sgrp = [[]]
+            numstrp = len(self.strps)
+            for i in range(numstrp):
+                lstrp = self.strps[numstrp-1-i]
+                self.sgrp[0].append(lstrp.lsid)
         bpos = [0.0]
         for sht in self.shts:
             sht.inherit_panels()
@@ -181,10 +189,10 @@ class LatticeSurface(object):
         return [strp.lsid for strp in self.strps]
     @property
     def lstrpi(self):
-        return [strp.lsid for strp in self.strps if strp.msid is None]
+        return self.sgrp[0]
     @property
     def mstrpi(self):
-        return [strp.lsid for strp in self.strps if strp.msid is not None]
+        return self.sgrp[1]
     @property
     def pnli(self):
         lpids = []

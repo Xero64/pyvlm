@@ -34,9 +34,6 @@ lsys_opt = latticesystem_from_json(jsonfilepath)
 lsys_bll = latticesystem_from_json(jsonfilepath)
 display(lsys)
 
-lstrp = lsys.lstrpi
-mstrp = lsys.mstrpi
-
 #%% Create Initial Result
 lres_org = LatticeResult('Initial', lsys)
 lres_org.set_state(speed=V)
@@ -44,25 +41,22 @@ lres_org.set_density(rho=rho)
 display(lres_org)
 
 #%% Bell Shaped Lift Distribution
-l = bell_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, W)
+lbll = bell_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, W)
 
 lopt_bll = LatticeOptimum('Bell', lsys_bll)
-lopt_bll.set_state(speed=V)
-lopt_bll.set_density(rho=rho)
-lopt_bll.set_lift_distribution(l, rho, V)
+lopt_bll.set_target_lift_distribution(lbll, rho, V)
 lopt_bll.add_record('L')
-lopt_bll.add_record('l', strplst=lstrp)
-lopt_bll.add_record('l', strplst=mstrp)
+lopt_bll.add_record('l', strplst=lsys.lstrpi)
+lopt_bll.add_record('l', strplst=lsys.mstrpi)
 display(lopt_bll)
-
 
 #%% Optimal Lift Distribution
 lopt = LatticeOptimum('Optimal', lsys_opt)
 lopt.set_state(speed=V)
 lopt.set_density(rho=rho)
 lopt.add_constraint('L', W)
-lopt.add_constraint('l', lopt_bll.record[1].value, strplst=lstrp)
-lopt.add_constraint('l', lopt_bll.record[2].value, strplst=mstrp)
+lopt.add_constraint('l', lopt_bll.record[1].value, strplst=lsys.lstrpi)
+lopt.add_constraint('l', lopt_bll.record[2].value, strplst=lsys.mstrpi)
 lopt.optimum_lift_distribution()
 display(lopt)
 
@@ -214,8 +208,8 @@ trdrg = lopt.acs.dirx*lopt.trres.trfrctot
 print(f'stdrg = {stdrg:g}')
 print(f'trdrg = {trdrg:g}')
 
-stcdi = stdrg/lopt.res.qfs/lsys.sref
-trcdi = trdrg/lopt.res.qfs/lsys.sref
+stcdi = stdrg/lopt.qfs/lsys.sref
+trcdi = trdrg/lopt.qfs/lsys.sref
 
 print(f'stcdi = {stcdi:g}')
 print(f'trcdi = {trcdi:g}')

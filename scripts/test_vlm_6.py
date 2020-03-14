@@ -47,7 +47,7 @@ l = bell_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, trm.lift)
 
 #%% Bell Shaped Lift Distribution
 lopt_bll = LatticeOptimum('Bell', lsys_bll)
-lopt_bll.set_lift_distribution(l, trm.density, trm.speed)
+lopt_bll.set_target_lift_distribution(l, trm.density, trm.speed)
 lopt_bll.add_record('l', strplst=lsys.mstrpi)
 display(lopt_bll)
 
@@ -196,7 +196,7 @@ lres_1g.set_density(rho=rho)
 display(lres_1g)
 
 CL0 = lres_1g.nfres.CL
-CLa = lres_1g.stres['alpha'].CL
+CLa = lres_1g.stres.alpha.CL
 al3g = degrees(asin((3*CL-CL0)/CLa))
 
 lres_3g = LatticeResult(f'3g Result', lsys_bll)

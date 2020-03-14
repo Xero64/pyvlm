@@ -16,10 +16,6 @@ class LatticeStrip(object):
     leni = None
     pnti = None
     pntq = None
-    # pnta = None
-    # pntb = None
-    # teni = None
-    # pnte = None
     pnls = None
     msid = None
     sht = None
@@ -53,10 +49,6 @@ class LatticeStrip(object):
         pntb = self.pnt2+0.25*self.crd2*ihat
         vecab = pntb-pnta
         self.pntq = pnta+self.bfrc*vecab
-        # self.pnta = self.pnt1+self.crd1*ihat
-        # self.pntb = self.pnt2+self.crd2*ihat
-        # self.teni = self.pntb-self.pnta
-        # self.pnte = self.pnta+self.bfrc*self.teni+1.0*self.chord*ihat
     def set_angles(self, ang1: float, ang2: float):
         self.ang1 = ang1
         self.ang2 = ang2
@@ -65,12 +57,6 @@ class LatticeStrip(object):
         self.cdo2 = cdo2
     def add_panel(self, pnl):
         self.pnls.append(pnl)
-    def set_mirror(self, mstrp):
-        self.msid = mstrp.lsid
-        for i in range(len(self.pnls)):
-            mpnl = mstrp.pnls[i]
-            pnl = self.pnls[i]
-            pnl.mpid = mpnl.lpid
     def return_points(self, percrd: float):
         pnt1 = self.pnt1+self.crd1*percrd*ihat
         pnt2 = self.pnt2+self.crd2*percrd*ihat
