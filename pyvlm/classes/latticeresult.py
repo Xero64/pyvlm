@@ -1287,7 +1287,7 @@ class ParasiticDragResult(object):
             self._Cn = fix_zero(self._Cn)
         return self._Cn
 
-def fix_zero(value: float, tol: float=1e-12):
+def fix_zero(value: float, tol: float=1e-8):
     if abs(value) < tol:
         value = 0.0
     return value

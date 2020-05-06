@@ -42,3 +42,11 @@ axd = lres_org.plot_strip_drag_distribution(ax=axd)
 #%% Plot Wash Distribution
 axw = None
 axw = lres_org.plot_trefftz_wash_distribution(ax=axw)
+
+#%% Neutral Point
+for case in lsys.results:
+    lres = lsys.results[case]
+    print(f'Case: {case:s}')
+    print(f'Neutral Point: {lres.stres.neutral_point():.3f}')
+
+display_markdown(lres.stability_derivatives)

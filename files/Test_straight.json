@@ -39,35 +39,40 @@
             "name": "Test Alpha",
             "alpha": 3.0,
             "outputs": [
-                "stability derivatives"
+                "stability derivatives",
+                "stability derivatives body"
             ]
         },
         {
             "name": "Test Beta",
             "beta": 3.0,
             "outputs": [
-                "stability derivatives"
+                "stability derivatives",
+                "stability derivatives body"
             ]
         },
         {
             "name": "Test pbo2V",
             "pbo2V": 0.01,
             "outputs": [
-                "stability derivatives"
+                "stability derivatives",
+                "stability derivatives body"
             ]
         },
         {
             "name": "Test qco2V",
             "qco2V": 0.01,
             "outputs": [
-                "stability derivatives"
+                "stability derivatives",
+                "stability derivatives body"
             ]
         },
         {
             "name": "Test rbo2V",
             "rbo2V": 0.01,
             "outputs": [
-                "stability derivatives"
+                "stability derivatives",
+                "stability derivatives body"
             ]
         },
         {
@@ -75,7 +80,8 @@
             "alpha": 3.0,
             "mach": 0.4,
             "outputs": [
-                "stability derivatives"
+                "stability derivatives",
+                "stability derivatives body"
             ]
         },
         {
@@ -83,7 +89,8 @@
             "beta": 3.0,
             "mach": 0.4,
             "outputs": [
-                "stability derivatives"
+                "stability derivatives",
+                "stability derivatives body"
             ]
         },
         {
@@ -91,7 +98,8 @@
             "pbo2V": 0.01,
             "mach": 0.4,
             "outputs": [
-                "stability derivatives"
+                "stability derivatives",
+                "stability derivatives body"
             ]
         },
         {
@@ -99,7 +107,8 @@
             "qco2V": 0.01,
             "mach": 0.4,
             "outputs": [
-                "stability derivatives"
+                "stability derivatives",
+                "stability derivatives body"
             ]
         },
         {
@@ -107,14 +116,16 @@
             "rbo2V": 0.01,
             "mach": 0.4,
             "outputs": [
-                "stability derivatives"
+                "stability derivatives",
+                "stability derivatives body"
             ]
         },
         {
             "name": "Test Zero",
             "alpha": 0.0,
             "outputs": [
-                "stability derivatives"
+                "stability derivatives",
+                "stability derivatives body"
             ]
         }
     ]
