@@ -33,6 +33,9 @@ notebooks/
 research/
 results/*
 
+# Requirements
+requirements.txt
+
 # Shell scripts
 *.sh
 

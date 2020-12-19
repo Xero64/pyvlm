@@ -155,9 +155,9 @@ def masses_from_json(jsonfilepath: str):
 
     return masses_from_data(massesdata)
 
-def display_masses(masses):
-    from IPython.display import display_markdown
+def mass_table(masses):
     from py2md.classes import MDTable
+    masslst = []
     if isinstance(masses, dict):
         masslst = [masses[m] for m in masses]
     elif isinstance(masses, list):
@@ -179,4 +179,4 @@ def display_masses(masses):
                        mass.xcm, mass.ycm, mass.zcm,
                        mass.Ixx, mass.Ixy, mass.Ixz,
                        mass.Iyy, mass.Iyz, mass.Izz])
-    display_markdown(table)
+    return table

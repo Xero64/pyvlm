@@ -33,5 +33,16 @@
                 }
             ]            
         }
+    ],
+    "cases": [
+        {
+            "name": "Test Alpha",
+            "alpha": 3.0
+        },
+        {
+            "name": "Test Alpha Mach",
+            "alpha": 3.0,
+            "mach": 0.4
+        }
     ]
 }

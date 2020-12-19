@@ -2,6 +2,8 @@ from .latticestrip import LatticeStrip
 from math import pi, radians, cos, sin, atan2
 from pygeom.geom3d import Point, Vector, Coordinate, ihat
 
+fourPi = 4*pi
+
 class LatticePanel(object):
     lpid = None
     pnts = None
@@ -118,7 +120,7 @@ class LatticePanel(object):
         if bxx.return_magnitude() != 0.0:
             den = bm-b.x
             vel -= bxx/den/bm
-        vel = vel/(4*pi)
+        vel = vel/fourPi
         return vel
     def __repr__(self):
         return '<LatticePanel {:d}>'.format(self.lpid)

@@ -23,3 +23,4 @@ setuptools.setup(
         'console_scripts': ['pyvlm=pyvlm.__main__:main',],
     }
 )
+
