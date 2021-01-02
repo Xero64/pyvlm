@@ -15,7 +15,7 @@ class LatticeSurface(object):
     pnls = None
     area = None
     sgrp = None
-    def __init__(self, name: str, sects: list, mirror: bool, funcs:list):
+    def __init__(self, name: str, sects: list, mirror: bool, funcs: list):
         self.name = name
         self.sects = sects
         self.mirror = mirror
