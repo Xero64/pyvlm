@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyvlm",
-    version="0.0.9",
+    version="0.0.10",
     author="Xero64",
     author_email="xero64@gmail.com",
     description="Vortex Lattice Method in Python",
