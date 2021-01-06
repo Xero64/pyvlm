@@ -279,4 +279,4 @@ Use File > Open in Gmsh to open the mesh file with the pressure results.
 
 A sample of the aircraft shown in Gmsh is captured below. Consult Gmsh help to operate Gmsh.
 
-![](https://github.com/Xero64/pyvlm/raw/master/Readme.png)
+![](https://github.com/Xero64/pyvlm/raw/main/Readme.png)
