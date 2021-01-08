@@ -13,8 +13,31 @@ lsys = latticesystem_from_json(jsonfilepath)
 display_markdown(lsys)
 
 #%% Design Point Result
-lres = lsys.results['Design Point']
+alpha = 0.0
+speed = 13.0
+rho = 1.145
+
+lres = LatticeResult('Design Point', lsys)
+lres.set_density(rho=rho)
+lres.set_state(alpha=alpha, speed=speed)
+
 display_markdown(lres)
+display_markdown(lres.surface_loads)
+display_markdown(lres.stability_derivatives)
+
+#%% Roll Case Result
+alpha = 0.0
+speed = 13.0
+pbo2V = 0.01
+rho = 1.145
+
+lres = LatticeResult('Roll Case', lsys)
+lres.set_density(rho=rho)
+lres.set_state(alpha=alpha, speed=speed, pbo2V=pbo2V)
+
+display_markdown(lres)
+display_markdown(lres.surface_loads)
+display_markdown(lres.stability_derivatives)
 
 #%% Plots
 axp = None
