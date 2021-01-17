@@ -1,4 +1,4 @@
-from math import pi, sqrt, acos, sin
+from math import pi, acos, sin
 from matplotlib.pyplot import figure
 
 class Bell(object):
@@ -87,11 +87,11 @@ class Bell(object):
             yb = self.y[b]
             dy.append(yb-ya)
         return dy
-    def lift_distribution(self):
+    def lift_force_distribution(self):
         L = self.lift
         b = self.span
         return [16*L*sin(th)**3/(3*pi*b) for th in self.th]
-    def drag_distribution(self):
+    def drag_force_distribution(self):
         L = self.lift
         b = self.span
         V = self.speed
@@ -143,20 +143,20 @@ class Bell(object):
         outstr += f'Root Shear Force = {sf:g}\n'
         outstr += f'Root Bending Moment = {bm:g}\n'
         return outstr
-    def plot_lift_distribution(self, ax=None):
+    def plot_lift_force_distribution(self, ax=None):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        ax.plot(self.y, self.lift_distribution(), label='Bell Theory')
+        ax.plot(self.y, self.lift_force_distribution(), label='Bell Theory')
         ax.legend()
         return ax
-    def plot_drag_distribution(self, ax=None):
+    def plot_drag_force_distribution(self, ax=None):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        ax.plot(self.y, self.drag_distribution(), label='Bell Theory')
+        ax.plot(self.y, self.drag_force_distribution(), label='Bell Theory')
         ax.legend()
         return ax
     def plot_wash_distribution(self, ax=None):

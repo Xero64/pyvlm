@@ -3,9 +3,10 @@ from pygeom.matrix3d import zero_matrix_vector, elementwise_multiply
 from pygeom.matrix3d import elementwise_cross_product, elementwise_dot_product
 from numpy.matlib import zeros, matrix
 from numpy import multiply
-from math import radians, cos, sin
+from math import radians, cos, sin, tan
 from matplotlib.pyplot import figure
 from .latticesystem import LatticeSystem
+from py2md.classes import MDTable, MDReport, MDHeading
 
 class LatticeResult(object):
     name = None
@@ -120,7 +121,7 @@ class LatticeResult(object):
         return self._scs
     @property
     def wcs(self):
-        if self._wcs is None:    
+        if self._wcs is None:
             pnt = self.sys.rref
             dirx = -1.0*self.acs.dirx
             diry = self.acs.diry
@@ -168,7 +169,7 @@ class LatticeResult(object):
         gmats = {}
         for control in self.sys.ctrls:
             gmats[control] = self.gctrln_single(control)
-        return gmats 
+        return gmats
     @property
     def phi(self):
         if self._phi is None:
@@ -338,13 +339,13 @@ class LatticeResult(object):
         ax.plot(self.sys.srfcs[0].strpy, self.phi, label=self.name)
         ax.legend()
         return ax
-    def plot_strip_lift_distribution(self, ax=None, axis: str='b',
-                                     surfaces: list=[], normalise: bool=False):
+    def plot_strip_lift_force_distribution(self, ax=None, axis: str='b',
+                                           surfaces: list=None, normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        if len(surfaces) == 0:
+        if surfaces is None:
             srfcs = [srfc for srfc in self.sys.srfcs]
         else:
             srfcs = []
@@ -370,13 +371,13 @@ class LatticeResult(object):
                     ax.plot(l, z, label=label)
         ax.legend()
         return ax
-    def plot_strip_yforce_distribution(self, ax=None, axis: str='b',
-                                       surfaces: list=[], normalise: bool=False):
+    def plot_strip_side_force_distribution(self, ax=None, axis: str='b',
+                                           surfaces: list=None, normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        if len(surfaces) == 0:
+        if surfaces is None:
             srfcs = [srfc for srfc in self.sys.srfcs]
         else:
             srfcs = []
@@ -402,13 +403,13 @@ class LatticeResult(object):
                     ax.plot(f, z, label=label)
         ax.legend()
         return ax
-    def plot_strip_drag_distribution(self, ax=None, axis: str='b',
-                                     surfaces: list=[], normalise: bool=False):
+    def plot_strip_drag_force_distribution(self, ax=None, axis: str='b',
+                                           surfaces: list=None, normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        if len(surfaces) == 0:
+        if surfaces is None:
             srfcs = [srfc for srfc in self.sys.srfcs]
         else:
             srfcs = []
@@ -434,13 +435,13 @@ class LatticeResult(object):
                     ax.plot(d, z, label=label)
         ax.legend()
         return ax
-    def plot_trefftz_lift_distribution(self, ax=None, axis: str='b',
-                                       surfaces: list=[], normalise: bool=False):
+    def plot_trefftz_lift_force_distribution(self, ax=None, axis: str='b',
+                                       surfaces: list=None, normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        if len(surfaces) == 0:
+        if surfaces is None:
             srfcs = [srfc for srfc in self.sys.srfcs]
         else:
             srfcs = []
@@ -466,13 +467,13 @@ class LatticeResult(object):
                     ax.plot(l, z, label=label)
         ax.legend()
         return ax
-    def plot_trefftz_yforce_distribution(self, ax=None, axis: str='b',
-                                         surfaces: list=[], normalise: bool=False):
+    def plot_trefftz_side_force_distribution(self, ax=None, axis: str='b',
+                                         surfaces: list=None, normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        if len(surfaces) == 0:
+        if surfaces is None:
             srfcs = [srfc for srfc in self.sys.srfcs]
         else:
             srfcs = []
@@ -498,13 +499,13 @@ class LatticeResult(object):
                     ax.plot(f, z, label=label)
         ax.legend()
         return ax
-    def plot_trefftz_drag_distribution(self, ax=None, axis: str='b',
-                                       surfaces: list=[], normalise: bool=False):
+    def plot_trefftz_drag_force_distribution(self, ax=None, axis: str='b',
+                                       surfaces: list=None, normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        if len(surfaces) == 0:
+        if surfaces is None:
             srfcs = [srfc for srfc in self.sys.srfcs]
         else:
             srfcs = []
@@ -531,12 +532,12 @@ class LatticeResult(object):
         ax.legend()
         return ax
     def plot_trefftz_wash_distribution(self, ax=None, axis: str='b',
-                                       surfaces: list=[], normalise: bool=False):
+                                       surfaces: list=None, normalise: bool=False):
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        if len(surfaces) == 0:
+        if surfaces is None:
             srfcs = [srfc for srfc in self.sys.srfcs]
         else:
             srfcs = []
@@ -579,8 +580,6 @@ class LatticeResult(object):
         return res
     @property
     def surface_loads(self):
-        from py2md.classes import MDTable, MDReport, MDHeading
-        from math import atan
         report = MDReport()
         heading = MDHeading('Surface Loads', 2)
         report.add_object(heading)
@@ -640,11 +639,9 @@ class LatticeResult(object):
         return report
     @property
     def strip_forces(self):
-        from py2md.classes import MDTable
-        from math import atan
         table = MDTable()
         table.add_column('#', 'd')
-        table.add_column('Yle', '.4f')
+        table.add_column('ypos', '.4f')
         table.add_column('Chord', '.4f')
         table.add_column('Area', '.4f')
         table.add_column('c cl', '.4f')
@@ -655,7 +652,7 @@ class LatticeResult(object):
         q = self.qfs
         for strp in self.sys.strps:
             j = strp.lsid
-            yle = strp.pnti.y
+            ypos = strp.pnti.y
             chord = strp.chord
             area = strp.area
             nrmfrc = Vector(0.0, 0.0, 0.0)
@@ -669,12 +666,10 @@ class LatticeResult(object):
             cf = Vector(0.0, cy, cz)
             cl_norm = cf*strp.nrmt
             cl = cl_norm
-            table.add_row([j, yle, chord, area, c_cl, ai, cl_norm, cl, cd])
+            table.add_row([j, ypos, chord, area, c_cl, ai, cl_norm, cl, cd])
         return table
     @property
     def strip_coefficients(self):
-        from py2md.classes import MDTable
-        from math import atan
         table = MDTable()
         table.add_column('#', 'd')
         table.add_column('Chord', '.4f')
@@ -710,8 +705,6 @@ class LatticeResult(object):
         return table
     @property
     def panel_forces(self):
-        from py2md.classes import MDTable
-        from math import atan, tan
         table = MDTable()
         table.add_column('# P', 'd')
         table.add_column('# S', 'd')
@@ -738,8 +731,6 @@ class LatticeResult(object):
         return table
     @property
     def panel_near_field_results(self):
-        from py2md.classes import MDTable
-        from math import atan
         table = MDTable()
         table.add_column('# P', 'd')
         table.add_column('# S', 'd')
@@ -776,7 +767,6 @@ class LatticeResult(object):
         return self.stres.stability_derivatives_body
     @property
     def control_derivatives(self):
-        from py2md.classes import MDTable, MDHeading, MDReport
         from . import sfrm
         report = MDReport()
         heading = MDHeading('Control Derivatives', 1)
@@ -800,7 +790,6 @@ class LatticeResult(object):
             report.add_object(table)
         return report
     def __str__(self):
-        from py2md.classes import MDTable
         from . import cfrm, dfrm, efrm
         outstr = '# Lattice Result '+self.name+' for '+self.sys.name+'\n'
         table = MDTable()
@@ -1191,7 +1180,7 @@ class PhiResult(object):
     @property
     def Cn(self):
         if self._Cn is None:
-            n = -self._trmomtot.z
+            n = -self.trmomtot.z
             self._Cn = n/self.res.qfs/self.res.sys.sref/self.res.sys.bref
             self._Cn = fix_zero(self._Cn)
         return self._Cn
@@ -1621,4 +1610,4 @@ class StabilityResult(object):
     def __str__(self):
         return self.stability_derivatives._repr_markdown_()
     def _repr_markdown_(self):
-        return self.__str__()        
+        return self.__str__()

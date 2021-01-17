@@ -1,10 +1,10 @@
 #%% Import Dependencies
-from pyvlm import LatticeResult, LatticeOptimum
+from pyvlm import LatticeOptimum
 from pyvlm import latticesystem_from_json
 from pyvlm.tools import Elliptical
 
 #%% Low AR Wing
-jsonfilepath = r'..\files\Straight_Wing_Cosine_100.json'
+jsonfilepath = '../files/Straight_Wing_Cosine_100.json'
 lsys = latticesystem_from_json(jsonfilepath)
 print(lsys)
 
@@ -21,30 +21,30 @@ l = ell.return_phi()
 
 #%% Low AR Wing Optimum
 
-lres = LatticeResult('Low AR Wing', lsys)
-lres.set_state()
-lres.set_lift_distribution(l, rho=1.0, speed=1.0)
-print(lres)
+lopt = LatticeOptimum('Low AR Wing', lsys)
+lopt.set_state()
+lopt.set_target_lift_force_distribution(l, rho=1.0, speed=1.0)
+print(lopt)
 
 #%% Plots
 
 axl = None
-axl = lres.plot_trefftz_lift_distribution(ax=axl)
-axl = ell.plot_lift_distribution(ax=axl)
+axl = lopt.plot_trefftz_lift_force_distribution(ax=axl)
+axl = ell.plot_lift_force_distribution(ax=axl)
 
 axd = None
-axd = lres.plot_trefftz_drag_distribution(ax=axd)
-axd = ell.plot_drag_distribution(ax=axd)
+axd = lopt.plot_trefftz_drag_force_distribution(ax=axd)
+axd = ell.plot_drag_force_distribution(ax=axd)
 
 axw1 = None
-axw1 = lres.plot_trefftz_wash_distribution(ax=axw1)
+axw1 = lopt.plot_trefftz_wash_distribution(ax=axw1)
 axw2 = None
 axw2 = ell.plot_trefftz_wash_distribution(ax=axw2)
 
 #%% Variables
 
 well = ell.trefftz_wash_distribution()
-wres = lres.trres.trwsh
+wres = lopt.trres.trwsh
 
 from matplotlib.pyplot import figure
 

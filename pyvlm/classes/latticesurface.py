@@ -1,5 +1,4 @@
-from math import pi, cos, sqrt
-from .latticestrip import LatticeStrip
+from math import sqrt
 from .latticesheet import LatticeSheet
 from .latticepanel import LatticePanel
 from pygeom.matrix3d import zero_matrix_vector
@@ -8,6 +7,7 @@ from matplotlib.pyplot import figure
 class LatticeSurface(object):
     name = None
     sects = None
+    shts = None
     cspace = None
     xspace = None
     strps = None
@@ -329,7 +329,7 @@ class SurfaceFunction(object):
             self.spline = CubicSpline(spc, self.values)
     def interpolate(self, b: float):
         return self.spline.single_interpolate_spline(b)
-    
+
 def surffunc_from_json(funcdata: dict):
     var = funcdata["variable"]
     if "spacing" in funcdata:

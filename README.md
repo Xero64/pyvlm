@@ -39,9 +39,9 @@ The above command generates a "aircraft.md" file containing results.
             "zpos": 0.15,
             "sections": [
                 {
-                    "xle": 0.0,
-                    "yle": 0.0,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 0.0,
+                    "zpos": 0.0,
                     "chord": 0.35,
                     "angle": 0.0,
                     "numb": 3,
@@ -50,9 +50,9 @@ The above command generates a "aircraft.md" file containing results.
                     "noload": true
                 },
                 {
-                    "xle": null,
-                    "yle": 0.21,
-                    "zle": null,
+                    "xpos": null,
+                    "ypos": 0.21,
+                    "zpos": null,
                     "chord": 0.35,
                     "angle": 0.0,
                     "numb": 5,
@@ -60,9 +60,9 @@ The above command generates a "aircraft.md" file containing results.
                     "airfoil": "NACA 2412"
                 },
                 {
-                    "xle": null,
-                    "yle": 0.8,
-                    "zle": null,
+                    "xpos": null,
+                    "ypos": 0.8,
+                    "zpos": null,
                     "chord": null,
                     "angle": null,
                     "numb": 20,
@@ -70,9 +70,9 @@ The above command generates a "aircraft.md" file containing results.
                     "airfoil": "NACA 2412"
                 },
                 {
-                    "xle": null,
-                    "yle": 1.8,
-                    "zle": null,
+                    "xpos": null,
+                    "ypos": 1.8,
+                    "zpos": null,
                     "chord": null,
                     "angle": null,
                     "numb": 15,
@@ -89,9 +89,9 @@ The above command generates a "aircraft.md" file containing results.
                     }
                 },
                 {
-                    "xle": 0.3,
-                    "yle": 2.25,
-                    "zle": 0.0,
+                    "xpos": 0.3,
+                    "ypos": 2.25,
+                    "zpos": 0.0,
                     "chord": 0.2,
                     "angle": -1.5
                 }
@@ -108,9 +108,9 @@ The above command generates a "aircraft.md" file containing results.
             "angle": -1.8,
             "sections": [
                 {
-                    "xle": 0.0,
-                    "yle": 0.0,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 0.0,
+                    "zpos": 0.0,
                     "chord": 0.22,
                     "numb": 25,
                     "bspace": "cosine",
@@ -125,9 +125,9 @@ The above command generates a "aircraft.md" file containing results.
                     }
                 },
                 {
-                    "xle": 0.1,
-                    "yle": 0.7,
-                    "zle": 0.0,
+                    "xpos": 0.1,
+                    "ypos": 0.7,
+                    "zpos": 0.0,
                     "chord": 0.18
                 }
             ]
@@ -142,18 +142,18 @@ The above command generates a "aircraft.md" file containing results.
             "zpos": 0.1,
             "sections": [
                 {
-                    "xle": 0.0,
-                    "yle": 0.0,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 0.0,
+                    "zpos": 0.0,
                     "chord": 0.25,
                     "angle": 0.0,
                     "numb": 15,
                     "bspace": "cosine"
                 },
                 {
-                    "xle": 0.1,
-                    "yle": 0.0,
-                    "zle": 0.4,
+                    "xpos": 0.1,
+                    "ypos": 0.0,
+                    "zpos": 0.4,
                     "chord": 0.15,
                     "angle": 0.0
                 }
@@ -222,7 +222,7 @@ from pyvlm.outputs.msh import latticeresult_to_msh
 from pyvlm.outputs.prf import latticeresult_to_prf
 
 #%% Import Geometry
-jsonfilepath = r'..\files\Aircraft.json'
+jsonfilepath = '../files/Aircraft.json'
 lsys = latticesystem_from_json(jsonfilepath)
 
 #%% Display System
@@ -235,19 +235,19 @@ for case in lsys.results:
 
 #%% Mesh File Output
 lres = lsys.results['Positive 1g Cruise + 15deg Side Slip']
-latticeresult_to_msh(lres, r'..\results\Aircraft.msh')
+latticeresult_to_msh(lres, '../results/Aircraft.msh')
 
 #%% Pessure File Output
-latticeresult_to_prf(lsys, r'..\results\Aircraft_pressures.json')
+latticeresult_to_prf(lsys, '../results/Aircraft_pressures.json')
 
 #%% 5g Trim Case
 ltrm = lsys.results['Positive 5g Dive']
 
 #%% Plot Lift Distribution
-axl = ltrm.plot_trefftz_lift_distribution()
+axl = ltrm.plot_trefftz_lift_force_distribution()
 
 #%% Plot Y Force Distribution
-axy = ltrm.plot_trefftz_yforce_distribution()
+axy = ltrm.plot_trefftz_side_force_distribution()
 
 #%% Print Strip Forces
 display_markdown(ltrm.strip_forces)
@@ -268,7 +268,7 @@ You can generate a Gmsh mesh file (*.msh) directly from a Python script using th
 
 ```python
 lres = lsys.results['Positive 1g Cruise + 15deg Side Slip']
-latticeresult_to_msh(lres, r'..\results\Aircraft.msh')
+latticeresult_to_msh(lres, '../results/Aircraft.msh')
 ```
 
 This will output a mesh file to the specified location, which can then be viewed in Gmsh. The latest version of Gmsh can be downloaded at:

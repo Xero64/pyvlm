@@ -1,6 +1,3 @@
-from math import pi, sin, cos, acos, degrees
-from numpy.linalg import lstsq
-from numpy.matlib import zeros
 from matplotlib.pyplot import figure
 from pygeom.geom2d import CubicSpline2D, Point2D
 from .spacing import full_cosine_spacing
@@ -12,8 +9,8 @@ class Airfoil(object):
     y = None
     xte = None
     yte = None
-    xle = None
-    yle = None
+    xpos = None
+    ypos = None
     ile = None
     crd = None
     xn = None
@@ -30,20 +27,20 @@ class Airfoil(object):
     def update(self, num: int=80):
         self.xte = (self.x[0]+self.x[-1])/2
         self.yte = (self.y[0]+self.y[-1])/2
-        self.xle = min(self.x)
+        self.xpos = min(self.x)
         for i, yi in enumerate(self.y):
-            if self.x[i] == self.xle:
-                self.yle = yi
+            if self.x[i] == self.xpos:
+                self.ypos = yi
                 self.ile = i
                 break
-        self.crd = self.xte-self.xle
-        self.xn = [(xi-self.xle)/self.crd for xi in self.x]
-        self.yn = [(yi-self.yle)/self.crd for yi in self.y]
+        self.crd = self.xte-self.xpos
+        self.xn = [(xi-self.xpos)/self.crd for xi in self.x]
+        self.yn = [(yi-self.ypos)/self.crd for yi in self.y]
         pnts = [Point2D(xi, yi) for xi, yi in zip(self.xn, self.yn)]
         self.spline = CubicSpline2D(pnts)
-        dxle = self.spline.dr[self.ile].x
-        dyle = self.spline.dr[self.ile].y
-        self.mle = -dxle/dyle
+        dxpos = self.spline.dr[self.ile].x
+        dypos = self.spline.dr[self.ile].y
+        self.mle = -dxpos/dypos
         dx1 = self.spline.dr[0].x
         dy1 = self.spline.dr[0].y
         dx2 = self.spline.dr[-1].x

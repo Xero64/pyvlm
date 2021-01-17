@@ -1,10 +1,9 @@
+from math import degrees
 from numpy.matlib import zeros, matrix
 from numpy.linalg import solve, norm
-from .latticesystem import LatticeSystem
-from .latticeresult import LatticeResult
 from pygeom.geom3d import Point
-from math import degrees
 from matplotlib.pyplot import figure
+from .latticeresult import LatticeResult
 
 class LatticeOptimum(LatticeResult):
     constr = None
@@ -13,8 +12,6 @@ class LatticeOptimum(LatticeResult):
     lamopt = None
     _bdg = None
     _adg = None
-    def __init__(self, name: str, sys: LatticeSystem):
-        super(LatticeOptimum, self).__init__(name, sys)
     def add_constraint(self, param: str, value: float, strplst: list=None, point: Point=None):
         if self.constr is None:
             self.constr = []
@@ -30,7 +27,7 @@ class LatticeOptimum(LatticeResult):
             raise Exception('The length of phi must equal the number of strips.')
         self.phiopt = matrix([phi], dtype=float).transpose()
         self._phi = self.phiopt
-    def set_target_lift_distribution(self, ltgt: list, rho: float, speed: float, mach: float=0.0):
+    def set_target_lift_force_distribution(self, ltgt: list, rho: float, speed: float, mach: float=0.0):
         if len(ltgt) != len(self.sys.strps):
             raise Exception('The length of l must equal the number of strips.')
         phitgt = [li/rho/speed for li in ltgt]
@@ -60,7 +57,7 @@ class LatticeOptimum(LatticeResult):
         phi = xmat[0:nump, 0]
         lam = xmat[nump:num, 0]
         return phi, lam
-    def optimum_lift_distribution(self, crit=1e-12):
+    def optimum_lift_force_distribution(self, crit=1e-12):
         nump = self.sys.nums
         phi_old = zeros((nump, 1))
         phi, lam = self.old_iteration(phi_old)
@@ -72,7 +69,7 @@ class LatticeOptimum(LatticeResult):
         self.lamopt = lam
         return phi, lam
     def optimum_strip_twist_iteration(self):
-        
+
         nump = len(self.sys.pnls)
         nums = len(self.sys.strps)
 
@@ -100,7 +97,7 @@ class LatticeOptimum(LatticeResult):
                     dpda[i, j] += dgda[k, j]
 
         dphi = self.phiopt-self.phi
-        
+
         dal = solve(dpda, dphi)
 
         for i in range(nums):
@@ -198,6 +195,7 @@ class Record(object):
     def __init__(self, opt: LatticeOptimum, param: str, pnt: Point=None, strplst: list=None):
         self.opt = opt
         self.param = param
+        self.point = pnt
         self.strplst = strplst
         self.update()
     def update(self):

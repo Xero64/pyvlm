@@ -4,7 +4,7 @@ from pyvlm import LatticeResult
 from pyvlm import latticesystem_from_json
 
 #%% Create Lattice System
-jsonfilepath = r'..\files\Straight_Wing_Control.json'
+jsonfilepath = '../files/Straight_Wing_Control.json'
 lsys = latticesystem_from_json(jsonfilepath)
 display(lsys)
 
@@ -33,7 +33,7 @@ display(lres_org.strip_coefficients)
 display(lres_org.panel_forces)
 
 #%% Plot Distribution
-axl = lres_org.plot_trefftz_lift_distribution()
+axl = lres_org.plot_trefftz_lift_force_distribution()
 
 #%% Plot Wash
 axw = lres_org.plot_trefftz_wash_distribution()
@@ -94,4 +94,4 @@ lres_ail.set_state(alpha=3.0)
 lres_ail.set_controls(aileron=2.0)
 display(lres_ail)
 
-axl = lres_ail.plot_trefftz_lift_distribution()
+axl = lres_ail.plot_trefftz_lift_force_distribution()

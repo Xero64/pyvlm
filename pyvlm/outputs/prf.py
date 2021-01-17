@@ -8,25 +8,25 @@ def latticeresult_to_prf(lsys: LatticeSystem, prffilepath: str):
     srfclist = []
     for srfc in lsys.srfcs:
         srfcdict = {}
-        xle, yle, zle, chords = [], [], [], []
+        xpos, ypos, zpos, chords = [], [], [], []
         csps = srfc.cspace
         cspace = []
         for csp in csps:
             cspace.append(csp[0])
-        cspace.append(csp[-1])
+        cspace.append(csps[-1][-1])
         for i in range(srfc.pnts.shape[0]):
             pntle = srfc.pnts[i, 0]
             pntte = srfc.pnts[i, -1]
             x, y, z = pntle.x, pntle.y, pntle.z
             chord = pntte.x-pntle.x
-            xle.append(x)
-            yle.append(y)
-            zle.append(z)
+            xpos.append(x)
+            ypos.append(y)
+            zpos.append(z)
             chords.append(chord)
         srfcdict['name'] = srfc.name
-        srfcdict['xle'] = xle
-        srfcdict['yle'] = yle
-        srfcdict['zle'] = zle
+        srfcdict['xpos'] = xpos
+        srfcdict['ypos'] = ypos
+        srfcdict['zpos'] = zpos
         srfcdict['chords'] = chords
         srfcdict['cspace'] = cspace
         srfclist.append(srfcdict)

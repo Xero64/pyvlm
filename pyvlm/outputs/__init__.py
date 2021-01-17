@@ -8,4 +8,4 @@ def outputs_from_json(sysdct: dict):
         outputs[name] = []
         if 'outputs' in casedct:
             outputs[name] = outputs[name] + casedct['outputs']
-    return outputs               
+    return outputs

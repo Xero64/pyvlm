@@ -1,7 +1,8 @@
-from math import asin, cos, pi
 from pygeom.geom3d import Point, ihat
-from pyvlm.tools.camber import FlatPlate
 from .latticecontrol import LatticeControl, latticecontrol_from_json
+from ..tools.camber import FlatPlate, NACA4, NACA6Series
+from ..tools import equal_spacing, full_cosine_spacing, semi_cosine_spacing
+from ..tools.airfoil import airfoil_from_dat
 
 class LatticeSection(object):
     pnt = None
@@ -34,30 +35,24 @@ class LatticeSection(object):
     def offset_angle(self, angle: float):
         self.angle = self.angle+angle
     def set_span_equal_spacing(self, numb: int):
-        from pyvlm.tools import equal_spacing
         bsp = equal_spacing(2*numb)
         self.bspace = [tuple(bsp[i*2:i*2+3]) for i in range(numb)]
     def set_span_cosine_spacing(self, numb: int):
-        from pyvlm.tools import full_cosine_spacing
         bsp = full_cosine_spacing(2*numb)
         self.bspace = [tuple(bsp[i*2:i*2+3]) for i in range(numb)]
     def set_span_semi_cosine_spacing(self, numb: int):
-        from pyvlm.tools import semi_cosine_spacing
         bsp = semi_cosine_spacing(2*numb)
         self.bspace = [tuple(bsp[i*2:i*2+3]) for i in range(numb)]
     def set_airfoil(self, airfoil: str):
         if airfoil[-4:].lower() == '.dat':
-            from ..tools.airfoil import airfoil_from_dat
             self.camber = airfoil_from_dat(airfoil)
             self.airfoil = airfoil
         elif airfoil[0:4].lower() == 'naca':
             code = airfoil[4:].strip()
             if len(code) == 4:
-                from ..tools.camber import NACA4
                 self.camber = NACA4(code)
                 self.airfoil = airfoil
             elif code[0] == '6':
-                from ..tools.camber import NACA6Series
                 self.camber = NACA6Series(code)
                 self.airfoil = airfoil
     def set_noload(self, noload: bool):
@@ -86,19 +81,19 @@ class LatticeSection(object):
         return '<LatticeSection>'
 
 def latticesecttion_from_json(sectdata: dict):
-    if 'xle' in sectdata:
-        xle = sectdata['xle']
+    if 'xpos' in sectdata:
+        xpos = sectdata['xpos']
     else:
         return ValueError
-    if 'yle' in sectdata:
-        yle = sectdata['yle']
+    if 'ypos' in sectdata:
+        ypos = sectdata['ypos']
     else:
         return ValueError
-    if 'zle' in sectdata:
-        zle = sectdata['zle']
+    if 'zpos' in sectdata:
+        zpos = sectdata['zpos']
     else:
         return ValueError
-    point = Point(xle, yle, zle)
+    point = Point(xpos, ypos, zpos)
     if 'chord' in sectdata:
         chord = sectdata['chord']
     else:

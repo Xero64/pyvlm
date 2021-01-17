@@ -4,7 +4,7 @@ from pyvlm import LatticeResult
 from pyvlm import latticesystem_from_json
 
 #%% Create Lattice System
-jsonfilepath = r'..\files\Test_twist.json'
+jsonfilepath = '../files/Test_twist.json'
 lsys = latticesystem_from_json(jsonfilepath)
 display_markdown(lsys)
 
@@ -35,13 +35,13 @@ display_markdown(lres_org)
 
 #%% Plot Lift Distribution
 axl = None
-axl = lres_org.plot_trefftz_lift_distribution(ax=axl)
-axl = lres_org.plot_strip_lift_distribution(ax=axl)
+axl = lres_org.plot_trefftz_lift_force_distribution(ax=axl)
+axl = lres_org.plot_strip_lift_force_distribution(ax=axl)
 
 #%% Plot Drag Distribution
 axd = None
-axd = lres_org.plot_trefftz_drag_distribution(ax=axd)
-axd = lres_org.plot_strip_drag_distribution(ax=axd)
+axd = lres_org.plot_trefftz_drag_force_distribution(ax=axd)
+axd = lres_org.plot_strip_drag_force_distribution(ax=axd)
 
 #%% Plot Wash Distribution
 axw = None

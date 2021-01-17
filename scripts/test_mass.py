@@ -1,10 +1,8 @@
 #%% Import Dependencies
-from pyvlm.tools import masses_from_json
-from pyvlm.tools.mass import display_masses
+from pyvlm.tools import masses_from_json, MassCollection
 
 #%% Read in Mass File
-jsonfilepath = r'..\files\Aircraft_Mass.json'
+jsonfilepath = '../files/Aircraft_Mass.json'
 masses = masses_from_json(jsonfilepath)
-
-#%% Display Masses
-display_masses(masses)
+masscol = MassCollection('Aircraft Mass', masses)
+print(masscol)

@@ -1,6 +1,6 @@
-from .latticestrip import LatticeStrip
 from math import pi, radians, cos, sin, atan2
-from pygeom.geom3d import Point, Vector, Coordinate, ihat
+from pygeom.geom3d import Point, Vector
+from .latticestrip import LatticeStrip
 
 fourPi = 4*pi
 

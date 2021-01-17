@@ -1,9 +1,9 @@
 #%% Import Dependencies
+from math import atan2, degrees, radians, pi
 from IPython.display import display
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm import latticesystem_from_json
-from pyvlm.tools import bell_lift_distribution
-from math import atan2, degrees, radians, pi
+from pyvlm.tools import bell_lift_force_distribution
 from matplotlib.pyplot import figure
 from pygeom.geom1d import LinearSpline
 
@@ -28,7 +28,7 @@ q = rho*V**2/2 # Pa
 print(f'q = {q:.2f} Pa')
 
 #%% Low AR Wing System
-jsonfilepath = r'..\files\Test_rhofw.json'
+jsonfilepath = '../files/Test_rhofw.json'
 lsys = latticesystem_from_json(jsonfilepath)
 lsys_opt = latticesystem_from_json(jsonfilepath)
 lsys_bll = latticesystem_from_json(jsonfilepath)
@@ -41,10 +41,10 @@ lres_org.set_density(rho=rho)
 display(lres_org)
 
 #%% Bell Shaped Lift Distribution
-lbll = bell_lift_distribution(lsys.srfcs[0].strpy, lsys.bref, W)
+lbll = bell_lift_force_distribution(lsys.srfcs[0].strpy, lsys.bref, W)
 
 lopt_bll = LatticeOptimum('Bell', lsys_bll)
-lopt_bll.set_target_lift_distribution(lbll, rho, V)
+lopt_bll.set_target_lift_force_distribution(lbll, rho, V)
 lopt_bll.add_record('L')
 lopt_bll.add_record('l', strplst=lsys.lstrpi)
 lopt_bll.add_record('l', strplst=lsys.mstrpi)
@@ -57,7 +57,7 @@ lopt.set_density(rho=rho)
 lopt.add_constraint('L', W)
 lopt.add_constraint('l', lopt_bll.record[1].value, strplst=lsys.lstrpi)
 lopt.add_constraint('l', lopt_bll.record[2].value, strplst=lsys.mstrpi)
-lopt.optimum_lift_distribution()
+lopt.optimum_lift_force_distribution()
 display(lopt)
 
 #%% Plot Phi Distribution
@@ -70,17 +70,17 @@ _ = axp.set_xlabel('Span Position')
 
 #%% Plot Lift Distribution
 axl = None
-axl = lres_org.plot_trefftz_lift_distribution(ax=axl)
-axl = lopt_bll.plot_trefftz_lift_distribution(ax=axl)
-axl = lopt.plot_trefftz_lift_distribution(ax=axl)
+axl = lres_org.plot_trefftz_lift_force_distribution(ax=axl)
+axl = lopt_bll.plot_trefftz_lift_force_distribution(ax=axl)
+axl = lopt.plot_trefftz_lift_force_distribution(ax=axl)
 _ = axl.set_ylabel('Lift Distribution')
 _ = axl.set_xlabel('Span Position')
 
 #%% Plot Drag Distribution
 axd = None
-axd = lres_org.plot_trefftz_drag_distribution(ax=axd)
-axd = lopt_bll.plot_trefftz_drag_distribution(ax=axd)
-axd = lopt.plot_trefftz_drag_distribution(ax=axd)
+axd = lres_org.plot_trefftz_drag_force_distribution(ax=axd)
+axd = lopt_bll.plot_trefftz_drag_force_distribution(ax=axd)
+axd = lopt.plot_trefftz_drag_force_distribution(ax=axd)
 _ = axd.set_ylabel('Drag Distribution')
 _ = axd.set_xlabel('Span Position')
 
@@ -123,19 +123,19 @@ print(min(w)/min(lopt_bll.trres.trwsh))
 
 #%% Plot Lift Distribution
 axl = None
-axl = lres_org.plot_trefftz_lift_distribution(ax=axl)
-axl = lopt_bll.plot_trefftz_lift_distribution(ax=axl)
-axl = lopt.plot_trefftz_lift_distribution(ax=axl)
-axl = lopt.plot_strip_lift_distribution(ax=axl)
+axl = lres_org.plot_trefftz_lift_force_distribution(ax=axl)
+axl = lopt_bll.plot_trefftz_lift_force_distribution(ax=axl)
+axl = lopt.plot_trefftz_lift_force_distribution(ax=axl)
+axl = lopt.plot_strip_lift_force_distribution(ax=axl)
 _ = axl.set_ylabel('Lift Distribution')
 _ = axl.set_xlabel('Span Position')
 
 #%% Plot Drag Distribution
 axd = None
-axd = lres_org.plot_trefftz_drag_distribution(ax=axd)
-axd = lopt_bll.plot_trefftz_drag_distribution(ax=axd)
-axd = lopt.plot_trefftz_drag_distribution(ax=axd)
-axd = lopt.plot_strip_drag_distribution(ax=axd)
+axd = lres_org.plot_trefftz_drag_force_distribution(ax=axd)
+axd = lopt_bll.plot_trefftz_drag_force_distribution(ax=axd)
+axd = lopt.plot_trefftz_drag_force_distribution(ax=axd)
+axd = lopt.plot_strip_drag_force_distribution(ax=axd)
 _ = axd.set_ylabel('Drag Distribution')
 _ = axd.set_xlabel('Span Position')
 
@@ -189,7 +189,7 @@ fig  = figure(figsize=(12, 8))
 ax = fig.gca()
 ax.grid(True)
 ax.plot(lsys.srfcs[0].strpy, l, label='Lift Distribution')
-ax = lopt_bll.plot_trefftz_lift_distribution(ax=ax)
+ax = lopt_bll.plot_trefftz_lift_force_distribution(ax=ax)
 leg = ax.legend()
 
 #%% Plot Specified Twist

@@ -1,12 +1,14 @@
-from time import perf_counter
-from math import pi, atan2
-from numpy.matlib import zeros, matrix, multiply, divide, fill_diagonal, seterr
-from pygeom.geom3d import Point, Vector, ihat, jhat, zero_vector
+from math import pi
+from numpy.matlib import zeros, multiply, divide, fill_diagonal, seterr, logical_and
+from pygeom.geom3d import Point
 from pygeom.matrix3d import zero_matrix_vector, MatrixVector
 from pygeom.matrix3d import elementwise_dot_product, elementwise_cross_product
 from pygeom.matrix3d import elementwise_multiply, elementwise_divide
+from py2md.classes import MDTable
 
 seterr(divide='ignore', invalid='ignore')
+
+fourPi = 4*pi
 
 class LatticeSystem(object):
     source = None # System Source
@@ -117,7 +119,7 @@ class LatticeSystem(object):
         if mach not in self._avc:
             beta = (1-mach**2)**0.5
             veli, vela, velb = velocity_matrix(self.ra, self.rb, self.rc, beta)
-            self._avc[mach] = (veli+vela-velb)/(4*pi)
+            self._avc[mach] = (veli+vela-velb)/fourPi
         return self._avc[mach]
     def aic(self, mach: float):
         if self._aic is None:
@@ -172,7 +174,7 @@ class LatticeSystem(object):
             fill_diagonal(veli.x, 0.0)
             fill_diagonal(veli.y, 0.0)
             fill_diagonal(veli.z, 0.0)
-            self._avg[mach] = (veli+vela-velb)/(4*pi)
+            self._avg[mach] = (veli+vela-velb)/fourPi
         return self._avg[mach]
     def afg(self, mach: float):
         if self._afg is None:
@@ -289,17 +291,16 @@ class LatticeSystem(object):
         return sgrp
     def set_strip_alpha(self, alpha: list):
         for strp in self.strps:
-            strp._ang = alpha[strp.lsid]
+            strp.set_angle(alpha[strp.lsid])
         self._aic = None
         self._afs = None
         self._ungam = None
     @property
     def strip_geometry(self):
-        from py2md.classes import MDTable
         table = MDTable()
         table.add_column('#', 'd')
-        table.add_column('Xle', '.5f')
-        table.add_column('Yle', '.5f')
+        table.add_column('xpos', '.5f')
+        table.add_column('ypos', '.5f')
         table.add_column('Zle', '.5f')
         table.add_column('Chord', '.4f')
         table.add_column('Width', '.5f')
@@ -308,19 +309,18 @@ class LatticeSystem(object):
         table.add_column('Incid', '.4f')
         for strp in self.strps:
             j = strp.lsid
-            xle = strp.pnti.x
-            yle = strp.pnti.y
-            zle = strp.pnti.z
+            xpos = strp.pnti.x
+            ypos = strp.pnti.y
+            zpos = strp.pnti.z
             chord = strp.chord
             width = strp.dst
             area = strp.area
             dihed = strp.dihedral
             angle = strp.angle
-            table.add_row([j, xle, yle, zle, chord, width, area, dihed, angle])
+            table.add_row([j, xpos, ypos, zpos, chord, width, area, dihed, angle])
         return table
     @property
     def panel_geometry(self):
-        from py2md.classes import MDTable
         table = MDTable()
         table.add_column('#', 'd')
         table.add_column('X', '.5f')
@@ -338,7 +338,7 @@ class LatticeSystem(object):
             dx = pnl.crd
             nx = pnl.nrml.x
             ny = pnl.nrml.y
-            nz = pnl.nrml.z            
+            nz = pnl.nrml.z
             table.add_row([j, x, y, z, dx, nx, ny, nz])
         return table
     def copy_from_source(self):
@@ -349,11 +349,10 @@ class LatticeSystem(object):
         return lsys
     def velocity_matrix(self, rc: MatrixVector):
         veli, vela, velb = velocity_matrix(self.ra, self.rb, rc)
-        return (veli+vela-velb)/(4*pi)
+        return (veli+vela-velb)/fourPi
     def __repr__(self):
         return '<LatticeSystem: {:s}>'.format(self.name)
     def __str__(self):
-        from py2md.classes import MDTable
         outstr = '# Lattice System '+self.name+'\n'
         table = MDTable()
         table.add_column('Name', 's', data=[self.name])
@@ -414,7 +413,7 @@ def latticesystem_from_dict(sysdct: dict):
                         del sectdata['airfoil']
                     else:
                         sectdata['airfoil'] = airfoil
-    
+
     name = sysdct['name']
     sfcs = []
     for surfdata in sysdct['surfaces']:
@@ -448,26 +447,24 @@ def latticesystem_from_dict(sysdct: dict):
                 latticetrim_from_json(lsys, resdata)
             else:
                 latticeresult_from_json(lsys, resdata)
-    
+
     lsys.source = jsonfilepath
 
     return lsys
 
 def velocity_matrix(ra: MatrixVector, rb: MatrixVector, rc: MatrixVector,
-                    betm: float=0.0, tol: float=1e-12):
-    
-    from numpy import logical_and
+                    betm: float=1.0, tol: float=1e-12):
 
     if ra.shape != rb.shape:
         return ValueError()
-    
+
     numi = rc.shape[0]
     numj = ra.shape[1]
-    
+
     ra = ra.repeat(numi, axis=0)
     rb = rb.repeat(numi, axis=0)
     rc = rc.repeat(numj, axis=1)
-    
+
     a = rc-ra
     b = rc-rb
 

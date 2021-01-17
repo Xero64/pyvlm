@@ -2,7 +2,7 @@
 from pyvlm.tools import airfoil_from_dat
 
 #%% Create Airfoil
-datfilepath = r'..\files\rhofw_root.dat'
+datfilepath = '../files/rhofw_root.dat'
 airfoil = airfoil_from_dat(datfilepath)
 
 #%% Plot Profile

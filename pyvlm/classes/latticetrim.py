@@ -4,7 +4,6 @@ from .latticesystem import LatticeSystem
 from numpy.matlib import zeros
 from numpy.linalg import norm, inv
 from math import degrees, radians
-from pygeom.geom3d import Point
 
 class LatticeTrim(LatticeResult):
     CLt = None
@@ -175,7 +174,7 @@ class LatticeTrim(LatticeResult):
         else:
             H = zeros((0, 0), dtype=float)
         return H
-    def trim_iteration(self, crit: float=1e-6, imax: int=100):
+    def trim_iteration(self):
         Ctgt = self.target_Cmat()
         Ccur = self.current_Cmat()
         Cdff = Ctgt-Ccur
@@ -199,7 +198,7 @@ class LatticeTrim(LatticeResult):
             if display:
                 print(f'Iteration {i:d}')
                 start = time()
-            Dcur = self.trim_iteration(crit, imax)
+            Dcur = self.trim_iteration()
             if display:
                 finish = time()
                 elapsed = finish-start
@@ -276,7 +275,7 @@ def latticetrim_from_json(lsys: LatticeSystem, resdata: dict):
             mass = Mass(name + ' Mass', m, xcm, ycm, zcm)
     else:
         mass = Mass(name + ' Mass', m, xcm, ycm, zcm)
-    
+
     trim.set_mass(mass)
 
     ltrm = trim.create_trim_result()

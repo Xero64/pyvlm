@@ -20,9 +20,9 @@
             "zpos": 0.15,
             "sections": [
                 {
-                    "xle": 0.0,
-                    "yle": 0.0,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 0.0,
+                    "zpos": 0.0,
                     "chord": 0.35,
                     "angle": 0.0,
                     "numb": 6,
@@ -31,9 +31,9 @@
                     "noload": true
                 },
                 {
-                    "xle": null,
-                    "yle": 0.21,
-                    "zle": null,
+                    "xpos": null,
+                    "ypos": 0.21,
+                    "zpos": null,
                     "chord": 0.35,
                     "angle": 0.0,
                     "numb": 10,
@@ -41,9 +41,9 @@
                     "airfoil": "NACA 2412"
                 },
                 {
-                    "xle": null,
-                    "yle": 0.8,
-                    "zle": null,
+                    "xpos": null,
+                    "ypos": 0.8,
+                    "zpos": null,
                     "chord": null,
                     "angle": null,
                     "numb": 40,
@@ -51,9 +51,9 @@
                     "airfoil": "NACA 2412"
                 },
                 {
-                    "xle": null,
-                    "yle": 1.8,
-                    "zle": null,
+                    "xpos": null,
+                    "ypos": 1.8,
+                    "zpos": null,
                     "chord": null,
                     "angle": null,
                     "numb": 30,
@@ -70,9 +70,9 @@
                     }
                 },
                 {
-                    "xle": 0.3,
-                    "yle": 2.25,
-                    "zle": 0.0,
+                    "xpos": 0.3,
+                    "ypos": 2.25,
+                    "zpos": 0.0,
                     "chord": 0.2,
                     "angle": -1.5
                 }
@@ -89,9 +89,9 @@
             "angle": -1.8,
             "sections": [
                 {
-                    "xle": 0.0,
-                    "yle": 0.0,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 0.0,
+                    "zpos": 0.0,
                     "chord": 0.22,
                     "numb": 25,
                     "bspace": "semi-cosine",
@@ -106,9 +106,9 @@
                     }
                 },
                 {
-                    "xle": 0.1,
-                    "yle": 0.7,
-                    "zle": 0.0,
+                    "xpos": 0.1,
+                    "ypos": 0.7,
+                    "zpos": 0.0,
                     "chord": 0.18
                 }
             ]
@@ -123,9 +123,9 @@
             "zpos": 0.1,
             "sections": [
                 {
-                    "xle": 0.0,
-                    "yle": 0.0,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 0.0,
+                    "zpos": 0.0,
                     "chord": 0.25,
                     "angle": 0.0,
                     "numb": 30,
@@ -141,9 +141,9 @@
                     }
                 },
                 {
-                    "xle": 0.1,
-                    "yle": 0.0,
-                    "zle": 0.4,
+                    "xpos": 0.1,
+                    "ypos": 0.0,
+                    "zpos": 0.4,
                     "chord": 0.15,
                     "angle": 0.0
                 }

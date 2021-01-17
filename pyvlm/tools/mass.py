@@ -12,8 +12,8 @@ class Mass(object):
     Iyy = None
     Iyz = None
     Izz = None
-    def __init__(self, name: str, mass: float,
-                 xcm: float, ycm: float, zcm: float,
+    def __init__(self, name: str, mass: float=0.0,
+                 xcm: float=0.0, ycm: float=0.0, zcm: float=0.0,
                  Ixx: float=0.0, Ixy: float=0.0, Ixz: float=0.0,
                  Iyy: float=0.0, Iyz: float=0.0, Izz: float=0.0):
         self.name = name
@@ -59,7 +59,7 @@ class Mass(object):
 class MassCollection(Mass):
     masses = None
     def __init__(self, name: str, masses: dict):
-        self.name = name
+        super(MassCollection, self).__init__(name)
         self.masses = masses
         self.update()
     def update(self):
@@ -135,7 +135,7 @@ def masscol_from_data(masscoldata: dict, masses: dict):
         else:
             print(f'Could not find {m:s} in masses.')
     return MassCollection(name, massdict)
-    
+
 def masses_from_data(massesdata: list):
     masses = {}
     for mdata in massesdata:
@@ -146,7 +146,7 @@ def masses_from_data(massesdata: list):
             mass = mass_from_data(mdata)
             masses[mass.name] = mass
     return masses
-        
+
 def masses_from_json(jsonfilepath: str):
     from json import load
 

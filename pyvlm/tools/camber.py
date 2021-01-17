@@ -4,13 +4,13 @@ class FlatPlate(object):
     def __init__(self):
         pass
     def return_camber(self, xc: float):
-        return 0.0
+        return 0.0*xc
     def return_camber_slope(self, xc: float):
-        return 0.0
+        return 0.0*xc
     def return_camber_angle(self, xc: float):
-        return 0.0
+        return 0.0*xc
     def __repr__(self):
-        return f'<Flat Plate Airfoil>'
+        return '<Flat Plate Airfoil>'
 
 class NACA4(object):
     code = None

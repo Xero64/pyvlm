@@ -16,9 +16,9 @@
             "cspace": "cosine",
             "sections": [
                 {
-                    "xle": 0.0,
-                    "yle": 0.0,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 0.0,
+                    "zpos": 0.0,
                     "chord": 0.5,
                     "angle": 0.0,
                     "numb": 30,
@@ -26,9 +26,9 @@
                     "airfoil": "NACA 0000"
                 },
                 {
-                    "xle": 0.0,
-                    "yle": 3.0,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 3.0,
+                    "zpos": 0.0,
                     "chord": 0.5,
                     "angle": 0.0,
                     "numb": 30,
@@ -45,9 +45,9 @@
                     }
                 },
                 {
-                    "xle": 0.0,
-                    "yle": 5.0,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 5.0,
+                    "zpos": 0.0,
                     "chord": 0.5,
                     "angle": 0.0,
                     "airfoil": "NACA 0000"

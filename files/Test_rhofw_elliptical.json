@@ -16,22 +16,22 @@
             "cspace": "cosine",
             "sections": [
                 {
-                    "xle": 0.0,
-                    "yle": 0.0,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 0.0,
+                    "zpos": 0.0,
                     "chord": 0.40005,
                     "angle": 0.0,
                     "numb": 100,
                     "bspace": "semi-cosine"
                 },
                 {
-                    "xle": 0.0,
-                    "yle": 1.5306,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 1.5306,
+                    "zpos": 0.0,
                     "chord": 0.10008,
                     "angle": 0.0
                 }
-            ]            
+            ]
         }
     ]
 }

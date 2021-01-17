@@ -14,17 +14,17 @@
             "mirror": true,
             "sections": [
                 {
-                    "xle": 0.0,
-                    "yle": 0.0,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 0.0,
+                    "zpos": 0.0,
                     "chord": 1.0,
                     "angle": 0.0,
                     "airfoil": "rootairfoil.dat"
                 },
                 {
-                    "xle": 3.6141,
-                    "yle": 2.0,
-                    "zle": 0.0,
+                    "xpos": 3.6141,
+                    "ypos": 2.0,
+                    "zpos": 0.0,
                     "chord": 0.25,
                     "angle": 0.0,
                     "airfoil": "tipairfoil.dat"

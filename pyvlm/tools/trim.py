@@ -39,7 +39,7 @@ class LoopingTrim(object):
             self.mass = self.sys.masses[mass]
         elif isinstance(mass, float):
             self.mass = Mass(self.name + ' Mass', mass,
-                             self.sys.xref, self.sys.yref, self.sys.zref)
+                             self.sys.rref.x, self.sys.rref.y, self.sys.rref.z)
         elif isinstance(mass, (Mass, MassCollection)):
             self.mass = mass
         self.reset()
@@ -163,7 +163,7 @@ class TurningTrim(object):
             self.mass = self.sys.masses[mass]
         elif isinstance(mass, float):
             self.mass = Mass(self.name + ' Mass', mass,
-                             self.sys.xref, self.sys.yref, self.sys.zref)
+                             self.sys.rref.x, self.sys.rref.y, self.sys.rref.z)
         elif isinstance(mass, (Mass, MassCollection)):
             self.mass = mass
         self.reset()
@@ -307,7 +307,7 @@ class LevelTrim(object):
             self.mass = self.sys.masses[mass]
         elif isinstance(mass, float):
             self.mass = Mass(self.name + ' Mass', mass,
-                             self.sys.xref, self.sys.yref, self.sys.zref)
+                             self.sys.rref.x, self.sys.rref.y, self.sys.rref.z)
         elif isinstance(mass, (Mass, MassCollection)):
             self.mass = mass
         self.reset()

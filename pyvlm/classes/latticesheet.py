@@ -1,9 +1,6 @@
-from math import pi, cos
-from numpy import empty
+from pygeom.geom3d import ihat, Coordinate
 from .latticesection import LatticeSection
-from .latticepanel import LatticePanel
 from .latticestrip import LatticeStrip
-from pygeom.geom3d import ihat, Point, Coordinate
 
 class LatticeSheet(object):
     sect1 = None

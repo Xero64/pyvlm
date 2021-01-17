@@ -51,7 +51,7 @@ def latticecontrol_from_json(name: str, controldata: dict):
     reverse = False
     if 'reverse' in controldata:
         reverse = controldata['reverse']
-    ctrl.reverse = reverse    
+    ctrl.reverse = reverse
     return ctrl
 
 def vector_from_json(vectordata):

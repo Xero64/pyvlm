@@ -4,7 +4,7 @@ from pyvlm import LatticeResult
 from pyvlm import latticesystem_from_json
 
 #%% Create Lattice System
-jsonfilepath = r'..\files\Straight_Wing_Cosine_100.json'
+jsonfilepath = '../files/Straight_Wing_Cosine_100.json'
 lsys = latticesystem_from_json(jsonfilepath)
 display(lsys)
 
@@ -29,7 +29,7 @@ display(lres_org.strip_coefficients)
 display(lres_org.panel_forces)
 
 #%% Plot Distribution
-axl = lres_org.plot_trefftz_lift_distribution()
+axl = lres_org.plot_trefftz_lift_force_distribution()
 
 #%% Plot Wash
 axw = lres_org.plot_trefftz_wash_distribution()

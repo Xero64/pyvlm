@@ -3,7 +3,7 @@ from pyvlm import LatticeResult
 from pyvlm import latticesystem_from_json
 
 #%% Create Lattice System
-jsonfilepath = r'..\files\Test_twist_sweep_taper.json'
+jsonfilepath = '../files/Test_twist_sweep_taper.json'
 lsys = latticesystem_from_json(jsonfilepath)
 print(lsys)
 

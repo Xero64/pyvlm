@@ -16,18 +16,18 @@
             "cspace": "cosine",
             "sections": [
                 {
-                    "xle": 0.0,
-                    "yle": 0.0,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 0.0,
+                    "zpos": 0.0,
                     "chord": 0.40005,
                     "numb": 40,
                     "bspace": "semi-cosine",
                     "airfoil": "rhofw_root.dat"
                 },
                 {
-                    "xle": 0.83459,
-                    "yle": 1.87452,
-                    "zle": 0.08177,
+                    "xpos": 0.83459,
+                    "ypos": 1.87452,
+                    "zpos": 0.08177,
                     "chord": 0.10008,
                     "airfoil": "rhofw_tip.dat"
                 }
