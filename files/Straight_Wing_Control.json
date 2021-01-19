@@ -12,8 +12,8 @@
             "name": "Wing",
             "angle": 0.0,
             "mirror": true,
-            "numc": 10,
-            "cspace": "cosine",
+            "cnum": 10,
+            "cspc": "cosine",
             "sections": [
                 {
                     "xpos": 0.0,
@@ -21,8 +21,8 @@
                     "zpos": 0.0,
                     "chord": 0.5,
                     "angle": 0.0,
-                    "numb": 30,
-                    "bspace": "semi-cosine",
+                    "bnum": 30,
+                    "bspc": "semi-cosine",
                     "airfoil": "NACA 0000"
                 },
                 {
@@ -31,8 +31,8 @@
                     "zpos": 0.0,
                     "chord": 0.5,
                     "angle": 0.0,
-                    "numb": 30,
-                    "bspace": "cosine",
+                    "bnum": 30,
+                    "bspc": "cosine",
                     "airfoil": "NACA 0000",
                     "controls": {
                         "aileron": {

@@ -12,8 +12,8 @@
             "name": "Wing",
             "angle": 0.0,
             "mirror": true,
-            "numc": 2,
-            "cspace": "cosine",
+            "cnum": 2,
+            "cspc": "cosine",
             "sections": [
                 {
                     "xpos": 0.0,
@@ -21,8 +21,8 @@
                     "zpos": 0.0,
                     "chord": 0.5,
                     "angle": 0.0,
-                    "numb": 50,
-                    "bspace": "semi-elliptical"
+                    "bnum": 50,
+                    "bspc": "semi-elliptical"
                 },
                 {
                     "xpos": 0.0,

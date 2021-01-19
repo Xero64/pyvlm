@@ -32,10 +32,10 @@
             ],
             "sheets": [
                 {
-                    "numc": 1,
-                    "cspace": "linear",
-                    "numb": 100,
-                    "bspace": "linear"
+                    "cnum": 1,
+                    "cspc": "linear",
+                    "bnum": 100,
+                    "bspc": "linear"
                 }
             ]
         }

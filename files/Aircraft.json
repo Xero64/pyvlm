@@ -13,8 +13,8 @@
             "name": "Wing",
             "angle": 0.0,
             "mirror": true,
-            "numc": 8,
-            "cspace": "cosine",
+            "cnum": 8,
+            "cspc": "cosine",
             "xpos": 0.875,
             "ypos": 0.0,
             "zpos": 0.15,
@@ -25,8 +25,8 @@
                     "zpos": 0.0,
                     "chord": 0.35,
                     "angle": 0.0,
-                    "numb": 6,
-                    "bspace": "semi-cosine",
+                    "bnum": 6,
+                    "bspc": "semi-cosine",
                     "airfoil": "NACA 2412",
                     "noload": true
                 },
@@ -36,8 +36,8 @@
                     "zpos": null,
                     "chord": 0.35,
                     "angle": 0.0,
-                    "numb": 10,
-                    "bspace": "semi-cosine",
+                    "bnum": 10,
+                    "bspc": "semi-cosine",
                     "airfoil": "NACA 2412"
                 },
                 {
@@ -46,8 +46,8 @@
                     "zpos": null,
                     "chord": null,
                     "angle": null,
-                    "numb": 40,
-                    "bspace": "semi-cosine",
+                    "bnum": 40,
+                    "bspc": "semi-cosine",
                     "airfoil": "NACA 2412"
                 },
                 {
@@ -56,8 +56,8 @@
                     "zpos": null,
                     "chord": null,
                     "angle": null,
-                    "numb": 30,
-                    "bspace": "cosine",
+                    "bnum": 30,
+                    "bspc": "cosine",
                     "airfoil": "NACA 2412",
                     "controls": {
                         "aileron": {
@@ -81,8 +81,8 @@
         {
             "name": "Horizontal Tail",
             "mirror": true,
-            "numc": 8,
-            "cspace": "cosine",
+            "cnum": 8,
+            "cspc": "cosine",
             "xpos": 2.3,
             "ypos": 0.0,
             "zpos": 0.1,
@@ -93,8 +93,8 @@
                     "ypos": 0.0,
                     "zpos": 0.0,
                     "chord": 0.22,
-                    "numb": 25,
-                    "bspace": "semi-cosine",
+                    "bnum": 25,
+                    "bspc": "semi-cosine",
                     "controls": {
                         "elevator": {
                             "xhinge": 0.7,
@@ -116,8 +116,8 @@
         {
             "name": "Vertical Tail",
             "angle": 0.0,
-            "numc": 5,
-            "cspace": "cosine",
+            "cnum": 5,
+            "cspc": "cosine",
             "xpos": 2.3,
             "ypos": 0.0,
             "zpos": 0.1,
@@ -128,8 +128,8 @@
                     "zpos": 0.0,
                     "chord": 0.25,
                     "angle": 0.0,
-                    "numb": 30,
-                    "bspace": "cosine",
+                    "bnum": 30,
+                    "bspc": "cosine",
                     "controls": {
                         "rudder": {
                             "xhinge": 0.7,
