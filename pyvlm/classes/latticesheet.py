@@ -5,7 +5,7 @@ from .latticestrip import LatticeStrip
 class LatticeSheet(object):
     sect1 = None
     sect2 = None
-    bspace = None
+    bspc = None
     mirror = None
     levec = None
     cord = None
@@ -42,15 +42,15 @@ class LatticeSheet(object):
         crda = self.sect1.chord
         crdb = self.sect2.chord
         crdr = crdb-crda
-        anga = self.sect1.angle
-        angb = self.sect2.angle
+        anga = self.sect1.twist
+        angb = self.sect2.twist
         angr = angb-anga
         cdoa = self.sect1.cdo
         cdob = self.sect2.cdo
         cdor = cdob-cdoa
-        lenb = len(self.bspace)
+        lenb = len(self.bspc)
         for i in range(lenb):
-            bspc = self.bspace[i]
+            bspc = self.bspc[i]
             bsp1 = bspc[0]
             bsp2 = bspc[2]
             pnt1 = pnta+bsp1*vecr
@@ -60,7 +60,7 @@ class LatticeSheet(object):
             strp = LatticeStrip(lsid, pnt1, pnt2, crd1, crd2, bspc)
             ang1 = anga+bsp1*angr
             ang2 = anga+bsp2*angr
-            strp.set_angles(ang1, ang2)
+            strp.set_twists(ang1, ang2)
             cdo1 = cdoa+bsp1*cdor
             cdo2 = cdoa+bsp2*cdor
             strp.set_cdo(cdo1, cdo2)
@@ -80,22 +80,22 @@ class LatticeSheet(object):
             self.noload = self.sect1.noload
     def inherit_spacing(self):
         if self.mirror:
-            if self.sect2.bspace is None:
-                self.bspace = [(0.0, 0.5, 1.0)]
+            if self.sect2.bspc is None:
+                self.bspc = [(0.0, 0.5, 1.0)]
             else:
-                lenb = len(self.sect2.bspace)
-                self.bspace = []
+                lenb = len(self.sect2.bspc)
+                self.bspc = []
                 for i in range(lenb):
                     blst = []
                     for j in range(2, -1, -1):
-                        blst.append(1.0-self.sect2.bspace[i][j])
-                    self.bspace.append(tuple(blst))
-                self.bspace.reverse()
+                        blst.append(1.0-self.sect2.bspc[i][j])
+                    self.bspc.append(tuple(blst))
+                self.bspc.reverse()
         else:
-            if self.sect1.bspace is None:
-                self.bspace = [(0.0, 0.5, 1.0)]
+            if self.sect1.bspc is None:
+                self.bspc = [(0.0, 0.5, 1.0)]
             else:
-                self.bspace = self.sect1.bspace
+                self.bspc = self.sect1.bspc
     def inherit_controls(self):
         self.ctrls = {}
         if self.mirror:
@@ -128,7 +128,7 @@ class LatticeSheet(object):
     def set_strip_bpos(self):
         bpos = self.sect1.bpos
         for i, strp in enumerate(self.strps):
-            bspc = self.bspace[i]
+            bspc = self.bspc[i]
             strp.bpos = bpos+self.width*bspc[1]
     def __repr__(self):
         return '<LatticeSheet>'

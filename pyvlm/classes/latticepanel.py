@@ -77,13 +77,13 @@ class LatticePanel(object):
         return self.strp.yspc
     @property
     def nrml(self):
-        als = radians(self.strp.angle)
+        als = radians(self.strp.twist)
         alc = radians(self.alpha)
         th = self.th
         return Vector(-sin(alc - als), -sin(th)*cos(alc - als), cos(th)*cos(alc - als))
     @property
     def dnda(self):
-        als = radians(self.strp.angle)
+        als = radians(self.strp.twist)
         alc = radians(self.alpha)
         th = self.th
         return Vector(cos(alc - als), -sin(th)*sin(alc - als), sin(alc - als)*cos(th))

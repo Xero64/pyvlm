@@ -7,20 +7,20 @@ from ..tools.airfoil import airfoil_from_dat
 class LatticeSection(object):
     pnt = None
     chord = None
-    angle = None
+    twist = None
     camber = None
     airfoil = None
-    bspace = None
+    bspc = None
     yspace = None
     mirror = None
     noload = None
     ctrls = None
     cdo = None
     bpos = None
-    def __init__(self, pnt: Point, chord: float, angle: float):
+    def __init__(self, pnt: Point, chord: float, twist: float):
         self.pnt = pnt
         self.chord = chord
-        self.angle = angle
+        self.twist = twist
         self.update()
     def update(self):
         self.noload = False
@@ -32,17 +32,17 @@ class LatticeSection(object):
         self.pnt.x = self.pnt.x+xpos
         self.pnt.y = self.pnt.y+ypos
         self.pnt.z = self.pnt.z+zpos
-    def offset_angle(self, angle: float):
-        self.angle = self.angle+angle
-    def set_span_equal_spacing(self, numb: int):
-        bsp = equal_spacing(2*numb)
-        self.bspace = [tuple(bsp[i*2:i*2+3]) for i in range(numb)]
-    def set_span_cosine_spacing(self, numb: int):
-        bsp = full_cosine_spacing(2*numb)
-        self.bspace = [tuple(bsp[i*2:i*2+3]) for i in range(numb)]
-    def set_span_semi_cosine_spacing(self, numb: int):
-        bsp = semi_cosine_spacing(2*numb)
-        self.bspace = [tuple(bsp[i*2:i*2+3]) for i in range(numb)]
+    def offset_twist(self, twist: float):
+        self.twist = self.twist+twist
+    def set_span_equal_spacing(self, bnum: int):
+        bsp = equal_spacing(2*bnum)
+        self.bspc = [tuple(bsp[i*2:i*2+3]) for i in range(bnum)]
+    def set_span_cosine_spacing(self, bnum: int):
+        bsp = full_cosine_spacing(2*bnum)
+        self.bspc = [tuple(bsp[i*2:i*2+3]) for i in range(bnum)]
+    def set_span_semi_cosine_spacing(self, bnum: int):
+        bsp = semi_cosine_spacing(2*bnum)
+        self.bspc = [tuple(bsp[i*2:i*2+3]) for i in range(bnum)]
     def set_airfoil(self, airfoil: str):
         if airfoil[-4:].lower() == '.dat':
             self.camber = airfoil_from_dat(airfoil)
@@ -64,10 +64,10 @@ class LatticeSection(object):
     def return_mirror(self):
         pnt = Point(self.pnt.x, -self.pnt.y, self.pnt.z)
         chord = self.chord
-        angle = self.angle
-        sect = LatticeSection(pnt, chord, angle)
+        twist = self.twist
+        sect = LatticeSection(pnt, chord, twist)
         sect.camber = self.camber
-        sect.bspace = self.bspace
+        sect.bspc = self.bspc
         sect.yspace = self.yspace
         sect.ctrls = self.ctrls
         sect.cdo = self.cdo
@@ -98,26 +98,26 @@ def latticesecttion_from_json(sectdata: dict):
         chord = sectdata['chord']
     else:
         return ValueError
-    if 'angle' in sectdata:
-        angle = sectdata['angle']
+    if 'twist' in sectdata:
+        twist = sectdata['twist']
     else:
-        angle = 0.0
-    sect = LatticeSection(point, chord, angle)
+        twist = 0.0
+    sect = LatticeSection(point, chord, twist)
     if 'cdo' in sectdata:
         sect.set_cdo(sectdata['cdo'])
     if 'noload' in sectdata:
         sect.set_noload(sectdata['noload'])
     if 'airfoil' in sectdata:
         sect.set_airfoil(sectdata['airfoil'])
-    if 'numb' in sectdata and 'bspace' in sectdata:
-        numb = sectdata['numb']
-        bspace = sectdata['bspace']
-        if bspace == 'equal':
-            sect.set_span_equal_spacing(numb)
-        elif bspace == 'cosine':
-            sect.set_span_cosine_spacing(numb)
-        elif bspace == 'semi-cosine':
-            sect.set_span_semi_cosine_spacing(numb)
+    if 'bnum' in sectdata and 'bspc' in sectdata:
+        bnum = sectdata['bnum']
+        bspc = sectdata['bspc']
+        if bspc == 'equal':
+            sect.set_span_equal_spacing(bnum)
+        elif bspc == 'cosine':
+            sect.set_span_cosine_spacing(bnum)
+        elif bspc == 'semi-cosine':
+            sect.set_span_semi_cosine_spacing(bnum)
     if 'controls' in sectdata:
         for name in sectdata['controls']:
             ctrl = latticecontrol_from_json(name, sectdata['controls'][name])

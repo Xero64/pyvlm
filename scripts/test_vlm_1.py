@@ -1,9 +1,9 @@
 #%% Load Dependencies
+from math import pi
 from IPython.display import display
 from pyvlm import LatticeResult, LatticeOptimum
 from pyvlm import latticesystem_from_json
 from pyvlm.tools import elliptical_lift_force_distribution
-from math import pi
 
 #%% Create Lattice System
 jsonfilepath = '../files/Straight_Wing_Cosine_100.json'

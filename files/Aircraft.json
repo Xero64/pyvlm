@@ -11,7 +11,7 @@
     "surfaces": [
         {
             "name": "Wing",
-            "angle": 0.0,
+            "twist": 0.0,
             "mirror": true,
             "cnum": 8,
             "cspc": "cosine",
@@ -24,7 +24,7 @@
                     "ypos": 0.0,
                     "zpos": 0.0,
                     "chord": 0.35,
-                    "angle": 0.0,
+                    "twist": 0.0,
                     "bnum": 6,
                     "bspc": "semi-cosine",
                     "airfoil": "NACA 2412",
@@ -35,7 +35,7 @@
                     "ypos": 0.21,
                     "zpos": null,
                     "chord": 0.35,
-                    "angle": 0.0,
+                    "twist": 0.0,
                     "bnum": 10,
                     "bspc": "semi-cosine",
                     "airfoil": "NACA 2412"
@@ -45,7 +45,7 @@
                     "ypos": 0.8,
                     "zpos": null,
                     "chord": null,
-                    "angle": null,
+                    "twist": null,
                     "bnum": 40,
                     "bspc": "semi-cosine",
                     "airfoil": "NACA 2412"
@@ -55,7 +55,7 @@
                     "ypos": 1.8,
                     "zpos": null,
                     "chord": null,
-                    "angle": null,
+                    "twist": null,
                     "bnum": 30,
                     "bspc": "cosine",
                     "airfoil": "NACA 2412",
@@ -74,7 +74,7 @@
                     "ypos": 2.25,
                     "zpos": 0.0,
                     "chord": 0.2,
-                    "angle": -1.5
+                    "twist": -1.5
                 }
             ]
         },
@@ -86,7 +86,7 @@
             "xpos": 2.3,
             "ypos": 0.0,
             "zpos": 0.1,
-            "angle": -1.8,
+            "twist": -1.8,
             "sections": [
                 {
                     "xpos": 0.0,
@@ -115,7 +115,7 @@
         },
         {
             "name": "Vertical Tail",
-            "angle": 0.0,
+            "twist": 0.0,
             "cnum": 5,
             "cspc": "cosine",
             "xpos": 2.3,
@@ -127,7 +127,7 @@
                     "ypos": 0.0,
                     "zpos": 0.0,
                     "chord": 0.25,
-                    "angle": 0.0,
+                    "twist": 0.0,
                     "bnum": 30,
                     "bspc": "cosine",
                     "controls": {
@@ -145,7 +145,7 @@
                     "ypos": 0.0,
                     "zpos": 0.4,
                     "chord": 0.15,
-                    "angle": 0.0
+                    "twist": 0.0
                 }
             ]
         }
@@ -181,7 +181,7 @@
             "density": 0.945,
             "speed": 50.0,
             "mass": "Forward CG",
-            "bank angle": 60.0
+            "bank twist": 60.0
         },
         {
             "name": "Positive 1g Cruise + 15deg Side Slip",

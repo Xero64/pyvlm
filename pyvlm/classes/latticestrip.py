@@ -49,11 +49,11 @@ class LatticeStrip(object):
         pntb = self.pnt2+0.25*self.crd2*ihat
         vecab = pntb-pnta
         self.pntq = pnta+self.bfrc*vecab
-    def set_angles(self, ang1: float, ang2: float):
+    def set_twists(self, ang1: float, ang2: float):
         self.ang1 = ang1
         self.ang2 = ang2
-    def set_angle(self, angle: float):
-        self._ang = angle
+    def set_twist(self, twist: float):
+        self._ang = twist
     def set_cdo(self, cdo1: float, cdo2: float):
         self.cdo1 = cdo1
         self.cdo2 = cdo2
@@ -102,7 +102,7 @@ class LatticeStrip(object):
             self._crd = self.crd1+(self.crd2-self.crd1)*self.bfrc
         return self._crd
     @property
-    def angle(self):
+    def twist(self):
         if self._ang is None:
             self._ang = self.ang1+(self.ang2-self.ang1)*self.bfrc
         return self._ang

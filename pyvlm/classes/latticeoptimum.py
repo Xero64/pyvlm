@@ -105,7 +105,7 @@ class LatticeOptimum(LatticeResult):
 
         da = dal.transpose().tolist()[0]
 
-        al = [strp.angle for i, strp in enumerate(self.sys.strps)]
+        al = [strp.twist for i, strp in enumerate(self.sys.strps)]
         alc = [al[i]+da[i] for i in range(nums)]
 
         self.sys.set_strip_alpha(alc)
@@ -132,7 +132,7 @@ class LatticeOptimum(LatticeResult):
             dal = self.optimum_strip_twist_iteration()
             # self.reset()
             nrmdal = norm(dal)
-        al = [strp.angle for i, strp in enumerate(self.sys.strps)]
+        al = [strp.twist for i, strp in enumerate(self.sys.strps)]
         return al
     def plot_target_phi_distribution(self, ax=None):
         if ax is None:
@@ -148,7 +148,7 @@ class LatticeOptimum(LatticeResult):
             ax = fig.gca()
             ax.grid(True)
         y = [strp.pnti.y for i, strp in enumerate(self.sys.strps)]
-        al = [strp.angle for i, strp in enumerate(self.sys.strps)]
+        al = [strp.twist for i, strp in enumerate(self.sys.strps)]
         ax.plot(y, al, label=f'{self.name} Strip Twist')
         ax.legend()
         return ax

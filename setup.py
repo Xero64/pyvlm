@@ -13,14 +13,13 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/Xero64/pyvlm",
     packages=setuptools.find_packages(),
-    classifiers=(
+    classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-    ),
-    python_requires='>=3.7',
+    ],
+    python_requires='>=3.8',
     entry_points = {
         'console_scripts': ['pyvlm=pyvlm.__main__:main',],
     }
 )
-

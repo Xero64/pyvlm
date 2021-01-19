@@ -10,7 +10,7 @@
     "surfaces": [
         {
             "name": "Wing",
-            "angle": 0.0,
+            "twist": 0.0,
             "mirror": true,
             "cnum": 2,
             "cspc": "cosine",
@@ -20,7 +20,7 @@
                     "ypos": 0.0,
                     "zpos": 0.0,
                     "chord": 0.5,
-                    "angle": 0.0,
+                    "twist": 0.0,
                     "bnum": 50,
                     "bspc": "semi-elliptical"
                 },
@@ -29,7 +29,7 @@
                     "ypos": 5.0,
                     "zpos": 0.0,
                     "chord": 0.5,
-                    "angle": 0.0
+                    "twist": 0.0
                 }
             ]
         }

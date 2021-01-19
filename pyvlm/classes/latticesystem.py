@@ -291,7 +291,7 @@ class LatticeSystem(object):
         return sgrp
     def set_strip_alpha(self, alpha: list):
         for strp in self.strps:
-            strp.set_angle(alpha[strp.lsid])
+            strp.set_twist(alpha[strp.lsid])
         self._aic = None
         self._afs = None
         self._ungam = None
@@ -316,8 +316,8 @@ class LatticeSystem(object):
             width = strp.dst
             area = strp.area
             dihed = strp.dihedral
-            angle = strp.angle
-            table.add_row([j, xpos, ypos, zpos, chord, width, area, dihed, angle])
+            twist = strp.twist
+            table.add_row([j, xpos, ypos, zpos, chord, width, area, dihed, twist])
         return table
     @property
     def panel_geometry(self):

@@ -10,7 +10,7 @@
     "surfaces": [
         {
             "name": "Wing",
-            "angle": 0.0,
+            "twist": 0.0,
             "mirror": true,
             "cnum": 16,
             "cspc": "cosine",
