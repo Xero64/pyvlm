@@ -279,12 +279,14 @@ def latticesurface_from_json(surfdata: dict, display: bool=False):
         sect.offset_position(xpos, ypos, zpos)
         sect.offset_twist(twist)
     surf = LatticeSurface(name, sects, mirror, funcs)
-    if 'cnum' in surfdata and 'cspc' in surfdata:
+    if 'cnum' in surfdata:
         cnum = surfdata['cnum']
-        cspc = surfdata['cspc']
+        cspc = 'cosine'
+        if 'cspc' in surfdata:
+            cspc = surfdata['cspc'].lower()
         if cspc == 'equal':
             surf.set_chord_equal_distribution(cnum)
-        elif cspc == 'cosine':
+        elif cspc in ('cosine', 'full-cosine'):
             surf.set_chord_cosine_distribution(cnum)
     return surf
 

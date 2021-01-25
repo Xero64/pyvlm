@@ -1,7 +1,6 @@
-from pyvlm.classes import LatticeSystem
-from pyvlm.classes import LatticeTrim
-from .mass import Mass, MassCollection
 from pygeom.geom3d import Point
+from .mass import Mass, MassCollection
+from ..classes import LatticeSystem
 
 class LoopingTrim(object):
     name = None
@@ -47,6 +46,7 @@ class LoopingTrim(object):
         self.loadfac = loadfac
         self.reset()
     def create_trim_result(self):
+        from ..classes import LatticeTrim
         ltrm = LatticeTrim(self.name, self.sys)
         ltrm.set_density(rho=self.density)
         ltrm.set_state(speed=self.speed, qco2V=self.qco2V)
@@ -171,6 +171,7 @@ class TurningTrim(object):
         self.bankang = bankang
         self.reset()
     def create_trim_result(self):
+        from ..classes import LatticeTrim
         ltrm = LatticeTrim(self.name, self.sys)
         ltrm.set_density(rho=self.density)
         ltrm.set_state(speed=self.speed, qco2V=self.qco2V, rbo2V=self.rbo2V)
@@ -312,6 +313,7 @@ class LevelTrim(object):
             self.mass = mass
         self.reset()
     def create_trim_result(self):
+        from ..classes import LatticeTrim
         lres = LatticeTrim(self.name, self.sys)
         lres.set_density(rho=self.density)
         lres.set_state(speed=self.speed)

@@ -1,9 +1,11 @@
-from time import time
-from .latticeresult import LatticeResult, GammaResult
-from .latticesystem import LatticeSystem
+from time import perf_counter
+from math import degrees, radians
 from numpy.matlib import zeros
 from numpy.linalg import norm, inv
-from math import degrees, radians
+from .latticeresult import LatticeResult, GammaResult
+from .latticesystem import LatticeSystem
+from ..tools.trim import LoopingTrim, TurningTrim
+from ..tools.mass import Mass
 
 class LatticeTrim(LatticeResult):
     CLt = None
@@ -15,7 +17,7 @@ class LatticeTrim(LatticeResult):
     trmmom = None
     trmlft = None
     def __init__(self, name: str, sys: LatticeSystem):
-        super(LatticeTrim, self).__init__(name, sys)
+        super().__init__(name, sys)
         self.set_trim_loads()
     def set_targets(self, CLt: float=0.0, CYt: float=0.0,
                     Clt: float=0.0, Cmt: float=0.0, Cnt: float=0.0):
@@ -197,10 +199,10 @@ class LatticeTrim(LatticeResult):
         while nrmC > crit:
             if display:
                 print(f'Iteration {i:d}')
-                start = time()
+                start = perf_counter()
             Dcur = self.trim_iteration()
             if display:
-                finish = time()
+                finish = perf_counter()
                 elapsed = finish-start
                 print(f'Trim Internal Iteration Duration = {elapsed:.3f} seconds.')
             if Dcur is False:
@@ -233,8 +235,6 @@ class LatticeTrim(LatticeResult):
                 return False
 
 def latticetrim_from_json(lsys: LatticeSystem, resdata: dict):
-    from pyvlm.tools.trim import LoopingTrim, TurningTrim
-    from pyvlm.tools.mass import Mass
     name = resdata['name']
 
     if resdata['trim'] == 'Looping Trim':
@@ -279,6 +279,23 @@ def latticetrim_from_json(lsys: LatticeSystem, resdata: dict):
     trim.set_mass(mass)
 
     ltrm = trim.create_trim_result()
+
+    if 'mach' in resdata:
+        mach = resdata['mach']
+        ltrm.set_state(mach=mach)
+
+    trim_force = True
+    trim_moment = True
+    trim_lift = False
+    if 'trim moment' in resdata:
+        trim_moment = resdata['trim moment']
+    if 'trim lift' in resdata:
+        trim_lift = resdata['trim lift']
+    if trim_lift:
+        trim_force = False
+        trim_moment = False
+
+    ltrm.set_trim_loads(trmfrc=trim_force, trmmom=trim_moment, trmlft=trim_lift)
 
     lsys.results[name] = ltrm
 
