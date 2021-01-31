@@ -114,7 +114,7 @@ def latticesecttion_from_json(sectdata: dict):
         bspc = sectdata['bspc']
         if bspc == 'equal':
             sect.set_span_equal_spacing(bnum)
-        elif bspc == 'cosine':
+        elif bspc in ('full-cosine', 'cosine'):
             sect.set_span_cosine_spacing(bnum)
         elif bspc == 'semi-cosine':
             sect.set_span_semi_cosine_spacing(bnum)

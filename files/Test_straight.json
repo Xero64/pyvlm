@@ -13,7 +13,7 @@
             "name": "Wing",
             "twist": 0.0,
             "mirror": true,
-            "cnum": 16,
+            "cnum": 20,
             "cspc": "cosine",
             "sections": [
                 {
@@ -22,7 +22,7 @@
                     "zpos": 0.0,
                     "chord": 0.5,
                     "twist": 0.0,
-                    "bnum": 20,
+                    "bnum": 25,
                     "bspc": "semi-cosine",
                     "airfoil": "NACA 0012"
                 },

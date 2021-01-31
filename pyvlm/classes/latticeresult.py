@@ -1460,8 +1460,8 @@ class StabilityResult(object):
         if self._pdbo2V is None:
             ofs = Vector(2*self.res.speed/self.res.sys.bref, 0.0, 0.0)
             gampdbo2V = self.res.ungam[:, 1]*ofs
-            self._pbo2V = GammaResult(self.res, gampdbo2V)
-        return self._pbo2V
+            self._pdbo2V = GammaResult(self.res, gampdbo2V)
+        return self._pdbo2V
     @property
     def qdco2V(self):
         if self._qdco2V is None:
