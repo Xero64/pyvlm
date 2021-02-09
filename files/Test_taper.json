@@ -7,13 +7,12 @@
     "xref": 0.125,
     "yref": 0.0,
     "zref": 0.0,
-    "type": "geom",
     "surfaces": [
         {
             "name": "Wing",
             "twist": 0.0,
             "mirror": true,
-            "cnum": 6,
+            "cnum": 12,
             "cspc": "cosine",
             "sections": [
                 {
@@ -22,7 +21,7 @@
                     "zpos": 0.0,
                     "chord": 0.75,
                     "twist": 0.0,
-                    "bnum": 20,
+                    "bnum": 25,
                     "bspc": "semi-cosine",
                     "airfoil": "NACA 0012"
                 },

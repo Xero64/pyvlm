@@ -1,5 +1,5 @@
 {
-    "name": "Test Twist Sweep",
+    "name": "Test Twist Taper",
     "mach": 0.0,
     "sref": 5.0,
     "cref": 0.5,
@@ -12,7 +12,7 @@
             "name": "Wing",
             "twist": 0.0,
             "mirror": true,
-            "cnum": 6,
+            "cnum": 12,
             "cspc": "cosine",
             "sections": [
                 {
@@ -21,15 +21,17 @@
                     "zpos": 0.0,
                     "chord": 0.75,
                     "twist": 0.0,
-                    "bnum": 20,
-                    "bspc": "semi-cosine"
+                    "bnum": 25,
+                    "bspc": "semi-cosine",
+                    "airfoil": "NACA 0012"
                 },
                 {
                     "xpos": 0.125,
                     "ypos": 5.0,
                     "zpos": 0.0,
                     "chord": 0.25,
-                    "twist": -2.0
+                    "twist": -2.0,
+                    "airfoil": "NACA 0012"
                 }
             ]
         }
@@ -37,12 +39,96 @@
     "cases": [
         {
             "name": "Test Alpha",
-            "alpha": 3.0
+            "alpha": 3.0,
+            "outputs": [
+                "stability derivatives",
+                "stability derivatives body"
+            ]
+        },
+        {
+            "name": "Test Beta",
+            "beta": 3.0,
+            "outputs": [
+                "stability derivatives",
+                "stability derivatives body"
+            ]
+        },
+        {
+            "name": "Test pbo2V",
+            "pbo2V": 0.01,
+            "outputs": [
+                "stability derivatives",
+                "stability derivatives body"
+            ]
+        },
+        {
+            "name": "Test qco2V",
+            "qco2V": 0.01,
+            "outputs": [
+                "stability derivatives",
+                "stability derivatives body"
+            ]
+        },
+        {
+            "name": "Test rbo2V",
+            "rbo2V": 0.01,
+            "outputs": [
+                "stability derivatives",
+                "stability derivatives body"
+            ]
         },
         {
             "name": "Test Alpha Mach",
             "alpha": 3.0,
-            "mach": 0.4
+            "mach": 0.4,
+            "outputs": [
+                "stability derivatives",
+                "stability derivatives body"
+            ]
+        },
+        {
+            "name": "Test Beta Mach",
+            "beta": 3.0,
+            "mach": 0.4,
+            "outputs": [
+                "stability derivatives",
+                "stability derivatives body"
+            ]
+        },
+        {
+            "name": "Test pbo2V Mach",
+            "pbo2V": 0.01,
+            "mach": 0.4,
+            "outputs": [
+                "stability derivatives",
+                "stability derivatives body"
+            ]
+        },
+        {
+            "name": "Test qco2V Mach",
+            "qco2V": 0.01,
+            "mach": 0.4,
+            "outputs": [
+                "stability derivatives",
+                "stability derivatives body"
+            ]
+        },
+        {
+            "name": "Test rbo2V Mach",
+            "rbo2V": 0.01,
+            "mach": 0.4,
+            "outputs": [
+                "stability derivatives",
+                "stability derivatives body"
+            ]
+        },
+        {
+            "name": "Test Zero",
+            "alpha": 0.0,
+            "outputs": [
+                "stability derivatives",
+                "stability derivatives body"
+            ]
         }
     ]
 }

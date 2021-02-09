@@ -7,13 +7,12 @@
     "xref": 0.125,
     "yref": 0.0,
     "zref": 0.0,
-    "type": "geom",
     "surfaces": [
         {
             "name": "Wing",
             "twist": 0.0,
             "mirror": true,
-            "cnum": 20,
+            "cnum": 12,
             "cspc": "cosine",
             "sections": [
                 {
