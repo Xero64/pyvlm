@@ -347,7 +347,7 @@ class LatticeResult(object):
             ax = fig.gca()
             ax.grid(True)
         if surfaces is None:
-            srfcs = [srfc for srfc in self.sys.srfcs]
+            srfcs = self.sys.srfcs
         else:
             srfcs = []
             for srfc in self.sys.srfcs:
@@ -387,7 +387,7 @@ class LatticeResult(object):
             ax = fig.gca()
             ax.grid(True)
         if surfaces is None:
-            srfcs = [srfc for srfc in self.sys.srfcs]
+            srfcs = self.sys.srfcs
         else:
             srfcs = []
             for srfc in self.sys.srfcs:
@@ -427,7 +427,7 @@ class LatticeResult(object):
             ax = fig.gca()
             ax.grid(True)
         if surfaces is None:
-            srfcs = [srfc for srfc in self.sys.srfcs]
+            srfcs = self.sys.srfcs
         else:
             srfcs = []
             for srfc in self.sys.srfcs:
@@ -467,7 +467,7 @@ class LatticeResult(object):
             ax = fig.gca()
             ax.grid(True)
         if surfaces is None:
-            srfcs = [srfc for srfc in self.sys.srfcs]
+            srfcs = self.sys.srfcs
         else:
             srfcs = []
             for srfc in self.sys.srfcs:
@@ -507,7 +507,7 @@ class LatticeResult(object):
             ax = fig.gca()
             ax.grid(True)
         if surfaces is None:
-            srfcs = [srfc for srfc in self.sys.srfcs]
+            srfcs = self.sys.srfcs
         else:
             srfcs = []
             for srfc in self.sys.srfcs:
@@ -547,7 +547,7 @@ class LatticeResult(object):
             ax = fig.gca()
             ax.grid(True)
         if surfaces is None:
-            srfcs = [srfc for srfc in self.sys.srfcs]
+            srfcs = self.sys.srfcs
         else:
             srfcs = []
             for srfc in self.sys.srfcs:
@@ -587,7 +587,7 @@ class LatticeResult(object):
             ax = fig.gca()
             ax.grid(True)
         if surfaces is None:
-            srfcs = [srfc for srfc in self.sys.srfcs]
+            srfcs = self.sys.srfcs
         else:
             srfcs = []
             for srfc in self.sys.srfcs:
