@@ -1,5 +1,6 @@
 from math import pi, radians, cos, sin, atan2
-from pygeom.geom3d import Point, Vector
+from typing import List
+from pygeom.geom3d import Vector, Vector
 from .latticestrip import LatticeStrip
 
 fourPi = 4*pi
@@ -20,7 +21,7 @@ class LatticePanel(object):
     strp = None
     crd = None
     area = None
-    def __init__(self, lpid: int, pnts: list, cspc: float, strp: LatticeStrip):
+    def __init__(self, lpid: int, pnts: list, cspc: List[float], strp: LatticeStrip):
         self.lpid = lpid
         self.pnts = pnts
         self.cspc = cspc
@@ -40,18 +41,18 @@ class LatticePanel(object):
         self.pntb = pnt2+self.cfr1*vecb
         self.leni = self.pntb-self.pnta
         self.pntg = self.pnta+0.5*self.leni
-        self.pnti = self.pnta+self.strp.bfrc*self.leni
+        self.pnti = self.pnta + self.strp.bfrc*self.leni
         self.th = atan2(self.leni.z, self.leni.y)
-        self.width = (self.leni.y**2+self.leni.z**2)**0.5
+        self.width = (self.leni.y**2 + self.leni.z**2)**0.5
         crda = veca.return_magnitude()
         crdb = vecb.return_magnitude()
-        self.crd = crda+(crdb-crda)*self.strp.bfrc
+        self.crd = crda + (crdb - crda)*self.strp.bfrc
         self.area = self.strp.dst*self.crd
         al1 = self.sht.sect1.camber.return_camber_angle(self.cspc[3])
         al2 = self.sht.sect2.camber.return_camber_angle(self.cspc[3])
-        self.alpha = self.strp.bspc[1]*(al2-al1)+al1
-        pnta = pnt1+self.cfr2*veca
-        pntb = pnt2+self.cfr2*vecb
+        self.alpha = al1 + self.strp.bspc[1]*(al2 - al1)
+        pnta = pnt1 + self.cfr2*veca
+        pntb = pnt2 + self.cfr2*vecb
         lenc = pntb-pnta
         self.pntc = pnta+self.strp.bfrc*lenc
     def return_panel_point(self):
@@ -98,7 +99,7 @@ class LatticePanel(object):
             return self.strp.cdo*self.area
     def dndl(self, gain: float, hvec: Vector):
         return gain*(hvec**self.nrml)
-    def velocity(self, pnt: Point):
+    def velocity(self, pnt: Vector):
         r = pnt
         ra = self.pnta
         rb = self.pntb

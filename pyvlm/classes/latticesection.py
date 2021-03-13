@@ -1,4 +1,4 @@
-from pygeom.geom3d import Point, ihat
+from pygeom.geom3d import Vector, ihat
 from .latticecontrol import LatticeControl, latticecontrol_from_json
 from ..tools.camber import FlatPlate, NACA4, NACA6Series
 from ..tools import equal_spacing, full_cosine_spacing, semi_cosine_spacing
@@ -14,10 +14,11 @@ class LatticeSection(object):
     yspace = None
     mirror = None
     noload = None
+    ruled = None
     ctrls = None
     cdo = None
     bpos = None
-    def __init__(self, pnt: Point, chord: float, twist: float):
+    def __init__(self, pnt: Vector, chord: float, twist: float):
         self.pnt = pnt
         self.chord = chord
         self.twist = twist
@@ -62,7 +63,7 @@ class LatticeSection(object):
     def add_control(self, ctrl: LatticeControl):
         self.ctrls[ctrl.name] = ctrl
     def return_mirror(self):
-        pnt = Point(self.pnt.x, -self.pnt.y, self.pnt.z)
+        pnt = Vector(self.pnt.x, -self.pnt.y, self.pnt.z)
         chord = self.chord
         twist = self.twist
         sect = LatticeSection(pnt, chord, twist)
@@ -93,7 +94,7 @@ def latticesecttion_from_json(sectdata: dict):
         zpos = sectdata['zpos']
     else:
         return ValueError
-    point = Point(xpos, ypos, zpos)
+    point = Vector(xpos, ypos, zpos)
     if 'chord' in sectdata:
         chord = sectdata['chord']
     else:

@@ -1,7 +1,7 @@
 from math import degrees
 from numpy.matlib import zeros, matrix
 from numpy.linalg import solve, norm
-from pygeom.geom3d import Point
+from pygeom.geom3d import Vector
 from matplotlib.pyplot import figure
 from .latticeresult import LatticeResult
 
@@ -12,12 +12,12 @@ class LatticeOptimum(LatticeResult):
     lamopt = None
     _bdg = None
     _adg = None
-    def add_constraint(self, param: str, value: float, strplst: list=None, point: Point=None):
+    def add_constraint(self, param: str, value: float, strplst: list=None, point: Vector=None):
         if self.constr is None:
             self.constr = []
         constr = Constraint(self, param, value, point, strplst)
         self.constr.append(constr)
-    def add_record(self, param: str, strplst: list=None, point: Point=None):
+    def add_record(self, param: str, strplst: list=None, point: Vector=None):
         if self.record is None:
             self.record = []
         record = Record(self, param, point, strplst)
@@ -192,7 +192,7 @@ class Record(object):
     _bcm = None
     _rhov = None
     _value = None
-    def __init__(self, opt: LatticeOptimum, param: str, pnt: Point=None, strplst: list=None):
+    def __init__(self, opt: LatticeOptimum, param: str, pnt: Vector=None, strplst: list=None):
         self.opt = opt
         self.param = param
         self.point = pnt
@@ -288,7 +288,7 @@ class Record(object):
         return '<LatticeOptimum Record of {:s}>'.format(self.param)
 
 class Constraint(Record):
-    def __init__(self, opt: LatticeOptimum, param: str, value: float, pnt: Point=None, strplst: list=None):
+    def __init__(self, opt: LatticeOptimum, param: str, value: float, pnt: Vector=None, strplst: list=None):
         super(Constraint, self).__init__(opt, param, pnt=pnt, strplst=strplst)
         self._value = value
     def __repr__(self):

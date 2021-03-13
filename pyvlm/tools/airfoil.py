@@ -1,5 +1,5 @@
 from matplotlib.pyplot import figure
-from pygeom.geom2d import CubicSpline2D, Point2D
+from pygeom.geom2d import CubicSpline2D, Vector2D
 from .spacing import full_cosine_spacing
 from pygeom.geom1d import CubicSpline
 
@@ -36,7 +36,7 @@ class Airfoil(object):
         self.crd = self.xte-self.xpos
         self.xn = [(xi-self.xpos)/self.crd for xi in self.x]
         self.yn = [(yi-self.ypos)/self.crd for yi in self.y]
-        pnts = [Point2D(xi, yi) for xi, yi in zip(self.xn, self.yn)]
+        pnts = [Vector2D(xi, yi) for xi, yi in zip(self.xn, self.yn)]
         self.spline = CubicSpline2D(pnts)
         dxpos = self.spline.dr[self.ile].x
         dypos = self.spline.dr[self.ile].y

@@ -1,4 +1,5 @@
-from pygeom.geom3d import ihat, Coordinate
+from math import cos, sin, tan, radians, degrees, atan2
+from pygeom.geom3d import ihat, Coordinate, Vector
 from .latticesection import LatticeSection
 from .latticestrip import LatticeStrip
 
@@ -13,6 +14,7 @@ class LatticeSheet(object):
     pnls = None
     ctrls = None
     noload = None
+    ruled = None
     width = None
     area = None
     def __init__(self, sect1: LatticeSection, sect2: LatticeSection):
@@ -24,6 +26,7 @@ class LatticeSheet(object):
             self.mirror = True
         else:
             self.mirror = False
+        self.inherit_ruled()
         self.inherit_noload()
         self.inherit_spacing()
         self.inherit_controls()
@@ -45,6 +48,19 @@ class LatticeSheet(object):
         anga = self.sect1.twist
         angb = self.sect2.twist
         angr = angb-anga
+        if self.ruled:
+            radanga = radians(anga)
+            cosanga = cos(radanga)
+            sinanga = sin(radanga)
+            xla = cosanga*crda
+            zla = -sinanga*crda
+            radangb = radians(angb)
+            cosangb = cos(radangb)
+            sinangb = sin(radangb)
+            xlb = cosangb*crdb
+            zlb = -sinangb*crdb
+            xlr = xlb-xla
+            zlr = zlb-zla
         cdoa = self.sect1.cdo
         cdob = self.sect2.cdo
         cdor = cdob-cdoa
@@ -52,17 +68,32 @@ class LatticeSheet(object):
         for i in range(lenb):
             bspc = self.bspc[i]
             bsp1 = bspc[0]
+            bspm = bspc[1]
             bsp2 = bspc[2]
-            pnt1 = pnta+bsp1*vecr
-            pnt2 = pnta+bsp2*vecr
-            crd1 = crda+bsp1*crdr
-            crd2 = crda+bsp2*crdr
+            pnt1 = pnta + bsp1*vecr
+            pnt2 = pnta + bsp2*vecr
+            pntm = pnta + bspm*vecr
+            crd1 = crda + bsp1*crdr
+            crd2 = crda + bsp2*crdr
             strp = LatticeStrip(lsid, pnt1, pnt2, crd1, crd2, bspc)
-            ang1 = anga+bsp1*angr
-            ang2 = anga+bsp2*angr
+            if self.ruled:
+                xl1 = xla + bsp1*xlr
+                xl2 = xla + bsp2*xlr
+                xlm = xla + bspm*xlr
+                zl1 = zla + bsp1*zlr
+                zl2 = zla + bsp2*zlr
+                zlm = zla + bspm*zlr
+                ang1 = degrees(atan2(-zl1, xl1))
+                ang2 = degrees(atan2(-zl2, xl2))
+                angm = degrees(atan2(-zlm, xlm))
+            else:
+                ang1 = anga+bsp1*angr
+                ang2 = anga+bsp2*angr
+                angm = anga+bspm*angr
             strp.set_twists(ang1, ang2)
-            cdo1 = cdoa+bsp1*cdor
-            cdo2 = cdoa+bsp2*cdor
+            strp.set_twist(angm)
+            cdo1 = cdoa + bsp1*cdor
+            cdo2 = cdoa + bsp2*cdor
             strp.set_cdo(cdo1, cdo2)
             strp.sht = self
             self.strps.append(strp)
@@ -73,6 +104,11 @@ class LatticeSheet(object):
         for strp in self.strps:
             for pnl in strp.pnls:
                 self.pnls.append(pnl)
+    def inherit_ruled(self):
+        if self.mirror:
+            self.ruled = self.sect2.ruled
+        else:
+            self.ruled = self.sect1.ruled
     def inherit_noload(self):
         if self.mirror:
             self.noload = self.sect2.noload

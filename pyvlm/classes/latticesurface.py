@@ -51,7 +51,7 @@ class LatticeSurface(object):
         else:
             self.set_chord_equal_distribution(cnum)
     def mesh(self, lsid: int, lpid: int):
-        from pygeom.geom3d import Point
+        from pygeom.geom3d import Vector
         from numpy.matlib import empty
         nums = len(self.sects)
         self.shts = []
@@ -70,7 +70,7 @@ class LatticeSurface(object):
         crds.append(self.strps[-1].crd2)
         lenb = len(pnts)
         lenc = len(self.cspc)
-        self.pnts = empty((lenb, lenc+1), dtype=Point)
+        self.pnts = empty((lenb, lenc+1), dtype=Vector)
         for i in range(lenb):
             minx = pnts[i].x
             y = pnts[i].y
@@ -78,11 +78,11 @@ class LatticeSurface(object):
             c = crds[i]
             cd = self.cspc[0][0]
             x = minx+cd*c
-            self.pnts[i, 0] = Point(x, y, z)
+            self.pnts[i, 0] = Vector(x, y, z)
             for j in range(1, lenc+1):
                 cd = self.cspc[j-1][-1]
                 x = minx+cd*c
-                self.pnts[i, j] = Point(x, y, z)
+                self.pnts[i, j] = Vector(x, y, z)
         self.pnls = empty((lenb-1, lenc), dtype=LatticePanel)
         for i, strp in enumerate(self.strps):
             for j in range(lenc):
@@ -275,9 +275,14 @@ def latticesurface_from_json(surfdata: dict, display: bool=False):
     twist = 0.0
     if 'twist' in surfdata:
         twist = surfdata['twist']
+    if 'ruled' in surfdata:
+        ruled = surfdata['ruled']
+    else:
+        ruled = False
     for sect in sects:
         sect.offset_position(xpos, ypos, zpos)
         sect.offset_twist(twist)
+        sect.ruled = ruled
     surf = LatticeSurface(name, sects, mirror, funcs)
     if 'cnum' in surfdata:
         cnum = surfdata['cnum']

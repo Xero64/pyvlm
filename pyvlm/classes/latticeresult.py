@@ -1,4 +1,4 @@
-from pygeom.geom3d import Point, Coordinate, Vector, jhat, ihat
+from pygeom.geom3d import Vector, Coordinate, Vector, jhat, ihat
 from pygeom.matrix3d import zero_matrix_vector, elementwise_multiply
 from pygeom.matrix3d import elementwise_cross_product, elementwise_dot_product
 from numpy.matlib import zeros, matrix
@@ -95,7 +95,7 @@ class LatticeResult(object):
         for control in kwargs:
             self.ctrls[control] = kwargs[control]
         self.reset()
-    def set_cg(self, rcg: Point):
+    def set_cg(self, rcg: Vector):
         self.rcg = rcg
         self.reset()
     @property
@@ -894,7 +894,7 @@ class LatticeResult(object):
             table.add_column('Cl', cfrm, data=[self.nfres.Cl])
             table.add_column('Cm', cfrm, data=[self.nfres.Cm])
             table.add_column('Cn', cfrm, data=[self.nfres.Cn])
-            table.add_column('e', efrm, data=[self.nfres.e])
+            # table.add_column('e', efrm, data=[self.nfres.e])
             if self.sys.cdo != 0.0:
                 lod = self.nfres.CL/(self.pdres.CDo+self.nfres.CDi)
                 table.add_column('L/D', '.5g', data=[lod])
@@ -1378,7 +1378,7 @@ def latticeresult_from_json(lsys: LatticeSystem, resdata: dict):
             lres.ctrls[key] = resdata[key]
         elif key == 'rcg':
             rcgdata = resdata[key]
-            rcg = Point(rcgdata['x'], rcgdata['y'], rcgdata['z'])
+            rcg = Vector(rcgdata['x'], rcgdata['y'], rcgdata['z'])
             lres.set_cg(rcg)
     lsys.results[name] = lres
     return lres

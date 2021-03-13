@@ -1,4 +1,4 @@
-from pygeom.geom3d import Point
+from pygeom.geom3d import Vector
 from .mass import Mass, MassCollection
 from ..classes import LatticeSystem
 
@@ -51,7 +51,7 @@ class LoopingTrim(object):
         ltrm.set_density(rho=self.density)
         ltrm.set_state(speed=self.speed, qco2V=self.qco2V)
         ltrm.set_targets(CLt=self.CL)
-        rcg = Point(self.mass.xcm, self.mass.ycm, self.mass.zcm)
+        rcg = Vector(self.mass.xcm, self.mass.ycm, self.mass.zcm)
         ltrm.set_cg(rcg)
         return ltrm
     @property
@@ -176,7 +176,7 @@ class TurningTrim(object):
         ltrm.set_density(rho=self.density)
         ltrm.set_state(speed=self.speed, qco2V=self.qco2V, rbo2V=self.rbo2V)
         ltrm.set_targets(CLt=self.CL)
-        rcg = Point(self.mass.xcm, self.mass.ycm, self.mass.zcm)
+        rcg = Vector(self.mass.xcm, self.mass.ycm, self.mass.zcm)
         ltrm.set_cg(rcg)
         return ltrm
     @property

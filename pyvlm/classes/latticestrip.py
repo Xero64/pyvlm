@@ -1,5 +1,5 @@
 from math import pi, atan2, degrees
-from pygeom.geom3d import Point, Vector, ihat
+from pygeom.geom3d import Vector, Vector, ihat
 
 class LatticeStrip(object):
     lsid = None
@@ -28,7 +28,7 @@ class LatticeStrip(object):
     _ang = None
     _cdo = None
     _area = None
-    def __init__(self, lsid: int, pnt1: Point, pnt2: Point, crd1: float, crd2: float, bspc: tuple):
+    def __init__(self, lsid: int, pnt1: Vector, pnt2: Vector, crd1: float, crd2: float, bspc: tuple):
         self.lsid = lsid
         self.pnt1 = pnt1
         self.pnt2 = pnt2
@@ -63,10 +63,10 @@ class LatticeStrip(object):
         pnt1 = self.pnt1+self.crd1*percrd*ihat
         pnt2 = self.pnt2+self.crd2*percrd*ihat
         return pnt1, pnt2
-    def trefftz_velocity(self, pnt: Point):
-        r = Point(0.0, pnt.y, pnt.z)
-        ra = Point(0.0, self.pnt1.y, self.pnt1.z)
-        rb = Point(0.0, self.pnt2.y, self.pnt2.z)
+    def trefftz_velocity(self, pnt: Vector):
+        r = Vector(0.0, pnt.y, pnt.z)
+        ra = Vector(0.0, self.pnt1.y, self.pnt1.z)
+        rb = Vector(0.0, self.pnt2.y, self.pnt2.z)
         a = r-ra
         b = r-rb
         axx = Vector(0.0, a.z, -a.y)
