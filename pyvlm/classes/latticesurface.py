@@ -6,7 +6,7 @@ from .latticepanel import LatticePanel
 
 class LatticeSurface(object):
     name = None
-    sects = None
+    scts = None
     shts = None
     cspc = None
     xspace = None
@@ -15,24 +15,24 @@ class LatticeSurface(object):
     pnls = None
     area = None
     sgrp = None
-    def __init__(self, name: str, sects: list, mirror: bool, funcs: list):
+    def __init__(self, name: str, scts: list, mirror: bool, funcs: list):
         self.name = name
-        self.sects = sects
+        self.scts = scts
         self.mirror = mirror
         self.funcs = funcs
         self.update()
     def update(self):
-        if self.mirror and self.sects[0].pnt.y == 0.0:
-            numsect = len(self.sects)
-            newsects = []
-            for i in range(numsect-1):
-                sect = self.sects[numsect-1-i]
-                msect = sect.return_mirror()
-                newsects.append(msect)
-            for sect in self.sects:
-                newsects.append(sect)
-            self.sects = newsects
-        elif self.mirror and self.sects[0].pnt.y != 0.0:
+        if self.mirror and self.scts[0].pnt.y == 0.0:
+            numsct = len(self.scts)
+            newscts = []
+            for i in range(numsct-1):
+                sct = self.scts[numsct-1-i]
+                msct = sct.return_mirror()
+                newscts.append(msct)
+            for sct in self.scts:
+                newscts.append(sct)
+            self.scts = newscts
+        elif self.mirror and self.scts[0].pnt.y != 0.0:
             print(f'Warning: Cannot mirror {self.name}.')
             self.mirror = False
     def set_chord_distribution(self, cspc: list):
@@ -53,13 +53,13 @@ class LatticeSurface(object):
     def mesh(self, lsid: int, lpid: int):
         from pygeom.geom3d import Vector
         from numpy.matlib import empty
-        nums = len(self.sects)
+        nums = len(self.scts)
         self.shts = []
         for i in range(nums-1):
             a, b = i, i+1
-            secta = self.sects[a]
-            sectb = self.sects[b]
-            self.shts.append(LatticeSheet(secta, sectb))
+            scta = self.scts[a]
+            sctb = self.scts[b]
+            self.shts.append(LatticeSheet(scta, sctb))
         self.strps = []
         for sht in self.shts:
             lsid = sht.mesh_strips(lsid)
@@ -121,8 +121,8 @@ class LatticeSurface(object):
             wmir = bpos[int(numsht/2)]
             for i in range(len(bpos)):
                 bpos[i] = bpos[i]-wmir
-        for i, sect in enumerate(self.sects):
-            sect.bpos = bpos[i]
+        for i, sct in enumerate(self.scts):
+            sct.bpos = bpos[i]
         for sht in self.shts:
             sht.set_strip_bpos()
         bmax = max(bpos)
@@ -217,7 +217,7 @@ class LatticeSurface(object):
         return '<LatticeSurface {:s}>'.format(self.name)
 
 def latticesurface_from_json(surfdata: dict, display: bool=False):
-    from .latticesection import latticesecttion_from_json
+    from .latticesection import latticesection_from_json
     name = surfdata['name']
     if 'mirror' in surfdata:
         mirror = surfdata['mirror']
@@ -225,18 +225,18 @@ def latticesurface_from_json(surfdata: dict, display: bool=False):
         mirror = False
     if display: print(f'Loading Surface: {name:s}')
     # Read Section Variables
-    sects = []
+    scts = []
     for sectdata in surfdata['sections']:
-        sect = latticesecttion_from_json(sectdata)
-        sects.append(sect)
+        sct = latticesection_from_json(sectdata)
+        scts.append(sct)
     # Linear Interpolate Missing Variables
     x, y, z, c, a = [], [], [], [], []
-    for sect in sects:
-        x.append(sect.pnt.x)
-        y.append(sect.pnt.y)
-        z.append(sect.pnt.z)
-        c.append(sect.chord)
-        a.append(sect.twist)
+    for sct in scts:
+        x.append(sct.pnt.x)
+        y.append(sct.pnt.y)
+        z.append(sct.pnt.z)
+        c.append(sct.chord)
+        a.append(sct.twist)
     if None in y:
         if None is z:
             return ValueError
@@ -244,20 +244,20 @@ def latticesurface_from_json(surfdata: dict, display: bool=False):
             y = linear_interpolate_none(z, y)
     else:
         z = linear_interpolate_none(y, z)
-    lensects = len(sects)
+    lenscts = len(scts)
     b = [0.0]
-    for i in range(lensects-1):
+    for i in range(lenscts-1):
         bi = b[i]+sqrt((y[i+1]-y[i])**2+(z[i+1]-z[i])**2)
         b.append(bi)
     x = linear_interpolate_none(b, x)
     c = linear_interpolate_none(b, c)
     a = linear_interpolate_none(b, a)
-    for i, sect in enumerate(sects):
-        sect.pnt.x = x[i]
-        sect.pnt.y = y[i]
-        sect.pnt.z = z[i]
-        sect.chord = c[i]
-        sect.twist = a[i]
+    for i, sct in enumerate(scts):
+        sct.pnt.x = x[i]
+        sct.pnt.y = y[i]
+        sct.pnt.z = z[i]
+        sct.chord = c[i]
+        sct.twist = a[i]
     # Read in Function Data
     funcs = []
     if 'functions' in surfdata:
@@ -279,11 +279,11 @@ def latticesurface_from_json(surfdata: dict, display: bool=False):
         ruled = surfdata['ruled']
     else:
         ruled = False
-    for sect in sects:
-        sect.offset_position(xpos, ypos, zpos)
-        sect.offset_twist(twist)
-        sect.ruled = ruled
-    surf = LatticeSurface(name, sects, mirror, funcs)
+    for sct in scts:
+        sct.offset_position(xpos, ypos, zpos)
+        sct.offset_twist(twist)
+        sct.ruled = ruled
+    surf = LatticeSurface(name, scts, mirror, funcs)
     if 'cnum' in surfdata:
         cnum = surfdata['cnum']
         cspc = 'cosine'

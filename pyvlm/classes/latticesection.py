@@ -66,14 +66,14 @@ class LatticeSection(object):
         pnt = Vector(self.pnt.x, -self.pnt.y, self.pnt.z)
         chord = self.chord
         twist = self.twist
-        sect = LatticeSection(pnt, chord, twist)
-        sect.camber = self.camber
-        sect.bspc = self.bspc
-        sect.yspace = self.yspace
-        sect.ctrls = self.ctrls
-        sect.cdo = self.cdo
-        sect.mirror = True
-        return sect
+        sct = LatticeSection(pnt, chord, twist)
+        sct.camber = self.camber
+        sct.bspc = self.bspc
+        sct.yspace = self.yspace
+        sct.ctrls = self.ctrls
+        sct.cdo = self.cdo
+        sct.mirror = True
+        return sct
     def return_point(self, percrd: float):
         return self.pnt+self.chord*percrd*ihat
     def get_camber(self, xc: float):
@@ -81,7 +81,7 @@ class LatticeSection(object):
     def __repr__(self):
         return '<LatticeSection>'
 
-def latticesecttion_from_json(sectdata: dict):
+def latticesection_from_json(sectdata: dict):
     if 'xpos' in sectdata:
         xpos = sectdata['xpos']
     else:
@@ -103,24 +103,24 @@ def latticesecttion_from_json(sectdata: dict):
         twist = sectdata['twist']
     else:
         twist = 0.0
-    sect = LatticeSection(point, chord, twist)
+    sct = LatticeSection(point, chord, twist)
     if 'cdo' in sectdata:
-        sect.set_cdo(sectdata['cdo'])
+        sct.set_cdo(sectdata['cdo'])
     if 'noload' in sectdata:
-        sect.set_noload(sectdata['noload'])
+        sct.set_noload(sectdata['noload'])
     if 'airfoil' in sectdata:
-        sect.set_airfoil(sectdata['airfoil'])
+        sct.set_airfoil(sectdata['airfoil'])
     if 'bnum' in sectdata and 'bspc' in sectdata:
         bnum = sectdata['bnum']
         bspc = sectdata['bspc']
         if bspc == 'equal':
-            sect.set_span_equal_spacing(bnum)
+            sct.set_span_equal_spacing(bnum)
         elif bspc in ('full-cosine', 'cosine'):
-            sect.set_span_cosine_spacing(bnum)
+            sct.set_span_cosine_spacing(bnum)
         elif bspc == 'semi-cosine':
-            sect.set_span_semi_cosine_spacing(bnum)
+            sct.set_span_semi_cosine_spacing(bnum)
     if 'controls' in sectdata:
         for name in sectdata['controls']:
             ctrl = latticecontrol_from_json(name, sectdata['controls'][name])
-            sect.add_control(ctrl)
-    return sect
+            sct.add_control(ctrl)
+    return sct
