@@ -85,20 +85,20 @@ def latticesection_from_json(sectdata: dict):
     if 'xpos' in sectdata:
         xpos = sectdata['xpos']
     else:
-        return ValueError
+        raise ValueError()
     if 'ypos' in sectdata:
         ypos = sectdata['ypos']
     else:
-        return ValueError
+        raise ValueError()
     if 'zpos' in sectdata:
         zpos = sectdata['zpos']
     else:
-        return ValueError
+        raise ValueError()
     point = Vector(xpos, ypos, zpos)
     if 'chord' in sectdata:
         chord = sectdata['chord']
     else:
-        return ValueError
+        raise ValueError()
     if 'twist' in sectdata:
         twist = sectdata['twist']
     else:

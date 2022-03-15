@@ -1080,7 +1080,7 @@ class GammaResult(object):
     #         dx = (dz*f.x - m.y)/f.z
     #         dy = (dz*f.y + m.x)/f.z
     #     else:
-    #         return ValueError()
+    #         raise ValueError()
     #     x = self.res.rcg.x-dx
     #     y = self.res.rcg.y-dy
     #     z = self.res.rcg.z-dz

@@ -456,7 +456,7 @@ def velocity_matrix(ra: MatrixVector, rb: MatrixVector, rc: MatrixVector,
                     betm: float=1.0, tol: float=1e-12):
 
     if ra.shape != rb.shape:
-        return ValueError()
+        raise ValueError()
 
     numi = rc.shape[0]
     numj = ra.shape[1]
