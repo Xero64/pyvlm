@@ -1,18 +1,22 @@
-#%% Import Dependencies
+#%%
+# Import Dependencies
 from IPython.display import display_markdown
 from pyvlm import latticesystem_from_json
 
-#%% Create Lattice System
+#%%
+# Create Lattice System
 
 jsonfilepath = '../files/Test_rhofw.json'
 lsys = latticesystem_from_json(jsonfilepath)
 display_markdown(lsys)
 
-#%% Design Point Result
+#%%
+# Design Point Result
 lres = lsys.results['Design Point']
 display_markdown(lres)
 
-#%% Plots
+#%%
+# Plots
 axp = None
 axp = lres.plot_phi_distribution(ax=axp)
 _ = axp.set_ylabel('Phi Distribution')
@@ -35,5 +39,6 @@ axw = lres.plot_trefftz_wash_distribution(ax=axw)
 _ = axw.set_ylabel('Wash Distribution')
 _ = axw.set_xlabel('Span Position')
 
-#%% Display Strip Geometry
+#%%
+# Display Strip Geometry
 display_markdown(lsys.strip_geometry)

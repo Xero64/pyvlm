@@ -1,26 +1,31 @@
-#%% Import Dependencies
+#%%
+# Import Dependencies
 from IPython.display import display
 from pyvlm import LatticeOptimum
 from pyvlm.tools import bell_lift_force_distribution, elliptical_lift_force_distribution
 from pyvlm import latticesystem_from_json
 from matplotlib.pyplot import subplots
 
-#%% Inputs
+#%%
+# Inputs
 L = 64.498 # N
 rho = 1.206 # kg/m**3
 V = 12.9173511047957 # m/s
 
-#%% Low AR Wing
+#%%
+# Low AR Wing
 jsonfilepath1 = '../files/Test_rhofw_elliptical.json'
 lsys1 = latticesystem_from_json(jsonfilepath1)
 display(lsys1)
 
-#%% High AR Wing
+#%%
+# High AR Wing
 jsonfilepath2 = '../files/Test_rhofw_bell.json'
 lsys2 = latticesystem_from_json(jsonfilepath2)
 display(lsys2)
 
-#%% Low AR Wing Optimum
+#%%
+# Low AR Wing Optimum
 # lres1 = LatticeResult('Low AR Wing Elliptical', lsys1)
 # lres1.set_state(speed=V)
 # lres1.set_density(rho=rho)
@@ -35,7 +40,8 @@ lopt1.add_record('L')
 lopt1.add_record('l', strplst=lsys1.mstrpi)
 display(lopt1)
 
-#%% High AR Wing Constrained Optimum
+#%%
+# High AR Wing Constrained Optimum
 # lres2 = LatticeResult('High AR Wing Bell', lsys2)
 # lres2.set_state(speed=V)
 # lres2.set_density(rho=rho)
@@ -50,7 +56,8 @@ lopt2.add_record('L')
 lopt2.add_record('l', strplst=lsys2.mstrpi)
 display(lopt2)
 
-#%% Print Drag Ratio
+#%%
+# Print Drag Ratio
 Di1 = lopt1.return_induced_drag()
 Di2 = lopt2.return_induced_drag()
 
@@ -65,7 +72,8 @@ print(f'Bell Root Bending Moment = {bm2:.2f} N.m')
 print(f'Elliptical Centre of Lift = {bm1/(L/2):.3f} m')
 print(f'Bell Centre of Lift = {bm2/(L/2):.3f} m')
 
-#%% Subplots Plots
+#%%
+# Subplots Plots
 fig, (axl, axd, axw) = subplots(nrows=3, figsize=(12, 8))
 
 axl.grid(True)

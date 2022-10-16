@@ -1,14 +1,17 @@
-#%% Import Dependencies
+#%%
+# Import Dependencies
 from pyvlm import LatticeOptimum
 from pyvlm import latticesystem_from_json
 from pyvlm.tools import Elliptical
 
-#%% Low AR Wing
+#%%
+# Low AR Wing
 jsonfilepath = '../files/Straight_Wing_Cosine_100.json'
 lsys = latticesystem_from_json(jsonfilepath)
 print(lsys)
 
-#%% Elliptical
+#%%
+# Elliptical
 
 # y = [strpi.pnti.y for strpi in lsys.strps]
 
@@ -19,14 +22,16 @@ ell.set_lift(1.0)
 ell.set_ym(lsys.srfcs[0].strpy)
 l = ell.return_phi()
 
-#%% Low AR Wing Optimum
+#%%
+# Low AR Wing Optimum
 
 lopt = LatticeOptimum('Low AR Wing', lsys)
 lopt.set_state()
 lopt.set_target_lift_force_distribution(l, rho=1.0, speed=1.0)
 print(lopt)
 
-#%% Plots
+#%%
+# Plots
 
 axl = None
 axl = lopt.plot_trefftz_lift_force_distribution(ax=axl)
@@ -41,7 +46,8 @@ axw1 = lopt.plot_trefftz_wash_distribution(ax=axw1)
 axw2 = None
 axw2 = ell.plot_trefftz_wash_distribution(ax=axw2)
 
-#%% Variables
+#%%
+# Variables
 
 well = ell.trefftz_wash_distribution()
 wres = lopt.trres.trwsh

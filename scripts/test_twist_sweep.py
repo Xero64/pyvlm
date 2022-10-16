@@ -1,30 +1,39 @@
-#%% Load Dependencies
+#%%
+# Load Dependencies
 from pyvlm import LatticeResult
 from pyvlm import latticesystem_from_json
 
-#%% Create Lattice System
+#%%
+# Create Lattice System
 jsonfilepath = '../files/Test_twist_sweep.json'
 lsys = latticesystem_from_json(jsonfilepath)
 print(lsys)
 
-#%% Original Strip Geometry
+#%%
+# Original Strip Geometry
 print(lsys.strip_geometry)
 
-#%% Original Strip Geometry
+#%%
+# Original Strip Geometry
 print(lsys.panel_geometry)
 
-#%% Original Case
+#%%
+# Original Case
 lres_org = LatticeResult('Baseline', lsys)
 lres_org.set_state(alpha=3.0)
 
-#%% Original Strip Forces
+#%%
+# Original Strip Forces
 print(lres_org.strip_forces)
 
-#%% Original Strip Coefficients
+#%%
+# Original Strip Coefficients
 print(lres_org.strip_coefficients)
 
-#%% Original Panel Forces
+#%%
+# Original Panel Forces
 print(lres_org.panel_forces)
 
-#%% Print Result
+#%%
+# Print Result
 print(lres_org)

@@ -1,9 +1,11 @@
-#%% Import Dependencies
+#%%
+# Import Dependencies
 from pyvlm.tools import equal_spacing
 from pyvlm.tools import semi_cosine_spacing, semi_elliptical_spacing
 from pyvlm.tools import full_cosine_spacing, full_elliptical_spacing
 
-#%% Create Spacings
+#%%
+# Create Spacings
 num = 10
 s1 = equal_spacing(num)
 s2 = semi_cosine_spacing(num)

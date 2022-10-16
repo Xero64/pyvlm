@@ -1,57 +1,72 @@
-#%% Import Dependencies
+#%%
+# Import Dependencies
 from IPython.display import display_markdown
 from pyvlm import latticesystem_from_json
 from pyvlm.outputs.msh import latticeresult_to_msh
 from pyvlm.outputs.prf import latticeresult_to_prf
 from pyvlm.classes import LatticeTrim
 
-#%% Import Geometry
+#%%
+# Import Geometry
 jsonfilepath = '../files/Aircraft.json'
 lsys = latticesystem_from_json(jsonfilepath)
 
-#%% Display System
+#%%
+# Display System
 display_markdown(lsys)
 
-#%% Display Results
+#%%
+# Display Results
 for case in lsys.results:
     lres = lsys.results[case]
     display_markdown(lres)
 
-#%% Mesh File Output
+#%%
+# Mesh File Output
 lres = lsys.results['Positive 1g Cruise + 15deg Side Slip']
 latticeresult_to_msh(lres, '../results/Aircraft.msh')
 
-#%% Pessure File Output
+#%%
+# Pessure File Output
 latticeresult_to_prf(lsys, '../results/Aircraft_pressures.json')
 
-#%% 5g Trim Case
+#%%
+# 5g Trim Case
 ltrm = lsys.results['Positive 5g Dive']
 
-#%% Plot Lift Distribution
+#%%
+# Plot Lift Distribution
 axl = ltrm.plot_trefftz_lift_force_distribution()
 axl = ltrm.plot_strip_lift_force_distribution(ax=axl)
 
-#%% Plot Y Force Distribution
+#%%
+# Plot Y Force Distribution
 axy = ltrm.plot_trefftz_side_force_distribution()
 axy = ltrm.plot_strip_side_force_distribution(ax=axy)
 
-#%% Plot Drag Distribution
+#%%
+# Plot Drag Distribution
 axd = ltrm.plot_trefftz_drag_force_distribution()
 axd = ltrm.plot_strip_drag_force_distribution(ax=axd)
 
-#%% Print Strip Forces
+#%%
+# Print Strip Forces
 display_markdown(ltrm.strip_forces)
 
-#%% Print Strip Coefficients
+#%%
+# Print Strip Coefficients
 display_markdown(ltrm.strip_coefficients)
 
-#%% Print Panel Forces
+#%%
+# Print Panel Forces
 display_markdown(ltrm.panel_forces)
 
-#%% Print Total Loads
+#%%
+# Print Total Loads
 display_markdown(ltrm.surface_loads)
 
-#%% Trim CL to 0.8
+#%%
+# Trim CL to 0.8
 CLt = 0.8
 CYt = 0.0
 
@@ -62,7 +77,8 @@ ltrm2.trim()
 
 display_markdown(ltrm2)
 
-# #%% Neutral Point
+# #%%
+# Neutral Point
 # for case in lsys.results:
 #     lres = lsys.results[case]
 #     print(f'Case: {case:s}')
@@ -70,21 +86,24 @@ display_markdown(ltrm2)
 
 # display_markdown(lres.stability_derivatives)
 
-# #%% Centre of Pressure
+# #%%
+# Centre of Pressure
 # for case in lsys.results:
 #     lres = lsys.results[case]
 #     print(f'Case: {case:s}')
 #     x, y, z = lres.nfres.centre_of_pressure('zx')
 #     print(f'Centre of Pressure: {x:.3f}, {y:.3f}, {z:.3f}')
 
-# #%% Neutral Point 2
+# #%%
+# Neutral Point 2
 # for case in lsys.results:
 #     lres = lsys.results[case]
 #     print(f'Case: {case:s}')
 #     x, y, z = lres.stres.alpha.centre_of_pressure('zx')
 #     print(f'Neutral Point: {x:.3f}, {y:.3f}, {z:.3f}')
 
-#%% State Derivative
+#%%
+# State Derivative
 # lsys.masses['Nominal CG'].Ixx = 500.0
 # lsys.masses['Nominal CG'].Iyy = 500.0
 # lsys.masses['Nominal CG'].Izz = 500.0
@@ -143,7 +162,8 @@ display_markdown(ltrm2)
 # mat = MDMatrix('vlatA', vlatA, '.3f')
 # display_markdown(mat)
 
-# #%% Stability Approximations
+# #%%
+# Stability Approximations
 
 # stabapprox = StabilityApproximation(lres, lsys.masses['Nominal CG'])
 

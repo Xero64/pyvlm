@@ -1,20 +1,25 @@
-#%% Load Dependencies
+#%%
+# Load Dependencies
 from IPython.display import display
 from pyvlm import LatticeResult
 from pyvlm import latticesystem_from_json
 
-#%% Create Lattice System
+#%%
+# Create Lattice System
 jsonfilepath = '../files/Straight_Wing_Control.json'
 lsys = latticesystem_from_json(jsonfilepath)
 display(lsys)
 
-#%% Original Strip Geometry
+#%%
+# Original Strip Geometry
 display(lsys.strip_geometry)
 
-#%% Original Strip Geometry
+#%%
+# Original Strip Geometry
 display(lsys.panel_geometry)
 
-#%% Original Case
+#%%
+# Original Case
 
 lres_org = LatticeResult('Baseline', lsys)
 lres_org.set_state(alpha=3.0)#, pbo2V=0.002)
@@ -23,34 +28,44 @@ display(lres_org)
 # lres_org.print_total_loads()
 # lres_org.print_aerodynamic_coefficients()
 
-#%% Original Strip Forces
+#%%
+# Original Strip Forces
 display(lres_org.strip_forces)
 
-#%% Original Strip Coefficients
+#%%
+# Original Strip Coefficients
 display(lres_org.strip_coefficients)
 
-#%% Original Panel Forces
+#%%
+# Original Panel Forces
 display(lres_org.panel_forces)
 
-#%% Plot Distribution
+#%%
+# Plot Distribution
 axl = lres_org.plot_trefftz_lift_force_distribution()
 
-#%% Plot Wash
+#%%
+# Plot Wash
 axw = lres_org.plot_trefftz_wash_distribution()
 
-#%% Print Results
+#%%
+# Print Results
 display(lres_org)
 
-#%% Print Stability Derivatives
+#%%
+# Print Stability Derivatives
 display(lres_org.stability_derivatives)
 
-#%% Print Control Derivatives
+#%%
+# Print Control Derivatives
 display(lres_org.control_derivatives)
 
-#%% Plot Aileron Drag Derivative
+#%%
+# Plot Aileron Drag Derivative
 ctres = lres_org.ctresp['aileron']
 
-#%% Plot Aileron Deflection Plots
+#%%
+# Plot Aileron Deflection Plots
 from pygeom.geom3d import Vector
 from matplotlib.pyplot import figure
 
@@ -87,7 +102,8 @@ for srfc in ctres.res.sys.srfcs:
 _ = axl.legend()
 _ = axd.legend()
 
-#%% Aileron Deflection
+#%%
+# Aileron Deflection
 
 lres_ail = LatticeResult('Baseline', lsys)
 lres_ail.set_state(alpha=3.0)

@@ -1,9 +1,11 @@
-#%% Import Dependencies
+#%%
+# Import Dependencies
 from pyvlm.tools import full_cosine_spacing
 from pyvlm.tools.camber import NACA4
 from pyvlm.tools.airfoil import airfoil_from_dat
 
-#%% Calculate Spacing
+#%%
+# Calculate Spacing
 naca4 = NACA4('2412')
 
 xc = full_cosine_spacing(8*4+2)

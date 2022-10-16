@@ -1,14 +1,17 @@
-#%% Import Dependencies
+#%%
+# Import Dependencies
 from IPython.display import display_markdown
 from pyvlm import LatticeResult
 from pyvlm import latticesystem_from_json
 
-#%% Create Lattice System
+#%%
+# Create Lattice System
 jsonfilepath = '../files/Prandtl-D2.json'
 lsys = latticesystem_from_json(jsonfilepath)
 display_markdown(lsys)
 
-#%% Design Point Result
+#%%
+# Design Point Result
 alpha = 0.0
 speed = 13.0
 rho = 1.145
@@ -21,7 +24,8 @@ display_markdown(lres)
 display_markdown(lres.surface_loads)
 display_markdown(lres.stability_derivatives)
 
-#%% Roll Case Result
+#%%
+# Roll Case Result
 alpha = 0.0
 speed = 13.0
 pbo2V = 0.01
@@ -35,7 +39,8 @@ display_markdown(lres)
 display_markdown(lres.surface_loads)
 display_markdown(lres.stability_derivatives)
 
-#%% Plots
+#%%
+# Plots
 axp = None
 axp = lres.plot_phi_distribution(ax=axp)
 _ = axp.set_ylabel('Phi Distribution')
@@ -58,5 +63,6 @@ axw = lres.plot_trefftz_wash_distribution(ax=axw)
 _ = axw.set_ylabel('Wash Distribution')
 _ = axw.set_xlabel('Span Position')
 
-#%% Display Strip Geometry
+#%%
+# Display Strip Geometry
 display_markdown(lsys.strip_geometry)

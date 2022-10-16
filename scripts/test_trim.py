@@ -1,10 +1,12 @@
-#%% Import Dependencies
+#%%
+# Import Dependencies
 from IPython.display import display_markdown
 from pygeom.geom3d import Point
 from pyvlm.classes import LatticeSystem
 from pyvlm.tools.trim import TurningTrim
 
-#%% Create Turning Trim
+#%%
+# Create Turning Trim
 lsys = LatticeSystem('Test Trim', [], 20.0, 1.0, 20.0, Point(0.0, 0.0, 0.0))
 display_markdown(lsys)
 trim = TurningTrim('30deg Banked Turn', lsys)

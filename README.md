@@ -215,50 +215,63 @@ The above command generates a "aircraft.md" file containing results.
 **Typical Python Script File "aircraft.py":**
 
 ```python
-#%% Import Dependencies
+#%%
+# Import Dependencies
 from IPython.display import display_markdown
 from pyvlm import latticesystem_from_json
 from pyvlm.outputs.msh import latticeresult_to_msh
 from pyvlm.outputs.prf import latticeresult_to_prf
 
-#%% Import Geometry
+#%%
+# Import Geometry
 jsonfilepath = '../files/Aircraft.json'
 lsys = latticesystem_from_json(jsonfilepath)
 
-#%% Display System
+#%%
+# Display System
 display_markdown(lsys)
 
-#%% Display Results
+#%%
+# Display Results
 for case in lsys.results:
     lres = lsys.results[case]
     display_markdown(lres)
 
-#%% Mesh File Output
+#%%
+# Mesh File Output
 lres = lsys.results['Positive 1g Cruise + 15deg Side Slip']
 latticeresult_to_msh(lres, '../results/Aircraft.msh')
 
-#%% Pessure File Output
+#%%
+# Pessure File Output
 latticeresult_to_prf(lsys, '../results/Aircraft_pressures.json')
 
-#%% 5g Trim Case
+#%%
+# 5g Trim Case
 ltrm = lsys.results['Positive 5g Dive']
 
-#%% Plot Lift Distribution
+#%%
+# Plot Lift Distribution
 axl = ltrm.plot_trefftz_lift_force_distribution()
 
-#%% Plot Y Force Distribution
+#%%
+# Plot Y Force Distribution
 axy = ltrm.plot_trefftz_side_force_distribution()
 
-#%% Print Strip Forces
+#%%
+# Print Strip Forces
 display_markdown(ltrm.strip_forces)
 
-#%% Print Strip Coefficients
+#%%
+# Print Strip Coefficients
 display_markdown(ltrm.strip_coefficients)
 
-#%% Print Panel Forces
+#%%
+# Print Panel Forces
 display_markdown(ltrm.panel_forces)
 
-#%% Print Total Loads
+#%%
+# Print Total Loads
 display_markdown(ltrm.surface_loads)
 ```
 
