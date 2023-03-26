@@ -1,5 +1,5 @@
 from math import cos, sin, tan, radians, degrees, atan2
-from pygeom.geom3d import ihat, Coordinate, Vector
+from pygeom.geom3d import IHAT, Coordinate, Vector
 from .latticesection import LatticeSection
 from .latticestrip import LatticeStrip
 
@@ -31,9 +31,9 @@ class LatticeSheet(object):
         self.inherit_spacing()
         self.inherit_controls()
         self.levec = self.sct2.pnt-self.sct1.pnt
-        vecz = (ihat**self.levec).to_unit()
-        vecy = (vecz**ihat).to_unit()
-        self.cord = Coordinate(self.sct1.pnt, ihat, vecy, vecz)
+        vecz = (IHAT**self.levec).to_unit()
+        vecy = (vecz**IHAT).to_unit()
+        self.cord = Coordinate(self.sct1.pnt, IHAT, vecy, vecz)
         self.strps = []
         self.pnls = []
         self.width = self.levec*self.cord.diry
@@ -149,10 +149,10 @@ class LatticeSheet(object):
             if ctrl.uhvec.return_magnitude() == 0.0:
                 pnt1 = self.sct1.pnt
                 crd1 = self.sct1.chord
-                pnta = pnt1+crd1*ihat*ctrl.xhinge
+                pnta = pnt1+crd1*IHAT*ctrl.xhinge
                 pnt2 = self.sct2.pnt
                 crd2 = self.sct2.chord
-                pntb = pnt2+crd2*ihat*ctrl.xhinge
+                pntb = pnt2+crd2*IHAT*ctrl.xhinge
                 hvec = pntb-pnta
                 ctrl.set_hinge_vector(hvec)
     def set_control_panels(self):

@@ -1,4 +1,4 @@
-from pygeom.geom3d import Vector, ihat
+from pygeom.geom3d import Vector, IHAT
 from .latticecontrol import LatticeControl, latticecontrol_from_json
 from ..tools.camber import FlatPlate, NACA4, NACA6Series
 from ..tools import equal_spacing, full_cosine_spacing, semi_cosine_spacing
@@ -75,7 +75,7 @@ class LatticeSection(object):
         sct.mirror = True
         return sct
     def return_point(self, percrd: float):
-        return self.pnt+self.chord*percrd*ihat
+        return self.pnt+self.chord*percrd*IHAT
     def get_camber(self, xc: float):
         return self.camber.cubic_interp(xc)
     def __repr__(self):

@@ -1,4 +1,4 @@
-from pygeom.geom3d import Vector, Coordinate, Vector, jhat, ihat
+from pygeom.geom3d import Vector, Coordinate, Vector, JHAT, IHAT
 from pygeom.matrix3d import zero_matrix_vector, elementwise_multiply
 from pygeom.matrix3d import elementwise_cross_product, elementwise_dot_product
 from numpy.matlib import zeros, matrix
