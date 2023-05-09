@@ -33,7 +33,7 @@ class LatticeSheet(object):
         self.levec = self.sct2.pnt-self.sct1.pnt
         vecz = (IHAT**self.levec).to_unit()
         vecy = (vecz**IHAT).to_unit()
-        self.cord = Coordinate(self.sct1.pnt, IHAT, vecy, vecz)
+        self.cord = Coordinate(self.sct1.pnt, IHAT, vecy)
         self.strps = []
         self.pnls = []
         self.width = self.levec*self.cord.diry

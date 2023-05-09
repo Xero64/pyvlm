@@ -2,8 +2,8 @@ from math import pi
 from numpy.matlib import zeros, multiply, divide, fill_diagonal, seterr, logical_and
 from pygeom.geom3d import Vector
 from pygeom.matrix3d import zero_matrix_vector, MatrixVector
-from pygeom.matrix3d import elementwise_dot_product, elementwise_cross_product
-from pygeom.matrix3d import elementwise_multiply, elementwise_divide
+from pygeom.matrix3d.matrixvector import elementwise_dot_product, elementwise_cross_product
+from pygeom.matrix3d.matrixvector import elementwise_multiply, elementwise_divide
 from py2md.classes import MDTable
 
 seterr(divide='ignore', invalid='ignore')

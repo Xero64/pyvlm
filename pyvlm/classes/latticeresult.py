@@ -1,6 +1,7 @@
-from pygeom.geom3d import Vector, Coordinate, Vector, JHAT, IHAT
-from pygeom.matrix3d import zero_matrix_vector, elementwise_multiply
-from pygeom.matrix3d import elementwise_cross_product, elementwise_dot_product
+from pygeom.geom3d import Vector, Coordinate
+from pygeom.matrix3d import zero_matrix_vector
+from pygeom.matrix3d.matrixvector import elementwise_multiply
+from pygeom.matrix3d.matrixvector import elementwise_cross_product, elementwise_dot_product
 from numpy.matlib import zeros, matrix
 from numpy import multiply
 from math import radians, cos, sin, tan
@@ -106,8 +107,7 @@ class LatticeResult(object):
             cosbt, sinbt = trig_angle(self.beta)
             dirx = Vector(cosbt*cosal, -sinbt, cosbt*sinal)
             diry = Vector(sinbt*cosal, cosbt, sinbt*sinal)
-            dirz = Vector(-sinal, 0.0, cosal)
-            self._acs = Coordinate(pnt, dirx, diry, dirz)
+            self._acs = Coordinate(pnt, dirx, diry)
         return self._acs
     @property
     def scs(self):
@@ -116,8 +116,7 @@ class LatticeResult(object):
             cosal, sinal = trig_angle(self.alpha)
             dirx = Vector(cosal, 0.0, sinal)
             diry = Vector(0.0, 1.0, 0.0)
-            dirz = Vector(-sinal, 0.0, cosal)
-            self._scs = Coordinate(pnt, dirx, diry, dirz)
+            self._scs = Coordinate(pnt, dirx, diry)
         return self._scs
     @property
     def wcs(self):
@@ -125,8 +124,7 @@ class LatticeResult(object):
             pnt = self.sys.rref
             dirx = -1.0*self.acs.dirx
             diry = self.acs.diry
-            dirz = -1.0*self.acs.dirz
-            self._wcs = Coordinate(pnt, dirx, diry, dirz)
+            self._wcs = Coordinate(pnt, dirx, diry)
         return self._wcs
     @property
     def ungam(self):
@@ -1464,7 +1462,7 @@ class StabilityResult(object):
             rbo2V = self.res.rbo2V
             cosal, sinal = trig_angle(self.res.alpha)
             cosbt, sinbt = trig_angle(self.res.beta)
-            vfs = Vector(-V*cosbt*sinal, 0, V*cosal*cosbt)
+            vfs = Vector(-V*cosbt*sinal, 0.0, V*cosal*cosbt)
             ofs = Vector(2*V*(qco2V*sinal*sinbt/c - cosal*rbo2V/b - cosbt*pbo2V*sinal/b), 0.0,
                          2*V*(cosal*cosbt*pbo2V/b - cosal*qco2V*sinbt/c - rbo2V*sinal/b))
             gamalpha = self.res.ungam[:, 0]*vfs+self.res.ungam[:, 1]*ofs
