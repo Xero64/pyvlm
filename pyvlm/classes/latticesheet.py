@@ -1,7 +1,10 @@
-from math import cos, sin, tan, radians, degrees, atan2
-from pygeom.geom3d import IHAT, Coordinate, Vector
+from math import atan2, cos, degrees, radians, sin
+
+from pygeom.geom3d import IHAT, Coordinate
+
 from .latticesection import LatticeSection
 from .latticestrip import LatticeStrip
+
 
 class LatticeSheet(object):
     sct1 = None
@@ -31,12 +34,12 @@ class LatticeSheet(object):
         self.inherit_spacing()
         self.inherit_controls()
         self.levec = self.sct2.pnt-self.sct1.pnt
-        vecz = (IHAT**self.levec).to_unit()
-        vecy = (vecz**IHAT).to_unit()
+        vecz = IHAT.cross(self.levec).to_unit()
+        vecy = vecz.cross(IHAT).to_unit()
         self.cord = Coordinate(self.sct1.pnt, IHAT, vecy)
         self.strps = []
         self.pnls = []
-        self.width = self.levec*self.cord.diry
+        self.width = self.levec.dot(self.cord.diry)
         self.area = self.width*(self.sct2.chord+self.sct1.chord)/2
     def mesh_strips(self, lsid: int):
         self.strps = []
@@ -72,7 +75,6 @@ class LatticeSheet(object):
             bsp2 = bspc[2]
             pnt1 = pnta + bsp1*vecr
             pnt2 = pnta + bsp2*vecr
-            pntm = pnta + bspm*vecr
             crd1 = crda + bsp1*crdr
             crd2 = crda + bsp2*crdr
             strp = LatticeStrip(lsid, pnt1, pnt2, crd1, crd2, bspc)

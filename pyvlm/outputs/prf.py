@@ -46,7 +46,7 @@ def latticeresult_to_prf(lsys: LatticeSystem, prffilepath: str):
                     pnl = srfc.pnls[i, j]
                     lpid = pnl.lpid
                     pnlfrc = result.nfres.nffrc[lpid, 0]
-                    frcnrm = pnl.nrml*pnlfrc
+                    frcnrm = pnl.nrml.dot(pnlfrc)
                     deltap = frcnrm/pnl.area
                     prtop[i, j] = dynprs+deltap/2
                     prbot[i, j] = dynprs-deltap/2

@@ -216,7 +216,7 @@ class LatticeResult(object):
             self._avv = zero_matrix_vector((num, 1))
             for pnl in self.sys.pnls:
                 i = pnl.lpid
-                self._avv[i, 0] = self.vfs-self.ofs**self.arm[i, 0]
+                self._avv[i, 0] = self.vfs-self.ofs.cross(self.arm[i, 0])
         return self._avv
     @property
     def bvv(self):
@@ -228,7 +228,7 @@ class LatticeResult(object):
                 if strp.noload:
                     self._bvv[i, 0] = Vector(0.0, 0.0, 0.0)
                 else:
-                    self._bvv[i, 0] = self.vfs-self.ofs**self.brm[i, 0]
+                    self._bvv[i, 0] = self.vfs-self.ofs.cross(self.brm[i, 0])
         return self._bvv
     @property
     def arm(self):
@@ -261,7 +261,7 @@ class LatticeResult(object):
             for pnl in self.sys.pnls:
                 if not pnl.noload:
                     i = pnl.lpid
-                    self._afv[i, 0] = self.avv[i, 0]**pnl.leni
+                    self._afv[i, 0] = self.avv[i, 0].cross(pnl.leni)
         return self._afv
     @property
     def nfres(self):
@@ -669,9 +669,9 @@ class LatticeResult(object):
             mom = self.nfres.nfmom[ind, 0].sum()
             table1.add_row([srfc.name, frc.x, frc.y, frc.z, mom.x, mom.y, mom.z])
             if area > 0.0:
-                Di = frc*self.acs.dirx
-                Y = frc*self.acs.diry
-                L = frc*self.acs.dirz
+                Di = frc.dot(self.acs.dirx)
+                Y = frc.dot(self.acs.diry)
+                L = frc.dot(self.acs.dirz)
                 CDi = Di/self.qfs/area
                 CY = Y/self.qfs/area
                 CL = L/self.qfs/area
@@ -715,10 +715,10 @@ class LatticeResult(object):
             c_cl = nrmfrc.z/q
             ai = -self.trres.trwsh[strp.lsid, 0]/self.speed
             cd = self.trres.trfrc.x[strp.lsid, 0]/q/area
-            cy = nrmfrc*self.acs.diry/q/chord
-            cz = nrmfrc*self.acs.dirz/q/chord
+            cy = nrmfrc.dot(self.acs.diry)/q/chord
+            cz = nrmfrc.dot(self.acs.dirz)/q/chord
             cf = Vector(0.0, cy, cz)
-            cl_norm = cf*strp.nrmt
+            cl_norm = cf.dot(strp.nrmt)
             cl = cl_norm
             table.add_row([j, ypos, chord, area, c_cl, ai, cl_norm, cl, cd])
         return table
@@ -744,16 +744,16 @@ class LatticeResult(object):
             momle = Vector(0.0, 0.0, 0.0)
             for pnl in strp.pnls:
                 force += self.nfres.nffrc[pnl.lpid, 0]
-                rref = pnl.pnti-strp.pnti
-                momle += rref**self.nfres.nffrc[pnl.lpid, 0]
-            cn = force*strp.nrmt/q/area
+                rref = pnl.pnti - strp.pnti
+                momle += rref.cross(self.nfres.nffrc[pnl.lpid, 0])
+            cn = force.dot(strp.nrmt)/q/area
             ca = force.x/q/area
-            cl = force*self.acs.dirz/q/area
-            cd = force*self.acs.dirx/q/area
+            cl = force.dot(self.acs.dirz)/q/area
+            cd = force.dot(self.acs.dirx)/q/area
             dw = -self.trres.trwsh[strp.lsid, 0]/self.speed
             cmle = momle.y/q/area/chord
             rqc = Vector(-chord/4, 0.0, 0.0)
-            momqc = momle+rqc**force
+            momqc = momle + rqc.cross(force)
             cmqc = momqc.y/q/area/chord
             table.add_row([j, chord, area, cn, ca, cl, cd, dw, cmle, cmqc])
         return table
@@ -777,7 +777,7 @@ class LatticeResult(object):
             z = pnl.pntg.z
             area = pnl.area
             frc = self.nfres.nffrc[pnl.lpid, 0]
-            nfrc = frc*pnl.nrml
+            nfrc = frc.dot(pnl.nrml)
             cp = nfrc/area/q
             chord = pnl.crd
             alc = tan(radians(pnl.alpha))
@@ -1011,42 +1011,42 @@ class GammaResult(object):
     @property
     def CDi(self):
         if self._CDi is None:
-            Di = self.res.acs.dirx*self.nffrctot
+            Di = self.nffrctot.dot(self.res.acs.dirx)
             self._CDi = Di/self.res.qfs/self.res.sys.sref
             self._CDi = fix_zero(self._CDi)
         return self._CDi
     @property
     def CY(self):
         if self._CY is None:
-            Y = self.res.acs.diry*self.nffrctot
+            Y = self.nffrctot.dot(self.res.acs.diry)
             self._CY = Y/self.res.qfs/self.res.sys.sref
             self._CY = fix_zero(self._CY)
         return self._CY
     @property
     def CL(self):
         if self._CL is None:
-            L = self.res.acs.dirz*self.nffrctot
+            L = self.nffrctot.dot(self.res.acs.dirz)
             self._CL = L/self.res.qfs/self.res.sys.sref
             self._CL = fix_zero(self._CL)
         return self._CL
     @property
     def Cl(self):
         if self._Cl is None:
-            l = self.res.wcs.dirx*self.nfmomtot
+            l = self.nfmomtot.dot(self.res.wcs.dirx)
             self._Cl = l/self.res.qfs/self.res.sys.sref/self.res.sys.bref
             self._Cl = fix_zero(self._Cl)
         return self._Cl
     @property
     def Cm(self):
         if self._Cm is None:
-            m = self.res.wcs.diry*self.nfmomtot
+            m = self.nfmomtot.dot(self.res.wcs.diry)
             self._Cm = m/self.res.qfs/self.res.sys.sref/self.res.sys.cref
             self._Cm = fix_zero(self._Cm)
         return self._Cm
     @property
     def Cn(self):
         if self._Cn is None:
-            n = self.res.wcs.dirz*self.nfmomtot
+            n = self.nfmomtot.dot(self.res.wcs.dirz)
             self._Cn = n/self.res.qfs/self.res.sys.sref/self.res.sys.bref
             self._Cn = fix_zero(self._Cn)
         return self._Cn
@@ -1117,35 +1117,35 @@ class StripResult(object):
                 for pnl in strp.pnls:
                     j = pnl.lpid
                     arm = pnl.pnti-strp.pntq
-                    self._stmom[i, 0] += arm**self.gamres.nffrc[j, 0]
+                    self._stmom[i, 0] += arm.cross(self.gamres.nffrc[j, 0])
         return self._stmom
     @property
     def drag(self):
         if self._drag is None:
             self._drag = zeros(self.stfrc.shape)
             for i in range(self.stfrc.shape[0]):
-                self._drag[i, 0] = self.gamres.res.acs.dirx*self.stfrc[i, 0]
+                self._drag[i, 0] = self.gamres.res.acs.dirx.dot(self.stfrc[i, 0])
         return self._drag
     @property
     def side(self):
         if self._side is None:
             self._side = zeros(self.stfrc.shape)
             for i in range(self.stfrc.shape[0]):
-                self._side[i, 0] = self.gamres.res.acs.diry*self.stfrc[i, 0]
+                self._side[i, 0] = self.gamres.res.acs.diry.dot(self.stfrc[i, 0])
         return self._side
     @property
     def lift(self):
         if self._lift is None:
             self._lift = zeros(self.stfrc.shape)
             for i in range(self.stfrc.shape[0]):
-                self._lift[i, 0] = self.gamres.res.acs.dirz*self.stfrc[i, 0]
+                self._lift[i, 0] = self.gamres.res.acs.dirz.dot(self.stfrc[i, 0])
         return self._lift
     @property
     def pmom(self):
         if self._pmom is None:
             self._pmom = zeros(self.stmom.shape)
             for i in range(self.stmom.shape[0]):
-                self._pmom[i, 0] = self.gamres.res.acs.diry*self.stmom[i, 0]
+                self._pmom[i, 0] = self.gamres.res.acs.diry.dot(self.stmom[i, 0])
         return self._pmom
 
 class PhiResult(object):

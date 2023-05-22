@@ -98,7 +98,7 @@ class LatticePanel(object):
         else:
             return self.strp.cdo*self.area
     def dndl(self, gain: float, hvec: Vector):
-        return gain*(hvec**self.nrml)
+        return gain*hvec.cross(self.nrml)
     def velocity(self, pnt: Vector):
         r = pnt
         ra = self.pnta
@@ -109,7 +109,7 @@ class LatticePanel(object):
         bm = b.return_magnitude()
         vel = Vector(0.0, 0.0, 0.0)
         if pnt != self.pnti:
-            axb = a**b
+            axb = a.cross(b)
             if axb.return_magnitude() != 0.0:
                 den = am*bm+a*b
                 vel += axb/den*(1/am+1/bm)

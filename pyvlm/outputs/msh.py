@@ -126,7 +126,7 @@ def latticeresult_to_msh(lres: LatticeResult, mshfilepath: str):
         mshfile.write('{:d}\n'.format(lenpnl))
         frmstr = '{:d} {:f}\n'
         for pnl in lres.sys.pnls:
-            dp = lres.nfres.nffrc[pnl.lpid, 0]*pnl.nrml/pnl.area
+            dp = lres.nfres.nffrc[pnl.lpid, 0].dot(pnl.nrml)/pnl.area
             mshfile.write(frmstr.format(pnl.lpid+1, dp))
         mshfile.write('$EndElementData\n')
         optstr += 'View[{:d}].Light = 0;\n'.format(view)
@@ -145,7 +145,7 @@ def latticeresult_to_msh(lres: LatticeResult, mshfilepath: str):
         mshfile.write('{:d}\n'.format(lenpnl))
         frmstr = '{:d} {:f}\n'
         for pnl in lres.sys.pnls:
-            dp = lres.nfres.nffrc[pnl.lpid, 0]*pnl.nrml/pnl.area
+            dp = lres.nfres.nffrc[pnl.lpid, 0].dot(pnl.nrml)/pnl.area
             mshfile.write(frmstr.format(pnl.lpid+1, p-dp/2))
         mshfile.write('$EndElementData\n')
         optstr += 'View[{:d}].Light = 0;\n'.format(view)
@@ -164,7 +164,7 @@ def latticeresult_to_msh(lres: LatticeResult, mshfilepath: str):
         mshfile.write('{:d}\n'.format(lenpnl))
         frmstr = '{:d} {:f}\n'
         for pnl in lres.sys.pnls:
-            dp = lres.nfres.nffrc[pnl.lpid, 0]*pnl.nrml/pnl.area
+            dp = lres.nfres.nffrc[pnl.lpid, 0].dot(pnl.nrml)/pnl.area
             mshfile.write(frmstr.format(pnl.lpid+1, p+dp/2))
         mshfile.write('$EndElementData\n')
         optstr += 'View[{:d}].Light = 0;\n'.format(view)

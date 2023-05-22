@@ -128,7 +128,7 @@ class LatticeSystem(object):
             avc = self.avc(mach)
             aic = zeros(avc.shape, dtype=float)
             for pnl in self.pnls:
-                aic[pnl.lpid, :] = avc[pnl.lpid, :]*pnl.nrml
+                aic[pnl.lpid, :] = avc[pnl.lpid, :].dot(pnl.nrml)
             self._aic[mach] = aic
         return self._aic[mach]
     @property
@@ -141,7 +141,7 @@ class LatticeSystem(object):
                 lpid = pnl.lpid
                 rrel = pnl.pntc-self.rref
                 self._afs[lpid, 0] = pnl.nrml
-                self._afs[lpid, 1] = -rrel**pnl.nrml
+                self._afs[lpid, 1] = -rrel.cross(pnl.nrml)
             for srfc in self.srfcs:
                 for sht in srfc.shts:
                     for control in sht.ctrls:
@@ -152,10 +152,10 @@ class LatticeSystem(object):
                             rrel = pnl.pntc-self.rref
                             dndlp = pnl.dndl(ctrl.posgain, ctrl.uhvec)
                             self._afs[lpid, ctup[0]] = dndlp
-                            self._afs[lpid, ctup[1]] = rrel**dndlp
+                            self._afs[lpid, ctup[1]] = rrel.cross(dndlp)
                             dndln = pnl.dndl(ctrl.neggain, ctrl.uhvec)
                             self._afs[lpid, ctup[2]] = dndln
-                            self._afs[lpid, ctup[3]] = rrel**dndln
+                            self._afs[lpid, ctup[3]] = rrel.cross(dndln)
         return self._afs
     def ungam(self, mach: float):
         if self._ungam is None:
@@ -184,7 +184,7 @@ class LatticeSystem(object):
             afg = zero_matrix_vector(avg.shape, dtype=float)
             for pnl in self.pnls:
                 if not pnl.noload:
-                    afg[pnl.lpid, :] = avg[pnl.lpid, :]**pnl.leni
+                    afg[pnl.lpid, :] = avg[pnl.lpid, :].cross(pnl.leni)
             self._afg[mach] = afg
         return self._afg[mach]
     def adc(self, mach: float):
@@ -220,7 +220,7 @@ class LatticeSystem(object):
             self._bvg = zeros((num, num), dtype=float)
             for strpi in self.strps:
                 for strpj in self.strps:
-                    self._bvg[strpi.lsid, strpj.lsid] = strpj.trefftz_velocity(strpi.pnti)*strpi.nrmt
+                    self._bvg[strpi.lsid, strpj.lsid] = strpj.trefftz_velocity(strpi.pnti).dot(strpi.nrmt)
         return self._bvg
     @property
     def bdg(self):

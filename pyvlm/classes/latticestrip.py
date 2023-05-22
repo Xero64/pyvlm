@@ -71,8 +71,8 @@ class LatticeStrip(object):
         b = r-rb
         axx = Vector(0.0, a.z, -a.y)
         bxx = Vector(0.0, b.z, -b.y)
-        am2 = a*a
-        bm2 = b*b
+        am2 = a.dot(a)
+        bm2 = b.dot(b)
         vel = (axx/am2-bxx/bm2)/2/pi
         return vel
     def trefftz_lift(self):
