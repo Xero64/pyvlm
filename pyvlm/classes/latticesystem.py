@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING, Dict
+
 from math import pi
 from numpy.matlib import zeros, multiply, divide, fill_diagonal, seterr, logical_and
 from pygeom.geom3d import Vector
@@ -9,6 +11,10 @@ from py2md.classes import MDTable
 seterr(divide='ignore', invalid='ignore')
 
 fourPi = 4*pi
+
+if TYPE_CHECKING:
+    from .latticeresult import LatticeResult
+
 
 class LatticeSystem(object):
     source = None # System Source
@@ -47,7 +53,7 @@ class LatticeSystem(object):
     _ar = None # Aspect Ratio
     _cdo = None
     _cdo_ff = None
-    results = None
+    results: Dict[str, 'LatticeResult'] = None
     def __init__(self, name: str, srfcs: list,
                        bref: float, cref: float, sref: float,
                        rref: Vector):

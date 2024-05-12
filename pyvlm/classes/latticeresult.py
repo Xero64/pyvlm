@@ -334,7 +334,8 @@ class LatticeResult(object):
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
             ax.grid(True)
-        ax.plot(self.sys.srfcs[0].strpy, self.phi, label=self.name)
+        for srfc in self.sys.srfcs:
+            ax.plot(srfc.strpy, self.phi[srfc.strpi], label=self.name+' for '+srfc.name)
         ax.legend()
         return ax
     def plot_strip_lift_force_distribution(self, ax=None, axis: str='b',
