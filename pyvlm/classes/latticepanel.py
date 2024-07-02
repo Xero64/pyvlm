@@ -1,33 +1,40 @@
-from math import pi, radians, cos, sin, atan2
-from typing import List
-from pygeom.geom3d import Vector, Vector
+from typing import TYPE_CHECKING, List, Tuple
+
+from numpy import arctan2, cos, pi, radians, sin
+from pygeom.geom3d import Vector
+
 from .latticestrip import LatticeStrip
 
-fourPi = 4*pi
+if TYPE_CHECKING:
+    from .latticesheet import LatticeSheet
 
-class LatticePanel(object):
-    lpid = None
-    pnts = None
-    cspc = None
-    cfr1 = None
-    cfr2 = None
-    pntc = None
-    pnti = None
-    pntg = None
-    pnta = None
-    pntb = None
-    leni = None
-    slope = None
-    strp = None
-    crd = None
-    area = None
-    def __init__(self, lpid: int, pnts: list, cspc: List[float], strp: LatticeStrip):
+FOURPI = 4*pi
+
+class LatticePanel():
+    lpid: int = None
+    pnts: List[Vector] = None
+    cspc: List[float] = None
+    cfr1: float = None
+    cfr2: float = None
+    pntc: Vector = None
+    pnti: Vector = None
+    pntg: Vector = None
+    pnta: Vector = None
+    pntb: Vector = None
+    leni: Vector = None
+    strp: LatticeStrip = None
+    crd: float = None
+    area: float = None
+
+    def __init__(self, lpid: int, pnts: List[Vector],
+                 cspc: List[float], strp: LatticeStrip) -> None:
         self.lpid = lpid
         self.pnts = pnts
         self.cspc = cspc
         self.strp = strp
         self.update()
-    def update(self):
+
+    def update(self) -> None:
         self.cfr1 = (self.cspc[1]-self.cspc[0])/(self.cspc[4]-self.cspc[0])
         self.cfr2 = (self.cspc[3]-self.cspc[0])/(self.cspc[4]-self.cspc[0])
         self.strp.add_panel(self)
@@ -35,14 +42,14 @@ class LatticePanel(object):
         pnt2 = self.pnts[1]
         pnt3 = self.pnts[2]
         pnt4 = self.pnts[3]
-        veca = pnt3-pnt1
-        vecb = pnt4-pnt2
-        self.pnta = pnt1+self.cfr1*veca
-        self.pntb = pnt2+self.cfr1*vecb
-        self.leni = self.pntb-self.pnta
-        self.pntg = self.pnta+0.5*self.leni
+        veca = pnt3 - pnt1
+        vecb = pnt4 - pnt2
+        self.pnta = pnt1 + self.cfr1*veca
+        self.pntb = pnt2 + self.cfr1*vecb
+        self.leni = self.pntb - self.pnta
+        self.pntg = self.pnta + 0.5*self.leni
         self.pnti = self.pnta + self.strp.bfrc*self.leni
-        self.th = atan2(self.leni.z, self.leni.y)
+        self.th = arctan2(self.leni.z, self.leni.y)
         self.width = (self.leni.y**2 + self.leni.z**2)**0.5
         crda = veca.return_magnitude()
         crdb = vecb.return_magnitude()
@@ -53,53 +60,59 @@ class LatticePanel(object):
         self.alpha = al1 + self.strp.bspc[1]*(al2 - al1)
         pnta = pnt1 + self.cfr2*veca
         pntb = pnt2 + self.cfr2*vecb
-        lenc = pntb-pnta
-        self.pntc = pnta+self.strp.bfrc*lenc
-    def return_panel_point(self):
+        lenc = pntb - pnta
+        self.pntc = pnta + self.strp.bfrc*lenc
+
+    def return_panel_point(self) -> Vector:
         pnt1 = self.pnts[0]
         pnt2 = self.pnts[1]
         pnt3 = self.pnts[2]
         pnt4 = self.pnts[3]
-        veca = pnt3-pnt1
-        vecb = pnt4-pnt2
-        pnta = pnt1+0.75*veca
-        pntb = pnt2+0.75*vecb
-        lenc = pntb-pnta
-        pntc = pnta+self.bspc*lenc
+        veca = pnt3 - pnt1
+        vecb = pnt4 - pnt2
+        pnta = pnt1 + 0.75*veca
+        pntb = pnt2 + 0.75*vecb
+        lenc = pntb - pnta
+        pntc = pnta + self.bspc*lenc
         return pntc
+
     @property
-    def sht(self):
+    def sht(self) -> 'LatticeSheet':
         return self.strp.sht
+
     @property
-    def bspc(self):
+    def bspc(self) -> Tuple[float, float, float]:
         return self.strp.bspc
+
     @property
-    def yspc(self):
-        return self.strp.yspc
-    @property
-    def nrml(self):
+    def nrml(self) -> Vector:
         als = radians(self.strp.twist)
         alc = radians(self.alpha)
         th = self.th
         return Vector(-sin(alc - als), -sin(th)*cos(alc - als), cos(th)*cos(alc - als))
+
     @property
-    def dnda(self):
+    def dnda(self) -> Vector:
         als = radians(self.strp.twist)
         alc = radians(self.alpha)
         th = self.th
         return Vector(cos(alc - als), -sin(th)*sin(alc - als), sin(alc - als)*cos(th))
+
     @property
-    def noload(self):
+    def noload(self) -> bool:
         return self.strp.noload
+
     @property
-    def cdoarea(self):
+    def cdoarea(self) -> float:
         if self.noload:
             return 0.0
         else:
             return self.strp.cdo*self.area
-    def dndl(self, gain: float, hvec: Vector):
+
+    def dndl(self, gain: float, hvec: Vector) -> Vector:
         return gain*hvec.cross(self.nrml)
-    def velocity(self, pnt: Vector):
+
+    def velocity(self, pnt: Vector) -> Vector:
         r = pnt
         ra = self.pnta
         rb = self.pntb
@@ -121,18 +134,21 @@ class LatticePanel(object):
         if bxx.return_magnitude() != 0.0:
             den = bm-b.x
             vel -= bxx/den/bm
-        vel = vel/fourPi
+        vel = vel/FOURPI
         return vel
-    def __repr__(self):
+
+    def __repr__(self) -> str:
         return '<LatticePanel {:d}>'.format(self.lpid)
-    def __str__(self):
+
+    def __str__(self) -> str:
         frmstr = 'LatticePanel\t{:d}\t{:.5f}\t{:.5f}\t{:.5f}\t{:.5f}\t{:}'
         pnt1 = self.pnts[0]
         pnt2 = self.pnts[1]
         pnt3 = self.pnts[2]
         pnt4 = self.pnts[3]
         return frmstr.format(self.lpid, pnt1, pnt2, pnt3, pnt4)
-    def __format__(self, format_spec: str):
+
+    def __format__(self, format_spec: str) -> str:
         frmstr = 'LatticePanel\t{:d}\t{:'
         frmstr += format_spec
         frmstr += '}\t{:'

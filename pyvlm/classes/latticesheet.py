@@ -1,30 +1,38 @@
-from math import atan2, cos, degrees, radians, sin
+from typing import TYPE_CHECKING, List, Dict, Tuple
+from numpy import arctan2, cos, degrees, radians, sin
 
 from pygeom.geom3d import IHAT, Coordinate
 
-from .latticesection import LatticeSection
 from .latticestrip import LatticeStrip
 
+if TYPE_CHECKING:
+    from pygeom.geom3d import Vector
+    from .latticesection import LatticeSection
+    from .latticecontrol import LatticeControl
+    from .latticepanel import LatticePanel
 
-class LatticeSheet(object):
-    sct1 = None
-    sct2 = None
-    bspc = None
-    mirror = None
-    levec = None
-    cord = None
-    strps = None
-    pnls = None
-    ctrls = None
-    noload = None
-    ruled = None
-    width = None
-    area = None
-    def __init__(self, sct1: LatticeSection, sct2: LatticeSection):
+
+class LatticeSheet():
+    sct1: 'LatticeSection' = None
+    sct2: 'LatticeSection' = None
+    bspc: List[Tuple[float, float, float]] = None
+    mirror: bool = None
+    levec: 'Vector' = None
+    cord: Coordinate = None
+    strps: List['LatticeStrip'] = None
+    pnls: List['LatticePanel'] = None
+    ctrls: Dict[str, 'LatticeControl'] = None
+    noload: bool = None
+    ruled: bool = None
+    width: float = None
+    area: float = None
+
+    def __init__(self, sct1: 'LatticeSection', sct2: 'LatticeSection') -> None:
         self.sct1 = sct1
         self.sct2 = sct2
         self.update()
-    def update(self):
+
+    def update(self) -> None:
         if self.sct1.mirror or self.sct2.mirror:
             self.mirror = True
         else:
@@ -33,7 +41,7 @@ class LatticeSheet(object):
         self.inherit_noload()
         self.inherit_spacing()
         self.inherit_controls()
-        self.levec = self.sct2.pnt-self.sct1.pnt
+        self.levec = self.sct2.pnt - self.sct1.pnt
         vecz = IHAT.cross(self.levec).to_unit()
         vecy = vecz.cross(IHAT).to_unit()
         self.cord = Coordinate(self.sct1.pnt, IHAT, vecy)
@@ -41,7 +49,8 @@ class LatticeSheet(object):
         self.pnls = []
         self.width = self.levec.dot(self.cord.diry)
         self.area = self.width*(self.sct2.chord+self.sct1.chord)/2
-    def mesh_strips(self, lsid: int):
+
+    def mesh_strips(self, lsid: int) -> None:
         self.strps = []
         pnta = self.sct1.pnt
         vecr = self.levec
@@ -85,9 +94,9 @@ class LatticeSheet(object):
                 zl1 = zla + bsp1*zlr
                 zl2 = zla + bsp2*zlr
                 zlm = zla + bspm*zlr
-                ang1 = degrees(atan2(-zl1, xl1))
-                ang2 = degrees(atan2(-zl2, xl2))
-                angm = degrees(atan2(-zlm, xlm))
+                ang1 = degrees(arctan2(-zl1, xl1))
+                ang2 = degrees(arctan2(-zl2, xl2))
+                angm = degrees(arctan2(-zlm, xlm))
             else:
                 ang1 = anga+bsp1*angr
                 ang2 = anga+bsp2*angr
@@ -101,22 +110,26 @@ class LatticeSheet(object):
             self.strps.append(strp)
             lsid += 1
         return lsid
-    def inherit_panels(self):
+
+    def inherit_panels(self) -> None:
         self.pnls = []
         for strp in self.strps:
             for pnl in strp.pnls:
                 self.pnls.append(pnl)
-    def inherit_ruled(self):
+
+    def inherit_ruled(self) -> None:
         if self.mirror:
             self.ruled = self.sct2.ruled
         else:
             self.ruled = self.sct1.ruled
-    def inherit_noload(self):
+
+    def inherit_noload(self) -> None:
         if self.mirror:
             self.noload = self.sct2.noload
         else:
             self.noload = self.sct1.noload
-    def inherit_spacing(self):
+
+    def inherit_spacing(self) -> None:
         if self.mirror:
             if self.sct2.bspc is None:
                 self.bspc = [(0.0, 0.5, 1.0)]
@@ -126,7 +139,7 @@ class LatticeSheet(object):
                 for i in range(lenb):
                     blst = []
                     for j in range(2, -1, -1):
-                        blst.append(1.0-self.sct2.bspc[i][j])
+                        blst.append(1.0 - self.sct2.bspc[i][j])
                     self.bspc.append(tuple(blst))
                 self.bspc.reverse()
         else:
@@ -134,7 +147,8 @@ class LatticeSheet(object):
                 self.bspc = [(0.0, 0.5, 1.0)]
             else:
                 self.bspc = self.sct1.bspc
-    def inherit_controls(self):
+
+    def inherit_controls(self) -> None:
         self.ctrls = {}
         if self.mirror:
             for control in self.sct2.ctrls:
@@ -151,22 +165,25 @@ class LatticeSheet(object):
             if ctrl.uhvec.return_magnitude() == 0.0:
                 pnt1 = self.sct1.pnt
                 crd1 = self.sct1.chord
-                pnta = pnt1+crd1*IHAT*ctrl.xhinge
+                pnta = pnt1 + crd1*IHAT*ctrl.xhinge
                 pnt2 = self.sct2.pnt
                 crd2 = self.sct2.chord
-                pntb = pnt2+crd2*IHAT*ctrl.xhinge
-                hvec = pntb-pnta
+                pntb = pnt2 + crd2*IHAT*ctrl.xhinge
+                hvec = pntb - pnta
                 ctrl.set_hinge_vector(hvec)
-    def set_control_panels(self):
+
+    def set_control_panels(self) -> None:
         for control in self.ctrls:
             ctrl = self.ctrls[control]
             for pnl in self.pnls:
                 if pnl.cspc[3] >= ctrl.xhinge:
                     ctrl.add_panel(pnl)
-    def set_strip_bpos(self):
+
+    def set_strip_bpos(self) -> None:
         bpos = self.sct1.bpos
         for i, strp in enumerate(self.strps):
             bspc = self.bspc[i]
-            strp.bpos = bpos+self.width*bspc[1]
+            strp.bpos = bpos + self.width*bspc[1]
+
     def __repr__(self):
         return '<LatticeSheet>'

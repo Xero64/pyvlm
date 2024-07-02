@@ -1,26 +1,43 @@
-from math import sqrt
-from pygeom.matrix3d import zero_matrix_vector
-from matplotlib.pyplot import figure
-from .latticesheet import LatticeSheet
-from .latticepanel import LatticePanel
+from typing import TYPE_CHECKING, List, Union
 
-class LatticeSurface(object):
-    name = None
-    scts = None
-    shts = None
-    cspc = None
-    xspace = None
-    strps = None
-    pnts = None
-    pnls = None
-    area = None
-    sgrp = None
+from matplotlib.pyplot import figure
+from mpl_toolkits.mplot3d.axes3d import Axes3D
+from numpy import sqrt, zeros, ptp
+from pygeom.array3d import zero_arrayvector
+from pygeom.geom1d import CubicSpline, LinearSpline
+from pygeom.geom3d import Vector
+from pyvlm.tools import equal_spacing, full_cosine_spacing, normalise_spacing
+
+from .latticepanel import LatticePanel
+from .latticesection import latticesection_from_json
+from .latticesheet import LatticeSheet
+
+if TYPE_CHECKING:
+    from pygeom.array3d import ArrayVector
+
+    from .latticesection import LatticeSection
+    from .latticestrip import LatticeStrip
+
+
+class LatticeSurface():
+    name: str = None
+    scts: List['LatticeSection'] = None
+    shts: List[LatticeSheet] = None
+    cspc: List[float] = None
+    strps: List['LatticeStrip'] = None
+    pnts: 'ArrayVector' = None
+    pnls: List[List[LatticePanel]] = None
+    area: float = None
+    sgrp: List[List[int]] = None
+    funcs: List['SurfaceFunction'] = None
+
     def __init__(self, name: str, scts: list, mirror: bool, funcs: list):
         self.name = name
         self.scts = scts
         self.mirror = mirror
         self.funcs = funcs
         self.update()
+
     def update(self):
         if self.mirror and self.scts[0].pnt.y == 0.0:
             numsct = len(self.scts)
@@ -35,24 +52,23 @@ class LatticeSurface(object):
         elif self.mirror and self.scts[0].pnt.y != 0.0:
             print(f'Warning: Cannot mirror {self.name}.')
             self.mirror = False
+
     def set_chord_distribution(self, cspc: list):
-        from pyvlm.tools import normalise_spacing
         self.cspc = normalise_spacing(cspc)
+
     def set_chord_equal_distribution(self, cnum: int):
-        from pyvlm.tools import equal_spacing
         csp = equal_spacing(4*cnum)
         self.cspc = [tuple(csp[i*4:i*4+5]) for i in range(cnum)]
+
     def set_chord_cosine_distribution(self, cnum: int):
-        from pyvlm.tools import full_cosine_spacing
         if cnum > 1:
             csp = full_cosine_spacing(4*cnum+2)
             csp = [0.0]+csp[2:-2]+[1.0]
             self.cspc = [tuple(csp[i*4:i*4+5]) for i in range(cnum)]
         else:
             self.set_chord_equal_distribution(cnum)
+
     def mesh(self, lsid: int, lpid: int):
-        from pygeom.geom3d import Vector
-        from numpy.matlib import empty
         nums = len(self.scts)
         self.shts = []
         for i in range(nums-1):
@@ -70,21 +86,22 @@ class LatticeSurface(object):
         crds.append(self.strps[-1].crd2)
         lenb = len(pnts)
         lenc = len(self.cspc)
-        self.pnts = empty((lenb, lenc+1), dtype=Vector)
+        self.pnts = zero_arrayvector((lenb, lenc+1))
         for i in range(lenb):
+            c = crds[i]
+            cd = self.cspc[0][0]
+            x = minx + cd*c
             minx = pnts[i].x
             y = pnts[i].y
             z = pnts[i].z
-            c = crds[i]
-            cd = self.cspc[0][0]
-            x = minx+cd*c
             self.pnts[i, 0] = Vector(x, y, z)
             for j in range(1, lenc+1):
                 cd = self.cspc[j-1][-1]
-                x = minx+cd*c
+                x = minx + cd*c
                 self.pnts[i, j] = Vector(x, y, z)
-        self.pnls = empty((lenb-1, lenc), dtype=LatticePanel)
+        self.pnls = []
         for i, strp in enumerate(self.strps):
+            self.pnls.append([])
             for j in range(lenc):
                 pnts = [
                     self.pnts[i, j],
@@ -94,7 +111,7 @@ class LatticeSurface(object):
                 ]
                 cspc = self.cspc[j]
                 pnl = LatticePanel(lpid, pnts, cspc, strp)
-                self.pnls[i, j] = pnl
+                self.pnls[i].append(pnl)
                 lpid += 1
         if self.mirror:
             self.sgrp = [[], []]
@@ -149,8 +166,8 @@ class LatticeSurface(object):
             if not sht.noload:
                 self.area += sht.area
         return lsid, lpid
+
     def point_xyz(self):
-        from numpy.matlib import zeros
         x = zeros(self.pnts.shape)
         y = zeros(self.pnts.shape)
         z = zeros(self.pnts.shape)
@@ -160,50 +177,61 @@ class LatticeSurface(object):
                 y[i, j] = self.pnts[i, j].y
                 z[i, j] = self.pnts[i, j].z
         return x, y, z
+
     def return_panels(self):
         pnls = []
-        shp = self.pnls.shape
-        for i in range(shp[0]):
-            for j in range(shp[1]):
-                pnls.append(self.pnls[i, j])
+        for i in range(len(self.pnls)):
+            for j in range(len(self.pnls[i])):
+                pnls.append(self.pnls[i][j])
         return pnls
-    def plot_surface(self, ax=None):
+
+    def plot_surface(self, ax: Axes3D=None) -> Axes3D:
         if ax is None:
             fig = figure(figsize=(12, 8))
-            ax = fig.gca(projection='3d')
+            ax = Axes3D(fig)
+            fig.add_axes(ax)
             ax.grid(True)
         x, y, z = self.point_xyz()
+        ax.set_box_aspect((ptp(x), ptp(y), ptp(z)))
         ax.plot_surface(x, y, z, label=self.name)
         return ax
+
     @property
     def strpb(self):
         return [strp.bpos for strp in self.strps]
+
     @property
     def strpy(self):
         return [strp.pnti.y for strp in self.strps]
+
     @property
     def strpz(self):
         return [strp.pnti.z for strp in self.strps]
+
     @property
     def strpi(self):
         return [strp.lsid for strp in self.strps]
+
     @property
     def lstrpi(self):
         return self.sgrp[0]
+
     @property
     def mstrpi(self):
         return self.sgrp[1]
+
     @property
     def pnli(self):
         lpids = []
-        for i in range(self.pnls.shape[0]):
-            for j in range(self.pnls.shape[1]):
-                lpids.append(self.pnls[i, j].lpid)
+        for i in range(len(self.pnls)):
+            for j in range(len(self.pnls[i])):
+                lpids.append(self.pnls[i][j].lpid)
         return lpids
+
     def vortex_line_points(self, indp: int, nump: int):
         nums = len(self.strps)
         num = nums*nump+1
-        rpt = zero_matrix_vector((num, 1))
+        rpt = zero_arrayvector((num, 1))
         j = 0
         for strp in self.strps:
             pnl = strp.pnls[indp]
@@ -213,11 +241,11 @@ class LatticeSurface(object):
                 j += 1
         rpt[j, 0] = pnl.pntb
         return rpt
+
     def __repr__(self):
         return '<LatticeSurface {:s}>'.format(self.name)
 
 def latticesurface_from_json(surfdata: dict, display: bool=False):
-    from .latticesection import latticesection_from_json
     name = surfdata['name']
     if 'mirror' in surfdata:
         mirror = surfdata['mirror']
@@ -225,7 +253,7 @@ def latticesurface_from_json(surfdata: dict, display: bool=False):
         mirror = False
     if display: print(f'Loading Surface: {name:s}')
     # Read Section Variables
-    scts = []
+    scts: List['LatticeSection'] = []
     for sectdata in surfdata['sections']:
         sct = latticesection_from_json(sectdata)
         scts.append(sct)
@@ -311,33 +339,34 @@ def linear_interpolate_none(x: list, y: list):
             y[i] = (yb-ya)/(xb-xa)*(x[i]-xa)+ya
     return y
 
-class SurfaceFunction(object):
-    var = None
-    dist = None
-    interp = None
-    values = None
-    spline = None
-    def __init__(self, var: str, spacing: str, interp: str, values: list):
+
+class SurfaceFunction():
+    var: str = None
+    interp: str = None
+    values: List[float] = None
+    spline: Union[LinearSpline, CubicSpline] = None
+
+    def __init__(self, var: str, spacing: str, interp: str,
+                 values: List[float]) -> None:
         self.var = var
         self.spacing = spacing
         self.interp = interp
         self.values = values
-    def set_spline(self, bmax: float):
+
+    def set_spline(self, bmax: float) -> None:
         if self.spacing == 'equal':
             num = len(self.values)
-            from pyvlm.tools import equal_spacing
             nspc = equal_spacing(num-1)
             spc = [bmax*nspci for nspci in nspc]
         if self.interp == 'linear':
-            from pygeom.geom1d import LinearSpline
             self.spline = LinearSpline(spc, self.values)
         elif self.interp == 'cubic':
-            from pygeom.geom1d import CubicSpline
             self.spline = CubicSpline(spc, self.values)
-    def interpolate(self, b: float):
+
+    def interpolate(self, b: float) -> float:
         return self.spline.single_interpolate_spline(b)
 
-def surffunc_from_json(funcdata: dict):
+def surffunc_from_json(funcdata: dict) -> SurfaceFunction:
     var = funcdata["variable"]
     if "spacing" in funcdata:
         spacing = funcdata["spacing"]
