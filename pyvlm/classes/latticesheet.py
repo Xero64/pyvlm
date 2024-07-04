@@ -1,12 +1,11 @@
 from typing import TYPE_CHECKING, List, Dict, Tuple
 from numpy import arctan2, cos, degrees, radians, sin
 
-from pygeom.geom3d import IHAT, Coordinate
+from pygeom.geom3d import IHAT, Vector, Coordinate
 
 from .latticestrip import LatticeStrip
 
 if TYPE_CHECKING:
-    from pygeom.geom3d import Vector
     from .latticesection import LatticeSection
     from .latticecontrol import LatticeControl
     from .latticepanel import LatticePanel
@@ -17,7 +16,7 @@ class LatticeSheet():
     sct2: 'LatticeSection' = None
     bspc: List[Tuple[float, float, float]] = None
     mirror: bool = None
-    levec: 'Vector' = None
+    levec: Vector = None
     cord: Coordinate = None
     strps: List['LatticeStrip'] = None
     pnls: List['LatticePanel'] = None
@@ -56,10 +55,10 @@ class LatticeSheet():
         vecr = self.levec
         crda = self.sct1.chord
         crdb = self.sct2.chord
-        crdr = crdb-crda
+        crdr = crdb - crda
         anga = self.sct1.twist
         angb = self.sct2.twist
-        angr = angb-anga
+        angr = angb - anga
         if self.ruled:
             radanga = radians(anga)
             cosanga = cos(radanga)
@@ -71,21 +70,31 @@ class LatticeSheet():
             sinangb = sin(radangb)
             xlb = cosangb*crdb
             zlb = -sinangb*crdb
-            xlr = xlb-xla
-            zlr = zlb-zla
+            xlr = xlb - xla
+            zlr = zlb - zla
         cdoa = self.sct1.cdo
         cdob = self.sct2.cdo
-        cdor = cdob-cdoa
+        xoca = self.sct1.xoc
+        xocb = self.sct2.xoc
+        zoca = self.sct1.zoc
+        zocb = self.sct2.zoc
+        cdor = cdob - cdoa
+        xocr = xocb - xoca
+        zocr = zocb - zoca
         lenb = len(self.bspc)
         for i in range(lenb):
             bspc = self.bspc[i]
             bsp1 = bspc[0]
             bspm = bspc[1]
             bsp2 = bspc[2]
-            pnt1 = pnta + bsp1*vecr
-            pnt2 = pnta + bsp2*vecr
+            xoc1 = xoca + bsp1*xocr
+            xoc2 = xoca + bsp2*xocr
+            zoc1 = zoca + bsp1*zocr
+            zoc2 = zoca + bsp2*zocr
             crd1 = crda + bsp1*crdr
             crd2 = crda + bsp2*crdr
+            pnt1 = pnta + bsp1*vecr - Vector(xoc1, 0.0, zoc1)*crd1
+            pnt2 = pnta + bsp2*vecr - Vector(xoc2, 0.0, zoc2)*crd2
             strp = LatticeStrip(lsid, pnt1, pnt2, crd1, crd2, bspc)
             if self.ruled:
                 xl1 = xla + bsp1*xlr
@@ -98,9 +107,9 @@ class LatticeSheet():
                 ang2 = degrees(arctan2(-zl2, xl2))
                 angm = degrees(arctan2(-zlm, xlm))
             else:
-                ang1 = anga+bsp1*angr
-                ang2 = anga+bsp2*angr
-                angm = anga+bspm*angr
+                ang1 = anga + bsp1*angr
+                ang2 = anga + bsp2*angr
+                angm = anga + bspm*angr
             strp.set_twists(ang1, ang2)
             strp.set_twist(angm)
             cdo1 = cdoa + bsp1*cdor

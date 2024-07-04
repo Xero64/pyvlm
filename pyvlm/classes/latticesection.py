@@ -26,6 +26,8 @@ class LatticeSection():
     ctrls: Dict[str, 'LatticeControl'] = None
     cdo: float = None
     bpos: float = None
+    xoc: float = None
+    zoc: float = None
 
     def __init__(self, pnt: Vector, chord: float, twist: float) -> None:
         self.pnt = pnt
@@ -93,6 +95,8 @@ class LatticeSection():
         sct.ctrls = self.ctrls
         sct.cdo = self.cdo
         sct.mirror = True
+        sct.xoc = self.xoc
+        sct.zoc = self.zoc
         return sct
 
     def return_point(self, percrd: float) -> Vector:
@@ -129,8 +133,6 @@ def latticesection_from_json(sectdata: Dict[str, Any]) -> LatticeSection:
     sct = LatticeSection(point, chord, twist)
     sct.xoc = sectdata.get('xoc', 0.0)
     sct.zoc = sectdata.get('zoc', 0.0)
-
-
     if 'cdo' in sectdata:
         sct.set_cdo(sectdata['cdo'])
     if 'noload' in sectdata:

@@ -1,32 +1,48 @@
-from pyvlm.classes import LatticeResult, LatticeSurface
+from typing import TYPE_CHECKING, List
 
-class SurfaceMesh(object):
-    sid = None
-    srfc = None
-    pnts = None
-    pnls = None
-    def __init__(self, srfc: LatticeSurface):
+from pygeom.geom3d import Vector
+
+if TYPE_CHECKING:
+    from ..classes import LatticePanel, LatticeResult, LatticeSurface
+
+
+class LatticePoint(Vector):
+    pntid: int = None
+
+    def __init__(self, pnt: Vector) -> None:
+        super().__init__(pnt.x, pnt.y, pnt.z)
+
+
+class SurfaceMesh():
+    sid: int = None
+    srfc: 'LatticeSurface' = None
+    pnts: List[LatticePoint] = None
+    pnls: List['LatticePanel'] = None
+
+    def __init__(self, srfc: 'LatticeSurface'):
         self.srfc = srfc
         self.pnts = []
-        for i in range(srfc.pnts.shape[0]):
-            for j in range(srfc.pnts.shape[1]):
-                self.pnts.append(srfc.pnts[i, j])
+        for i in range(len(srfc.pnts)):
+            for j in range(len(srfc.pnts[i])):
+                self.pnts.append(srfc.pnts[i][j])
         self.pnls = []
-        for i in range(srfc.pnls.shape[0]):
-            for j in range(srfc.pnls.shape[1]):
-                self.pnls.append(srfc.pnls[i, j])
+        for i in range(len(srfc.pnls)):
+            for j in range(len(srfc.pnls[i])):
+                self.pnls.append(srfc.pnls[i][j])
+
     def number_points(self, pntid: int):
         for pnt in self.pnts:
             pnt.pntid = pntid
             pntid += 1
         return pntid
+
     def min_max_coordinates(self):
         x = [pnt.x for pnt in self.pnts]
         y = [pnt.y for pnt in self.pnts]
         z = [pnt.z for pnt in self.pnts]
         return min(x), min(y), min(z), max(x), max(y), max(z)
 
-def latticeresult_to_msh(lres: LatticeResult, mshfilepath: str):
+def latticeresult_to_msh(lres: 'LatticeResult', mshfilepath: str):
     pnts = []
     pntid = 1
     sid = 1
@@ -108,7 +124,7 @@ def latticeresult_to_msh(lres: LatticeResult, mshfilepath: str):
         mshfile.write('{:d}\n'.format(lenpnl))
         frmstr = '{:d} {:f}\n'
         for pnl in lres.sys.pnls:
-            gamma = lres.nfres.gamma[pnl.lpid, 0]
+            gamma = lres.nfres.gamma[pnl.lpid]
             mshfile.write(frmstr.format(pnl.lpid+1, gamma))
         mshfile.write('$EndElementData\n')
         optstr += 'View[{:d}].Light = 0;\n'.format(view)
@@ -126,7 +142,7 @@ def latticeresult_to_msh(lres: LatticeResult, mshfilepath: str):
         mshfile.write('{:d}\n'.format(lenpnl))
         frmstr = '{:d} {:f}\n'
         for pnl in lres.sys.pnls:
-            dp = lres.nfres.nffrc[pnl.lpid, 0].dot(pnl.nrml)/pnl.area
+            dp = lres.nfres.nffrc[pnl.lpid].dot(pnl.nrml)/pnl.area
             mshfile.write(frmstr.format(pnl.lpid+1, dp))
         mshfile.write('$EndElementData\n')
         optstr += 'View[{:d}].Light = 0;\n'.format(view)
@@ -145,7 +161,7 @@ def latticeresult_to_msh(lres: LatticeResult, mshfilepath: str):
         mshfile.write('{:d}\n'.format(lenpnl))
         frmstr = '{:d} {:f}\n'
         for pnl in lres.sys.pnls:
-            dp = lres.nfres.nffrc[pnl.lpid, 0].dot(pnl.nrml)/pnl.area
+            dp = lres.nfres.nffrc[pnl.lpid].dot(pnl.nrml)/pnl.area
             mshfile.write(frmstr.format(pnl.lpid+1, p-dp/2))
         mshfile.write('$EndElementData\n')
         optstr += 'View[{:d}].Light = 0;\n'.format(view)
@@ -164,7 +180,7 @@ def latticeresult_to_msh(lres: LatticeResult, mshfilepath: str):
         mshfile.write('{:d}\n'.format(lenpnl))
         frmstr = '{:d} {:f}\n'
         for pnl in lres.sys.pnls:
-            dp = lres.nfres.nffrc[pnl.lpid, 0].dot(pnl.nrml)/pnl.area
+            dp = lres.nfres.nffrc[pnl.lpid].dot(pnl.nrml)/pnl.area
             mshfile.write(frmstr.format(pnl.lpid+1, p+dp/2))
         mshfile.write('$EndElementData\n')
         optstr += 'View[{:d}].Light = 0;\n'.format(view)

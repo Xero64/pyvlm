@@ -19,13 +19,13 @@ class LatticeStrip():
     cdo2: float = None
     bspc: Tuple[float, float, float] = None
     bfrc: float = None
-    leni: float = None
+    leni: Vector = None
     pnti: Vector = None
     pntq: Vector = None
     pnls: List['LatticePanel'] = None
     msid: int = None
     sht: 'LatticeSheet' = None
-    lent: float = None
+    lent: Vector = None
     dyt: float = None
     dzt: float = None
     dst: float = None
@@ -46,7 +46,7 @@ class LatticeStrip():
         self.update()
 
     def update(self) -> None:
-        self.bfrc = (self.bspc[1]-self.bspc[0])/(self.bspc[2]-self.bspc[0])
+        self.bfrc = (self.bspc[1] - self.bspc[0])/(self.bspc[2] - self.bspc[0])
         self.pnls = []
         self.leni = self.pnt2 - self.pnt1
         self.pnti = self.pnt1 + self.bfrc*self.leni

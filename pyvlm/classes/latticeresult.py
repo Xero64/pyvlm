@@ -7,6 +7,7 @@ from pygeom.array3d import ArrayVector, zero_arrayvector
 from pygeom.geom3d import Coordinate, Vector
 
 if TYPE_CHECKING:
+    from matplotlib.axes import Axes
     from mpl_toolkits.mplot3d import Axes3D
     from numpy import float64
     from numpy.typing import NDArray
@@ -356,7 +357,8 @@ class LatticeResult():
                 self._ctresn[control] = GammaResult(self, self.ctgamn[control])
         return self._ctresn
 
-    def plot_panel_near_field_velocities(self, ax=None, component=None):
+    def plot_panel_near_field_velocities(self, ax: 'Axes' = None,
+                                         component=None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -374,7 +376,7 @@ class LatticeResult():
         ax.legend()
         return ax
 
-    def plot_phi_distribution(self, ax=None):
+    def plot_phi_distribution(self, ax: 'Axes' = None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -384,9 +386,9 @@ class LatticeResult():
         ax.legend()
         return ax
 
-    def plot_strip_lift_force_distribution(self, ax=None, axis: str='b',
+    def plot_strip_lift_force_distribution(self, ax: 'Axes' = None, axis: str='b',
                                            surfaces: list=None, normalise: bool=False,
-                                           label: str=None):
+                                           label: str=None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -401,132 +403,9 @@ class LatticeResult():
         onesrfc = len(srfcs) == 1
         for srfc in srfcs:
             if normalise:
-                l = [self.stripres.lift[strp.lsid, 0]/strp.area/self.qfs for strp in srfc.strps]
+                l = [self.stripres.lift[strp.lsid]/strp.area/self.qfs for strp in srfc.strps]
             else:
-                l = [self.stripres.lift[strp.lsid, 0]/strp.dst for strp in srfc.strps]
-            if label is None:
-                thislabel = self.name+' for '+srfc.name
-            else:
-                if not onesrfc:
-                    thislabel = label+' for '+srfc.name
-                else:
-                    thislabel = label
-            if axis == 'b':
-                b = srfc.strpb
-                ax.plot(b, l, label=thislabel)
-            elif axis == 'y':
-                y = srfc.strpy
-                if max(y) > min(y):
-                    ax.plot(y, l, label=thislabel)
-            elif axis == 'z':
-                z = srfc.strpz
-                if max(z) > min(z):
-                    ax.plot(l, z, label=thislabel)
-        ax.legend()
-        return
-
-    def plot_strip_side_force_distribution(self, ax=None, axis: str='b',
-                                           surfaces: list=None, normalise: bool=False,
-                                           label: str=None):
-        if ax is None:
-            fig = figure(figsize=(12, 8))
-            ax = fig.gca()
-            ax.grid(True)
-        if surfaces is None:
-            srfcs = self.sys.srfcs
-        else:
-            srfcs = []
-            for srfc in self.sys.srfcs:
-                if srfc.name in surfaces:
-                    srfcs.append(srfc)
-        onesrfc = len(srfcs) == 1
-        for srfc in srfcs:
-            if normalise:
-                f = [self.stripres.side[strp.lsid, 0]/strp.area/self.qfs for strp in srfc.strps]
-            else:
-                f = [self.stripres.side[strp.lsid, 0]/strp.dst for strp in srfc.strps]
-            if label is None:
-                thislabel = self.name+' for '+srfc.name
-            else:
-                if not onesrfc:
-                    thislabel = label+' for '+srfc.name
-                else:
-                    thislabel = label
-            if axis == 'b':
-                b = srfc.strpb
-                ax.plot(b, f, label=thislabel)
-            elif axis == 'y':
-                y = srfc.strpy
-                if max(y) > min(y):
-                    ax.plot(y, f, label=thislabel)
-            elif axis == 'z':
-                z = srfc.strpz
-                if max(z) > min(z):
-                    ax.plot(f, z, label=thislabel)
-        ax.legend()
-        return ax
-
-    def plot_strip_drag_force_distribution(self, ax=None, axis: str='b',
-                                           surfaces: list=None, normalise: bool=False,
-                                           label: str=None):
-        if ax is None:
-            fig = figure(figsize=(12, 8))
-            ax = fig.gca()
-            ax.grid(True)
-        if surfaces is None:
-            srfcs = self.sys.srfcs
-        else:
-            srfcs = []
-            for srfc in self.sys.srfcs:
-                if srfc.name in surfaces:
-                    srfcs.append(srfc)
-        onesrfc = len(srfcs) == 1
-        for srfc in srfcs:
-            if normalise:
-                d = [self.stripres.drag[strp.lsid, 0]/strp.area/self.qfs for strp in srfc.strps]
-            else:
-                d = [self.stripres.drag[strp.lsid, 0]/strp.dst for strp in srfc.strps]
-            if label is None:
-                thislabel = self.name+' for '+srfc.name
-            else:
-                if not onesrfc:
-                    thislabel = label+' for '+srfc.name
-                else:
-                    thislabel = label
-            if axis == 'b':
-                b = srfc.strpb
-                ax.plot(b, d, label=thislabel)
-            elif axis == 'y':
-                y = srfc.strpy
-                if max(y) > min(y):
-                    ax.plot(y, d, label=thislabel)
-            elif axis == 'z':
-                z = srfc.strpz
-                if max(z) > min(z):
-                    ax.plot(d, z, label=thislabel)
-        ax.legend()
-        return ax
-
-    def plot_trefftz_lift_force_distribution(self, ax=None, axis: str='b',
-                                             surfaces: list=None, normalise: bool=False,
-                                             label: str=None):
-        if ax is None:
-            fig = figure(figsize=(12, 8))
-            ax = fig.gca()
-            ax.grid(True)
-        if surfaces is None:
-            srfcs = self.sys.srfcs
-        else:
-            srfcs = []
-            for srfc in self.sys.srfcs:
-                if srfc.name in surfaces:
-                    srfcs.append(srfc)
-        onesrfc = len(srfcs) == 1
-        for srfc in srfcs:
-            if normalise:
-                l = [self.trres.trfrc.z[strp.lsid, 0]/strp.area/self.qfs for strp in srfc.strps]
-            else:
-                l = [self.trres.trfrc.z[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+                l = [self.stripres.lift[strp.lsid]/strp.dst for strp in srfc.strps]
             if label is None:
                 thislabel = self.name+' for '+srfc.name
             else:
@@ -548,9 +427,9 @@ class LatticeResult():
         ax.legend()
         return ax
 
-    def plot_trefftz_side_force_distribution(self, ax=None, axis: str='b',
-                                             surfaces: list=None, normalise: bool=False,
-                                             label: str=None):
+    def plot_strip_side_force_distribution(self, ax: 'Axes' = None, axis: str='b',
+                                           surfaces: list=None, normalise: bool=False,
+                                           label: str=None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -565,9 +444,9 @@ class LatticeResult():
         onesrfc = len(srfcs) == 1
         for srfc in srfcs:
             if normalise:
-                f = [self.trres.trfrc.y[strp.lsid, 0]/strp.area/self.qfs for strp in srfc.strps]
+                f = [self.stripres.side[strp.lsid]/strp.area/self.qfs for strp in srfc.strps]
             else:
-                f = [self.trres.trfrc.y[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+                f = [self.stripres.side[strp.lsid]/strp.dst for strp in srfc.strps]
             if label is None:
                 thislabel = self.name+' for '+srfc.name
             else:
@@ -589,9 +468,9 @@ class LatticeResult():
         ax.legend()
         return ax
 
-    def plot_trefftz_drag_force_distribution(self, ax=None, axis: str='b',
-                                             surfaces: list=None, normalise: bool=False,
-                                             label: str=None):
+    def plot_strip_drag_force_distribution(self, ax: 'Axes' = None, axis: str='b',
+                                           surfaces: list=None, normalise: bool=False,
+                                           label: str=None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -606,9 +485,9 @@ class LatticeResult():
         onesrfc = len(srfcs) == 1
         for srfc in srfcs:
             if normalise:
-                d = [self.trres.trfrc.x[strp.lsid, 0]/strp.area/self.qfs for strp in srfc.strps]
+                d = [self.stripres.drag[strp.lsid]/strp.area/self.qfs for strp in srfc.strps]
             else:
-                d = [self.trres.trfrc.x[strp.lsid, 0]/strp.dst for strp in srfc.strps]
+                d = [self.stripres.drag[strp.lsid]/strp.dst for strp in srfc.strps]
             if label is None:
                 thislabel = self.name+' for '+srfc.name
             else:
@@ -630,9 +509,132 @@ class LatticeResult():
         ax.legend()
         return ax
 
-    def plot_trefftz_wash_distribution(self, ax=None, axis: str='b',
+    def plot_trefftz_lift_force_distribution(self, ax: 'Axes' = None, axis: str='b',
+                                             surfaces: list=None, normalise: bool=False,
+                                             label: str=None) -> 'Axes':
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        if surfaces is None:
+            srfcs = self.sys.srfcs
+        else:
+            srfcs = []
+            for srfc in self.sys.srfcs:
+                if srfc.name in surfaces:
+                    srfcs.append(srfc)
+        onesrfc = len(srfcs) == 1
+        for srfc in srfcs:
+            if normalise:
+                l = [self.trres.trfrc.z[strp.lsid]/strp.area/self.qfs for strp in srfc.strps]
+            else:
+                l = [self.trres.trfrc.z[strp.lsid]/strp.dst for strp in srfc.strps]
+            if label is None:
+                thislabel = self.name+' for '+srfc.name
+            else:
+                if not onesrfc:
+                    thislabel = label+' for '+srfc.name
+                else:
+                    thislabel = label
+            if axis == 'b':
+                b = srfc.strpb
+                ax.plot(b, l, label=thislabel)
+            elif axis == 'y':
+                y = srfc.strpy
+                if max(y) > min(y):
+                    ax.plot(y, l, label=thislabel)
+            elif axis == 'z':
+                z = srfc.strpz
+                if max(z) > min(z):
+                    ax.plot(l, z, label=thislabel)
+        ax.legend()
+        return ax
+
+    def plot_trefftz_side_force_distribution(self, ax: 'Axes' = None, axis: str='b',
+                                             surfaces: list=None, normalise: bool=False,
+                                             label: str=None) -> 'Axes':
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        if surfaces is None:
+            srfcs = self.sys.srfcs
+        else:
+            srfcs = []
+            for srfc in self.sys.srfcs:
+                if srfc.name in surfaces:
+                    srfcs.append(srfc)
+        onesrfc = len(srfcs) == 1
+        for srfc in srfcs:
+            if normalise:
+                f = [self.trres.trfrc.y[strp.lsid]/strp.area/self.qfs for strp in srfc.strps]
+            else:
+                f = [self.trres.trfrc.y[strp.lsid]/strp.dst for strp in srfc.strps]
+            if label is None:
+                thislabel = self.name+' for '+srfc.name
+            else:
+                if not onesrfc:
+                    thislabel = label+' for '+srfc.name
+                else:
+                    thislabel = label
+            if axis == 'b':
+                b = srfc.strpb
+                ax.plot(b, f, label=thislabel)
+            elif axis == 'y':
+                y = srfc.strpy
+                if max(y) > min(y):
+                    ax.plot(y, f, label=thislabel)
+            elif axis == 'z':
+                z = srfc.strpz
+                if max(z) > min(z):
+                    ax.plot(f, z, label=thislabel)
+        ax.legend()
+        return ax
+
+    def plot_trefftz_drag_force_distribution(self, ax: 'Axes' = None, axis: str='b',
+                                             surfaces: list=None, normalise: bool=False,
+                                             label: str=None) -> 'Axes':
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        if surfaces is None:
+            srfcs = self.sys.srfcs
+        else:
+            srfcs = []
+            for srfc in self.sys.srfcs:
+                if srfc.name in surfaces:
+                    srfcs.append(srfc)
+        onesrfc = len(srfcs) == 1
+        for srfc in srfcs:
+            if normalise:
+                d = [self.trres.trfrc.x[strp.lsid]/strp.area/self.qfs for strp in srfc.strps]
+            else:
+                d = [self.trres.trfrc.x[strp.lsid]/strp.dst for strp in srfc.strps]
+            if label is None:
+                thislabel = self.name+' for '+srfc.name
+            else:
+                if not onesrfc:
+                    thislabel = label+' for '+srfc.name
+                else:
+                    thislabel = label
+            if axis == 'b':
+                b = srfc.strpb
+                ax.plot(b, d, label=thislabel)
+            elif axis == 'y':
+                y = srfc.strpy
+                if max(y) > min(y):
+                    ax.plot(y, d, label=thislabel)
+            elif axis == 'z':
+                z = srfc.strpz
+                if max(z) > min(z):
+                    ax.plot(d, z, label=thislabel)
+        ax.legend()
+        return ax
+
+    def plot_trefftz_wash_distribution(self, ax: 'Axes' = None, axis: str='b',
                                        surfaces: list=None, normalise: bool=False,
-                                       label: str=None):
+                                       label: str=None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -647,9 +649,9 @@ class LatticeResult():
         onesrfc = len(srfcs) == 1
         for srfc in srfcs:
             if normalise:
-                w = [self.trres.trwsh[strp.lsid, 0]/self.speed for strp in srfc.strps]
+                w = [self.trres.trwsh[strp.lsid]/self.speed for strp in srfc.strps]
             else:
-                w = [self.trres.trwsh[strp.lsid, 0] for strp in srfc.strps]
+                w = [self.trres.trwsh[strp.lsid] for strp in srfc.strps]
             if label is None:
                 thislabel = self.name+' for '+srfc.name
             else:
@@ -719,8 +721,8 @@ class LatticeResult():
         for srfc in self.sys.srfcs:
             area = srfc.area
             ind = srfc.pnli
-            frc = self.nfres.nffrc[ind, 0].sum()
-            mom = self.nfres.nfmom[ind, 0].sum()
+            frc = self.nfres.nffrc[ind].sum()
+            mom = self.nfres.nfmom[ind].sum()
             table1.add_row([srfc.name, frc.x, frc.y, frc.z, mom.x, mom.y, mom.z])
             if area > 0.0:
                 Di = frc.dot(self.acs.dirx)
@@ -764,10 +766,10 @@ class LatticeResult():
             area = strp.area
             nrmfrc = Vector(0.0, 0.0, 0.0)
             for pnl in strp.pnls:
-                nrmfrc += self.nfres.nffrc[pnl.lpid, 0]/pnl.area*pnl.crd
+                nrmfrc += self.nfres.nffrc[pnl.lpid]/pnl.area*pnl.crd
             c_cl = nrmfrc.z/q
-            ai = -self.trres.trwsh[strp.lsid, 0]/self.speed
-            cd = self.trres.trfrc.x[strp.lsid, 0]/q/area
+            ai = -self.trres.trwsh[strp.lsid]/self.speed
+            cd = self.trres.trfrc.x[strp.lsid]/q/area
             cy = nrmfrc.dot(self.acs.diry)/q/chord
             cz = nrmfrc.dot(self.acs.dirz)/q/chord
             cf = Vector(0.0, cy, cz)
@@ -798,14 +800,14 @@ class LatticeResult():
             force = Vector(0.0, 0.0, 0.0)
             momle = Vector(0.0, 0.0, 0.0)
             for pnl in strp.pnls:
-                force += self.nfres.nffrc[pnl.lpid, 0]
+                force += self.nfres.nffrc[pnl.lpid]
                 rref = pnl.pnti - strp.pnti
-                momle += rref.cross(self.nfres.nffrc[pnl.lpid, 0])
+                momle += rref.cross(self.nfres.nffrc[pnl.lpid])
             cn = force.dot(strp.nrmt)/q/area
             ca = force.x/q/area
             cl = force.dot(self.acs.dirz)/q/area
             cd = force.dot(self.acs.dirx)/q/area
-            dw = -self.trres.trwsh[strp.lsid, 0]/self.speed
+            dw = -self.trres.trwsh[strp.lsid]/self.speed
             cmle = momle.y/q/area/chord
             rqc = Vector(-chord/4, 0.0, 0.0)
             momqc = momle + rqc.cross(force)
@@ -833,7 +835,7 @@ class LatticeResult():
             y = pnl.pntg.y
             z = pnl.pntg.z
             area = pnl.area
-            frc = self.nfres.nffrc[pnl.lpid, 0]
+            frc = self.nfres.nffrc[pnl.lpid]
             nfrc = frc.dot(pnl.nrml)
             cp = nfrc/area/q
             chord = pnl.crd
@@ -860,16 +862,16 @@ class LatticeResult():
         for pnl in self.sys.pnls:
             j = pnl.lpid
             k = pnl.strp.lsid
-            gamma = self.gamma[j, 0]
-            Vx = self.nfres.nfvel[j, 0].x
-            Vy = self.nfres.nfvel[j, 0].y
-            Vz = self.nfres.nfvel[j, 0].z
+            gamma = self.gamma[j]
+            Vx = self.nfres.nfvel[j].x
+            Vy = self.nfres.nfvel[j].y
+            Vz = self.nfres.nfvel[j].z
             lx = pnl.leni.x
             ly = pnl.leni.y
             lz = pnl.leni.z
-            Fx = self.nfres.nffrc[j, 0].x
-            Fy = self.nfres.nffrc[j, 0].y
-            Fz = self.nfres.nffrc[j, 0].z
+            Fx = self.nfres.nffrc[j].x
+            Fy = self.nfres.nffrc[j].y
+            Fz = self.nfres.nffrc[j].z
             table.add_row([j, k, gamma, Vx, Vy, Vz, lx, ly, lz, Fx, Fy, Fz])
         return report
 
@@ -1247,9 +1249,9 @@ class PhiResult():
     @property
     def trfrc(self):
         if self._trfrc is None:
-            x = self.res.rho*self.phi@self.res.sys.bdg@self.phi
-            y = self.res.rho*self.res.speed*self.phi@self.res.sys.byg
-            z = self.res.rho*self.res.speed*self.phi@self.res.sys.blg
+            x = self.res.rho*self.phi*(self.res.sys.bdg@self.phi)
+            y = self.res.rho*self.res.speed*self.phi*self.res.sys.byg
+            z = self.res.rho*self.res.speed*self.phi*self.res.sys.blg
             self._trfrc = ArrayVector(x, y, z)
         return self._trfrc
 

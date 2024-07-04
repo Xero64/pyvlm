@@ -208,37 +208,37 @@ class LatticeSystem():
             self._afg[mach] = afg
         return self._afg[mach]
 
-    def adc(self, mach: float):
-        if self._adc is None:
-            self._adc = {}
-        if mach not in self._adc:
-            avc = self.avc(mach)
-            adc = zeros(avc.shape, dtype=float)
-            for pnl in self.pnls:
-                adc[pnl.lpid, :] = avc[pnl.lpid, :]*pnl.tang
-            self._adc[mach] = adc
-        return self._adc[mach]
+    # def adc(self, mach: float):
+    #     if self._adc is None:
+    #         self._adc = {}
+    #     if mach not in self._adc:
+    #         avc = self.avc(mach)
+    #         adc = zeros(avc.shape, dtype=float)
+    #         for pnl in self.pnls:
+    #             adc[pnl.lpid, :] = avc[pnl.lpid, :]*pnl.tang
+    #         self._adc[mach] = adc
+    #     return self._adc[mach]
 
     @property
-    def ada(self):
+    def ada(self) -> 'NDArray[float64]':
         if self._ada is None:
             num = len(self.pnls)
-            self._ada = zeros((num, 1), dtype=float)
+            self._ada = zeros(num, dtype=float)
             for pnl in self.pnls:
-                self._ada[pnl.lpid, 0] = pnl.cdoarea
+                self._ada[pnl.lpid] = pnl.cdoarea
         return self._ada
 
     @property
-    def cdo(self):
+    def cdo(self) -> 'NDArray[float64]':
         if self._cdo is None:
             dragarea = 0.0
             for pnl in self.pnls:
-                dragarea += self.ada[pnl.lpid, 0]
+                dragarea += self.ada[pnl.lpid]
             self._cdo = dragarea/self.sref
         return self._cdo
 
     @property
-    def bvg(self) -> ArrayVector:
+    def bvg(self) -> 'NDArray[float64]':
         if self._bvg is None:
             num = len(self.strps)
             self._bvg = zeros((num, num), dtype=float)
@@ -248,7 +248,7 @@ class LatticeSystem():
         return self._bvg
 
     @property
-    def bdg(self):
+    def bdg(self) -> 'NDArray[float64]':
         if self._bdg is None:
             num = len(self.strps)
             self._bdg = zeros((num, num), dtype=float)
@@ -258,40 +258,40 @@ class LatticeSystem():
         return self._bdg
 
     @property
-    def blg(self):
+    def blg(self) -> 'NDArray[float64]':
         if self._blg is None:
             num = len(self.strps)
-            self._blg = zeros((num, 1), dtype=float)
+            self._blg = zeros(num, dtype=float)
             for strp in self.strps:
-                self._blg[strp.lsid, 0] = strp.trefftz_lift()
+                self._blg[strp.lsid] = strp.trefftz_lift()
         return self._blg
 
     @property
     def byg(self):
         if self._byg is None:
             num = len(self.strps)
-            self._byg = zeros((num, 1), dtype=float)
+            self._byg = zeros(num, dtype=float)
             for strp in self.strps:
-                self._byg[strp.lsid, 0] = strp.trefftz_yfrc()
+                self._byg[strp.lsid] = strp.trefftz_yfrc()
         return self._byg
 
     @property
     def bmg(self):
         if self._bmg is None:
             num = len(self.strps)
-            self._bmg = zeros((num, 1), dtype=float)
+            self._bmg = zeros(num, dtype=float)
             for strp in self.strps:
-                self._bmg[strp.lsid, 0] += strp.pnti.y*self.blg[strp.lsid, 0]
-                self._bmg[strp.lsid, 0] -= strp.pnti.z*self.byg[strp.lsid, 0]
+                self._bmg[strp.lsid] += strp.pnti.y*self.blg[strp.lsid]
+                self._bmg[strp.lsid] -= strp.pnti.z*self.byg[strp.lsid]
         return self._bmg
 
     @property
     def bda(self):
         if self._bda is None:
             num = len(self.strps)
-            self._bda = zeros((num, 1), dtype=float)
+            self._bda = zeros(num, dtype=float)
             for strp in self.strps:
-                self._bda[strp.lsid, 0] = strp.cdoarea
+                self._bda[strp.lsid] = strp.cdoarea
         return self._bda
 
     @property
@@ -299,7 +299,7 @@ class LatticeSystem():
         if self._cdo_ff is None:
             dragarea = 0.0
             for strp in self.strps:
-                dragarea += self.bda[strp.lsid, 0]
+                dragarea += self.bda[strp.lsid]
             self._cdo_ff = dragarea/self.sref
         return self._cdo_ff
 
