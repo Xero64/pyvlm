@@ -19,7 +19,6 @@ class LatticeSection():
     camber: 'AirfoilType' = None
     airfoil: str = None
     bspc: List[Tuple[float, float, float]] = None
-    # yspace = None
     mirror: bool = None
     noload: bool = None
     ruled: bool = None
@@ -90,8 +89,8 @@ class LatticeSection():
         twist = self.twist
         sct = LatticeSection(pnt, chord, twist)
         sct.camber = self.camber
+        sct.airfoil = self.airfoil
         sct.bspc = self.bspc
-        # sct.yspace = self.yspace
         sct.ctrls = self.ctrls
         sct.cdo = self.cdo
         sct.mirror = True

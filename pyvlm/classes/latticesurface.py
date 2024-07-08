@@ -254,10 +254,7 @@ class LatticeSurface():
 
 def latticesurface_from_json(surfdata: dict, display: bool=False) -> LatticeSurface:
     name = surfdata['name']
-    if 'mirror' in surfdata:
-        mirror = surfdata['mirror']
-    else:
-        mirror = False
+    mirror = surfdata.get('mirror', False)
     if display: print(f'Loading Surface: {name:s}')
     # Read Section Variables
     scts: List['LatticeSection'] = []
