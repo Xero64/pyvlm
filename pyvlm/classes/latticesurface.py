@@ -191,7 +191,7 @@ class LatticeSurface():
                 pnls.append(self.pnls[i][j])
         return pnls
 
-    def plot_surface(self, ax: Axes3D=None) -> Axes3D:
+    def plot_surface(self, ax: Axes3D = None) -> Axes3D:
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = Axes3D(fig)
@@ -279,7 +279,7 @@ def latticesurface_from_json(surfdata: dict, display: bool=False) -> LatticeSurf
     lenscts = len(scts)
     b = [0.0]
     for i in range(lenscts-1):
-        bi = b[i]+sqrt((y[i+1]-y[i])**2+(z[i+1]-z[i])**2)
+        bi = b[i] + sqrt((y[i+1]-y[i])**2+(z[i+1]-z[i])**2)
         b.append(bi)
     x = linear_interpolate_none(b, x)
     c = linear_interpolate_none(b, c)
@@ -297,20 +297,11 @@ def latticesurface_from_json(surfdata: dict, display: bool=False) -> LatticeSurf
             func = surffunc_from_json(funcdata)
             funcs.append(func)
     # Entire Surface Position
-    xpos, ypos, zpos = 0.0, 0.0, 0.0
-    if 'xpos' in surfdata:
-        xpos = surfdata['xpos']
-    if 'ypos' in surfdata:
-        ypos = surfdata['ypos']
-    if 'zpos' in surfdata:
-        zpos = surfdata['zpos']
-    twist = 0.0
-    if 'twist' in surfdata:
-        twist = surfdata['twist']
-    if 'ruled' in surfdata:
-        ruled = surfdata['ruled']
-    else:
-        ruled = False
+    xpos = surfdata.get('xpos', 0.0)
+    ypos = surfdata.get('ypos', 0.0)
+    zpos = surfdata.get('zpos', 0.0)
+    twist = surfdata.get('twist', 0.0)
+    ruled = surfdata.get('ruled', False)
     for sct in scts:
         sct.offset_position(xpos, ypos, zpos)
         sct.offset_twist(twist)
@@ -367,18 +358,12 @@ class SurfaceFunction():
         elif self.interp == 'cubic':
             self.spline = CubicSpline(spc, self.values)
 
-    def interpolate(self, b: float) -> float:
-        return self.spline.single_interpolate_spline(b)
+    def interpolate(self, value: float) -> float:
+        return self.spline.single_interpolate_spline(value)
 
 def surffunc_from_json(funcdata: dict) -> SurfaceFunction:
-    var = funcdata["variable"]
-    if "spacing" in funcdata:
-        spacing = funcdata["spacing"]
-    else:
-        spacing = "equal"
-    if "interp" in funcdata:
-        interp = funcdata["interp"]
-    else:
-        interp = "linear"
-    values = funcdata["values"]
-    return SurfaceFunction(var, spacing, interp, values)
+    variable = funcdata.get('variable')
+    spacing = funcdata.get('spacing', 'equal')
+    interp = funcdata.get('interp', 'linear')
+    values = funcdata.get('values')
+    return SurfaceFunction(variable, spacing, interp, values)
