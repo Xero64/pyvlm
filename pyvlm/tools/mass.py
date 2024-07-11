@@ -1,6 +1,6 @@
 from numpy.matlib import zeros
 
-class Mass(object):
+class Mass():
     name = None
     mass = None
     xcm = None
@@ -12,6 +12,7 @@ class Mass(object):
     Iyy = None
     Iyz = None
     Izz = None
+
     def __init__(self, name: str, mass: float=0.0,
                  xcm: float=0.0, ycm: float=0.0, zcm: float=0.0,
                  Ixx: float=0.0, Ixy: float=0.0, Ixz: float=0.0,
@@ -27,12 +28,14 @@ class Mass(object):
         self.Iyy = Iyy
         self.Iyz = Iyz
         self.Izz = Izz
+
     def mass_matrix(self):
         M = zeros((3, 3))
         M[0, 0] = self.mass
         M[1, 1] = self.mass
         M[2, 2] = self.mass
         return M
+
     def moment_of_inertia_matrix(self):
         I = zeros((3, 3))
         I[0, 0] = self.Ixx
@@ -45,11 +48,14 @@ class Mass(object):
         I[1, 2] = self.Iyz
         I[2, 1] = self.Iyz
         return I
+
     def __repr__(self):
         return '<Mass {:s}>'.format(self.name)
+
     def __str__(self):
         frmstr = 'Mass\t{:s}\t{:}'
         return frmstr.format(self.name, self.mass)
+
     def __format__(self, format_spec: str):
         frmstr = 'Mass\t{:s}\t{:'
         frmstr += format_spec
@@ -58,10 +64,12 @@ class Mass(object):
 
 class MassCollection(Mass):
     masses = None
+
     def __init__(self, name: str, masses: dict):
         super(MassCollection, self).__init__(name)
         self.masses = masses
         self.update()
+
     def update(self):
         self.mass = 0.0
         mx = 0.0
@@ -93,11 +101,14 @@ class MassCollection(Mass):
             self.Ixy += mass.Ixy - mass.mass*x*y
             self.Ixz += mass.Ixz - mass.mass*x*z
             self.Iyz += mass.Iyz - mass.mass*y*z
+
     def __repr__(self):
         return '<MassCollection {:s}>'.format(self.name)
+
     def __str__(self):
         frmstr = 'MassCollection\t{:s}\t{:}'
         return frmstr.format(self.name, self.mass)
+
     def __format__(self, format_spec: str):
         frmstr = 'MassCollection\t{:s}\t{:'
         frmstr += format_spec

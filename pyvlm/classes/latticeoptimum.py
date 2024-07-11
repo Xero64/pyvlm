@@ -1,4 +1,5 @@
-from math import degrees
+from typing import List
+from numpy import asarray, degrees
 from numpy.matlib import zeros, matrix
 from numpy.linalg import solve, norm
 from pygeom.geom3d import Vector
@@ -12,21 +13,25 @@ class LatticeOptimum(LatticeResult):
     lamopt = None
     _bdg = None
     _adg = None
+
     def add_constraint(self, param: str, value: float, strplst: list=None, point: Vector=None):
         if self.constr is None:
             self.constr = []
         constr = Constraint(self, param, value, point, strplst)
         self.constr.append(constr)
+
     def add_record(self, param: str, strplst: list=None, point: Vector=None):
         if self.record is None:
             self.record = []
         record = Record(self, param, point, strplst)
         self.record.append(record)
-    def set_target_phi(self, phi: list):
+
+    def set_target_phi(self, phi: List[float]) -> None:
         if len(phi) != len(self.sys.strps):
             raise Exception('The length of phi must equal the number of strips.')
-        self.phiopt = matrix([phi], dtype=float).transpose()
+        self.phiopt = asarray(phi)
         self._phi = self.phiopt
+
     def set_target_lift_force_distribution(self, ltgt: list, rho: float, speed: float, mach: float=0.0):
         if len(ltgt) != len(self.sys.strps):
             raise Exception('The length of l must equal the number of strips.')
@@ -34,17 +39,20 @@ class LatticeOptimum(LatticeResult):
         self.set_density(rho)
         self.set_state(mach=mach, speed=speed)
         self.set_target_phi(phitgt)
+
     @property
     def bdg(self):
         return self.sys.bdg
+
     @property
     def adg(self):
         if self._adg is None:
-            self._adg = self.bdg+self.bdg.transpose()
+            self._adg = self.bdg + self.bdg.transpose()
         return self._adg
+
     def old_iteration(self, pmat: matrix):
         nump = self.sys.nums
-        num = nump+len(self.constr)
+        num = nump + len(self.constr)
         amat = zeros((num, num))
         bmat = zeros((num, 1))
         amat[0:nump, 0:nump] = self.adg
@@ -57,6 +65,7 @@ class LatticeOptimum(LatticeResult):
         phi = xmat[0:nump, 0]
         lam = xmat[nump:num, 0]
         return phi, lam
+
     def optimum_lift_force_distribution(self, crit=1e-12):
         nump = self.sys.nums
         phi_old = zeros((nump, 1))
@@ -68,6 +77,7 @@ class LatticeOptimum(LatticeResult):
         self.phiopt = phi
         self.lamopt = lam
         return phi, lam
+
     def optimum_strip_twist_iteration(self):
 
         nump = len(self.sys.pnls)
@@ -87,7 +97,7 @@ class LatticeOptimum(LatticeResult):
                         dafsda[i, j] += self.vfs*pnl.dnda
                         daicda[i, j] += avc[i, k]*pnl.dnda
 
-        dgda = -solve(aic, dafsda+daicda*self.phi)
+        dgda = -solve(aic, dafsda + daicda*self.phi)
 
         dpda = zeros((nums, nums))
         for i, strp in enumerate(self.sys.strps):
@@ -134,6 +144,7 @@ class LatticeOptimum(LatticeResult):
             nrmdal = norm(dal)
         al = [strp.twist for i, strp in enumerate(self.sys.strps)]
         return al
+
     def plot_target_phi_distribution(self, ax=None):
         if ax is None:
             fig = figure(figsize=(12, 8))
@@ -142,6 +153,7 @@ class LatticeOptimum(LatticeResult):
         ax.plot(self.sys.srfcs[0].strpy, self.phi, label=self.name+' Target')
         ax.legend()
         return ax
+
     def plot_strip_twist_distribution(self, ax=None):
         if ax is None:
             fig = figure(figsize=(12, 8))
@@ -152,11 +164,14 @@ class LatticeOptimum(LatticeResult):
         ax.plot(y, al, label=f'{self.name} Strip Twist')
         ax.legend()
         return ax
+
     def return_induced_drag(self):
         temp = self.phi.transpose()*self.sys.bdg*self.phi
         return self.rho*self.speed*temp[0, 0]
+
     def __repr__(self):
         return '<LatticeOptimum {:s}>'.format(self.name)
+
     def __str__(self):
         from py2md.classes import MDTable
         outstr = '# '+self.name+'\n'
@@ -180,10 +195,11 @@ class LatticeOptimum(LatticeResult):
                     table.add_row([record.param, 'Record', val])
             outstr += table._repr_markdown_()
         return outstr
+
     def _repr_markdown_(self):
         return self.__str__()
 
-class Record(object):
+class Record():
     opt = None
     param = None
     point = None
@@ -192,17 +208,20 @@ class Record(object):
     _bcm = None
     _rhov = None
     _value = None
+
     def __init__(self, opt: LatticeOptimum, param: str, pnt: Vector=None, strplst: list=None):
         self.opt = opt
         self.param = param
         self.point = pnt
         self.strplst = strplst
         self.update()
+
     def update(self):
         if self.strplst is None:
             self.strplst = [strp.lsid for strp in self.opt.sys.strps]
         if self.point is None:
             self.point = self.opt.sys.rref
+
     @property
     def bcv(self):
         if self._bcv is None:
@@ -239,6 +258,7 @@ class Record(object):
                     rxi = strp.pnti.x-self.point.x
                     self._bcv[i, 0] += self.rhov*rxi*byi
         return self._bcv
+
     @property
     def bcm(self):
         if self._bcm is None:
@@ -260,36 +280,44 @@ class Record(object):
                         j = strpj.lsid
                         self._bcm[i, j] -= self.rhov*ryi*self.opt.sys.bdg[i, j]
         return self._bcm
+
     @property
     def rhov(self):
         if self._rhov is None:
             self._rhov = self.opt.rho*self.opt.speed
         return self._rhov
+
     def return_matrices(self, phi: matrix):
         ach = self.bcv.transpose()
         acv = self.bcv
         if self.bcm is not None:
             ach = ach + phi.transpose()*self.bcm
-            acv = acv + (self.bcm.transpose()+self.bcm)*phi
+            acv = acv + (self.bcm.transpose() + self.bcm)*phi
         return acv, ach
-    def evaluate(self):
+
+    def evaluate(self) -> float:
         phi = self.opt.phi
         _, ach = self.return_matrices(phi)
         value = (ach*phi)[0, 0]
         if self._value is None:
             self._value = value
         return value
+
     @property
-    def value(self):
+    def value(self) -> float:
         if self._value is None:
             self._value = self.evaluate()
         return self._value
+
     def __repr__(self):
         return '<LatticeOptimum Record of {:s}>'.format(self.param)
 
 class Constraint(Record):
-    def __init__(self, opt: LatticeOptimum, param: str, value: float, pnt: Vector=None, strplst: list=None):
+
+    def __init__(self, opt: LatticeOptimum, param: str, value: float,
+                 pnt: Vector=None, strplst: list=None) -> None:
         super(Constraint, self).__init__(opt, param, pnt=pnt, strplst=strplst)
         self._value = value
-    def __repr__(self):
+
+    def __repr__(self) -> str:
         return '<LatticeOptimum Constraint of {:s} to {:}>'.format(self.param, self.value)

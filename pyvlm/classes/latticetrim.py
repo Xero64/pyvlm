@@ -1,11 +1,14 @@
-from time import perf_counter
 from math import degrees, radians
+from time import perf_counter
+from typing import Any, Dict
+
+from numpy.linalg import inv, norm
 from numpy.matlib import zeros
-from numpy.linalg import norm, inv
-from .latticeresult import LatticeResult, GammaResult
-from .latticesystem import LatticeSystem
-from ..tools.trim import LoopingTrim, TurningTrim
+
 from ..tools.mass import Mass
+from .latticeresult import GammaResult, LatticeResult
+from .latticesystem import LatticeSystem
+
 
 class LatticeTrim(LatticeResult):
     CLt = None
@@ -234,33 +237,26 @@ class LatticeTrim(LatticeResult):
                 print(f'Convergence failed for {self.name}.')
                 return False
 
-def latticetrim_from_json(lsys: LatticeSystem, resdata: dict):
+def latticetrim_from_json(lsys: LatticeSystem, resdata: Dict[str, Any]) -> LatticeTrim:
+
+    from ..tools.trim import LoopingTrim, TurningTrim, LevelTrim, GRAVACC
+
     name = resdata['name']
 
     if resdata['trim'] == 'Looping Trim':
         trim = LoopingTrim(name, lsys)
-        n = 1.0
-        if 'load factor' in resdata:
-            n = resdata['load factor']
-        trim.set_load_factor(n)
+        trim.set_loadfac(resdata.get('load factor', 1.0))
+
     elif resdata['trim'] == 'Turning Trim':
         trim = TurningTrim(name, lsys)
-        bang = 0.0
-        if 'bank angle' in resdata:
-            bang = resdata['bank angle']
-        trim.set_bank_angle(bang)
+        trim.set_bankang(resdata.get('bank angle', 1.0))
 
-    rho = 1.0
-    if 'density' in resdata:
-        rho = resdata['density']
-    speed = 1.0
-    if 'speed' in resdata:
-        speed = resdata['speed']
-    trim.set_speed_and_density(speed, rho)
+    elif resdata['trim'] == 'Level Trim':
+        trim = LevelTrim(name, lsys)
 
-    if 'gravacc' in resdata:
-        g = resdata['gravacc']
-        trim.set_gravitational_acceleration(g)
+    trim.set_density(resdata.get('density', 1.0))
+    trim.set_speed(resdata.get('speed', 1.0))
+    trim.set_gravacc(resdata.get('gravacc', GRAVACC))
 
     m = 1.0
     xcm, ycm, zcm = lsys.rref.x, lsys.rref.y, lsys.rref.z

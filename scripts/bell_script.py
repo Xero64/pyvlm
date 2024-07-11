@@ -1,5 +1,6 @@
 #%%
 # Import Dependencies
+from IPython.display import display_markdown
 from pyvlm import LatticeOptimum
 from pyvlm import latticesystem_from_json
 from pyvlm.tools import Bell
@@ -8,11 +9,11 @@ from pyvlm.tools import Bell
 # Low AR Wing
 jsonfilepath = '../files/Straight_Wing_Cosine_100.json'
 lsys = latticesystem_from_json(jsonfilepath)
-print(lsys)
+display_markdown(lsys)
 
 #%%
 # Bell
-y = [pnt.y for pnt in lsys.srfcs[0].pnts[:, 0].transpose().tolist()[0]]
+y = [lsys.srfcs[0].pnts[i][0].y for i in range(len(lsys.srfcs[0].pnts))]
 
 bll = Bell(lsys.bref, y)
 bll.set_lift(1.0)
@@ -24,7 +25,7 @@ l = bll.return_phi()
 lopt = LatticeOptimum('Low AR Wing', lsys)
 lopt.set_state()
 lopt.set_target_lift_force_distribution(l, rho=1.0, speed=1.0)
-print(lopt)
+display_markdown(lopt)
 
 #%%
 # Plots

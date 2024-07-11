@@ -1,8 +1,8 @@
 from cmath import sqrt
 
-g = 9.80665 # m/s*82
+g = 9.80665 # m/s**2
 
-class StabilityApproximation(object):
+class StabilityApproximation():
     res = None
     mass = None
     def __init__(self, res, mass):

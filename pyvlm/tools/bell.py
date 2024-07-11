@@ -1,7 +1,7 @@
 from math import pi, acos, sin
 from matplotlib.pyplot import figure
 
-class Bell(object):
+class Bell():
     lift = None
     span = None
     y = None
@@ -12,22 +12,29 @@ class Bell(object):
     _thm = None
     _speed = None
     _rho = None
+
     def __init__(self, span: float, y: list):
         self.span = span
         self.y = y
+
     def set_lift(self, lift: float):
         self.lift = lift
+
     def set_speed(self, speed: float):
         self._speed = speed
+
     def set_density(self, rho: float):
         self._rho = rho
+
     def set_ym(self, ym: list):
         self._ym = ym
+
     @property
     def s(self):
         if self._s is None:
             self._s = [2*yi/self.span for yi in self.y]
         return self._s
+
     @property
     def th(self):
         if self._th is None:

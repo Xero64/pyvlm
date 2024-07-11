@@ -3,7 +3,7 @@ from pygeom.geom2d import CubicSpline2D, Vector2D
 from .spacing import full_cosine_spacing
 from pygeom.geom1d import CubicSpline
 
-class Airfoil(object):
+class Airfoil():
     name = None
     x = None
     y = None
@@ -19,11 +19,13 @@ class Airfoil(object):
     splinec = None
     mle = None
     mte = None
+
     def __init__(self, name: str, x: list, y: list):
         self.name = name
         self.x = x
         self.y = y
         self.update()
+
     def update(self, num: int=80):
         self.xte = (self.x[0]+self.x[-1])/2
         self.yte = (self.y[0]+self.y[-1])/2
@@ -69,6 +71,7 @@ class Airfoil(object):
                 ync.append(yi)
         xnc[0], ync[0] = 0.0, 0.0
         self.splinec = CubicSpline(xnc, ync)
+
     def plot_airfoil(self, ax=None):
         if ax is None:
             fig = figure(figsize=(12, 8))
@@ -77,6 +80,7 @@ class Airfoil(object):
             ax.set_aspect('equal')
         ax.plot(self.x, self.y, label=self.name)
         return ax
+
     def plot_normalised_aifoil(self, ax=None):
         if ax is None:
             fig = figure(figsize=(12, 8))
@@ -85,10 +89,13 @@ class Airfoil(object):
             ax.set_aspect('equal')
         ax.plot(self.xn, self.yn, label=self.name)
         return ax
+
     def return_camber(self, xc: float):
         return self.splinec.single_interpolate_spline(xc)
+
     def return_camber_slope(self, xc: float):
         return self.splinec.single_interpolate_gradient(xc)
+
     def return_camber_angle(self, xc: float):
         from math import degrees, atan
         dydx = self.return_camber_slope(xc)

@@ -255,10 +255,8 @@ class LatticeResult():
             num = len(self.sys.strps)
             self._bvv = zero_arrayvector(num)
             for strp in self.sys.strps:
-                i = strp.lsid
-                if strp.noload:
-                    self._bvv[i] = Vector(0.0, 0.0, 0.0)
-                else:
+                if not strp.noload:
+                    i = strp.lsid
                     self._bvv[i] = self.vfs-self.ofs.cross(self.brm[i])
         return self._bvv
 

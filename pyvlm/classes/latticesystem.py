@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING, Dict, List, Tuple
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
-from numpy import (absolute, divide, fill_diagonal, multiply, pi, reciprocal,
-                   sqrt, zeros)
+from numpy import absolute, divide, multiply, pi, reciprocal, sqrt, zeros
 from py2md.classes import MDTable
 from pygeom.array3d import ArrayVector, solve_arrayvector, zero_arrayvector
 from pygeom.geom3d import Vector
@@ -10,16 +9,19 @@ if TYPE_CHECKING:
     from numpy import float64
     from numpy.typing import NDArray
 
+    from ..tools.mass import Mass, MassCollection
     from .latticepanel import LatticePanel
     from .latticeresult import LatticeResult
     from .latticestrip import LatticeStrip
     from .latticesurface import LatticeSurface
 
+    MassLike = Union[Mass, MassCollection]
+
 FOURPI = 4*pi
 
 
 class LatticeSystem():
-    source = None # System Source
+    source: str = None # System Source
     name: str = None # System Name
     srfcs: List['LatticeSurface'] = None # System Surfaces
     strps: List['LatticeStrip'] = None # System Strips
@@ -31,30 +33,27 @@ class LatticeSystem():
     ctrls: Dict[str, Tuple[int, int, int, int]] = None # System Controls
     nump: int = None # Number of Panels
     nums: int = None # Number of Strips
-    masses = None # Store Mass Options
-    _ra = None # Horseshoe Vortex Vector A
-    _rb = None # Horseshoe Vortex Vector B
-    _rc = None # Panel Control Vector
-    _rg = None # Panel Induced Vector
-    _ungam = None # System Unit Solution
-    _avg = None # Induced Vector Velocity Matrix
-    _afg = None # Induced Vector Force Matrix
-    _avc = None # Control Vector Velocity Matrix
-    _aic = None # Influence Coefficient Matrix
-    _afs = None
-    _adc = None
-    _ada = None
-    _ava = None
-    _avb = None
-    _bvg = None
-    _bdg = None
-    _blg = None
-    _byg = None
-    _bmg = None
-    _bda = None
-    _ar = None # Aspect Ratio
-    _cdo = None
-    _cdo_ff = None
+    masses: Dict[str, 'MassLike'] = None # Store Mass Options
+    _ra: ArrayVector = None # Horseshoe Vortex Vector A
+    _rb: ArrayVector = None # Horseshoe Vortex Vector B
+    _rc: ArrayVector = None # Panel Control Vector
+    _rg: ArrayVector = None # Panel Induced Vector
+    _ungam: ArrayVector = None # System Unit Solution
+    _avg: ArrayVector = None # Induced Vector Velocity Matrix
+    _afg: ArrayVector = None # Induced Vector Force Matrix
+    _avc: ArrayVector = None # Control Vector Velocity Matrix
+    _aic: 'NDArray[float64]' = None # Influence Coefficient Matrix
+    _afs: ArrayVector = None
+    _ada: 'NDArray[float64]' = None
+    _bvg: ArrayVector = None
+    _bdg: 'NDArray[float64]' = None
+    _blg: 'NDArray[float64]' = None
+    _byg: 'NDArray[float64]' = None
+    _bmg: 'NDArray[float64]' = None
+    _bda: 'NDArray[float64]' = None
+    _ar: float = None # Aspect Ratio
+    _cdo: float = None
+    _cdo_ff: float = None
     results: Dict[str, 'LatticeResult'] = None
 
     def __init__(self, name: str, srfcs: list,
@@ -68,7 +67,7 @@ class LatticeSystem():
         self.rref = rref
         self.results = {}
 
-    def mesh(self):
+    def mesh(self) -> None:
         lsid = 0
         lpid = 0
         for srfc in self.srfcs:
@@ -92,7 +91,7 @@ class LatticeSystem():
                         self.ctrls[control] = (ind, ind+1, ind+2, ind+3)
                         ind += 4
 
-    def reset(self):
+    def reset(self) -> None:
         for attr in self.__dict__:
             if attr[0] == '_':
                 self.__dict__[attr] = None
@@ -150,7 +149,7 @@ class LatticeSystem():
         return self._aic[mach]
 
     @property
-    def afs(self):
+    def afs(self) -> ArrayVector:
         if self._afs is None:
             num = len(self.pnls)
             numc = len(self.ctrls)
@@ -188,12 +187,9 @@ class LatticeSystem():
         if self._avg is None:
             self._avg = {}
         if mach not in self._avg:
-            beta = (1-mach**2)**0.5
+            beta = (1 - mach**2)**0.5
             veli, vela, velb = velocity_matrix(self.ra, self.rb, self.rg, beta)
-            fill_diagonal(veli.x, 0.0)
-            fill_diagonal(veli.y, 0.0)
-            fill_diagonal(veli.z, 0.0)
-            self._avg[mach] = (veli+vela-velb)/FOURPI
+            self._avg[mach] = (veli + vela - velb)/FOURPI
         return self._avg[mach]
 
     def afg(self, mach: float) -> ArrayVector:
@@ -207,17 +203,6 @@ class LatticeSystem():
                     afg[pnl.lpid, :] = avg[pnl.lpid, :].cross(pnl.leni)
             self._afg[mach] = afg
         return self._afg[mach]
-
-    # def adc(self, mach: float):
-    #     if self._adc is None:
-    #         self._adc = {}
-    #     if mach not in self._adc:
-    #         avc = self.avc(mach)
-    #         adc = zeros(avc.shape, dtype=float)
-    #         for pnl in self.pnls:
-    #             adc[pnl.lpid, :] = avc[pnl.lpid, :]*pnl.tang
-    #         self._adc[mach] = adc
-    #     return self._adc[mach]
 
     @property
     def ada(self) -> 'NDArray[float64]':
@@ -267,7 +252,7 @@ class LatticeSystem():
         return self._blg
 
     @property
-    def byg(self):
+    def byg(self) -> 'NDArray[float64]':
         if self._byg is None:
             num = len(self.strps)
             self._byg = zeros(num, dtype=float)
@@ -276,7 +261,7 @@ class LatticeSystem():
         return self._byg
 
     @property
-    def bmg(self):
+    def bmg(self) -> 'NDArray[float64]':
         if self._bmg is None:
             num = len(self.strps)
             self._bmg = zeros(num, dtype=float)
@@ -286,7 +271,7 @@ class LatticeSystem():
         return self._bmg
 
     @property
-    def bda(self):
+    def bda(self) -> 'NDArray[float64]':
         if self._bda is None:
             num = len(self.strps)
             self._bda = zeros(num, dtype=float)
@@ -295,7 +280,7 @@ class LatticeSystem():
         return self._bda
 
     @property
-    def cdo_ff(self):
+    def cdo_ff(self) -> float:
         if self._cdo_ff is None:
             dragarea = 0.0
             for strp in self.strps:
@@ -304,26 +289,26 @@ class LatticeSystem():
         return self._cdo_ff
 
     @property
-    def ar(self):
+    def ar(self) -> float:
         if self._ar is None:
             self._ar = self.bref**2/self.sref
         return self._ar
 
     @property
-    def lstrpi(self):
+    def lstrpi(self) -> List['LatticeStrip']:
         sgrp = []
         for srfc in self.srfcs:
             sgrp += srfc.sgrp[0]
         return sgrp
 
     @property
-    def mstrpi(self):
+    def mstrpi(self) -> List['LatticeStrip']:
         sgrp = []
         for srfc in self.srfcs:
             sgrp += srfc.sgrp[1]
         return sgrp
 
-    def set_strip_alpha(self, alpha: list):
+    def set_strip_alpha(self, alpha: List[float]) -> None:
         for strp in self.strps:
             strp.set_twist(alpha[strp.lsid])
         self._aic = None
@@ -331,7 +316,7 @@ class LatticeSystem():
         self._ungam = None
 
     @property
-    def strip_geometry(self):
+    def strip_geometry(self) -> MDTable:
         table = MDTable()
         table.add_column('#', 'd')
         table.add_column('xpos', '.5f')
@@ -356,7 +341,7 @@ class LatticeSystem():
         return table
 
     @property
-    def panel_geometry(self):
+    def panel_geometry(self) -> MDTable:
         table = MDTable()
         table.add_column('#', 'd')
         table.add_column('X', '.5f')
@@ -378,21 +363,21 @@ class LatticeSystem():
             table.add_row([j, x, y, z, dx, nx, ny, nz])
         return table
 
-    def copy_from_source(self):
+    def copy_from_source(self) -> 'LatticeSystem':
         lsys = latticesystem_from_json(self.source)
         for attr in self.__dict__:
             if attr[0] == '_':
                 lsys.__dict__[attr] = self.__dict__[attr].copy()
         return lsys
 
-    def velocity_matrix(self, rc: ArrayVector):
+    def velocity_matrix(self, rc: ArrayVector) -> ArrayVector:
         veli, vela, velb = velocity_matrix(self.ra, self.rb, rc)
-        return (veli+vela-velb)/FOURPI
+        return (veli + vela - velb)/FOURPI
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<LatticeSystem: {:s}>'.format(self.name)
 
-    def __str__(self):
+    def __str__(self) -> str:
         outstr = '# Lattice System '+self.name+'\n'
         table = MDTable()
         table.add_column('Name', 's', data=[self.name])
@@ -414,8 +399,9 @@ class LatticeSystem():
             outstr += table._repr_markdown_()
         return outstr
 
-    def _repr_markdown_(self):
+    def _repr_markdown_(self) -> str:
         return self.__str__()
+
 
 def latticesystem_from_json(jsonfilepath: str, mesh: bool=True) -> LatticeSystem:
     from json import load

@@ -8,6 +8,7 @@ from .latticestrip import LatticeStrip
 if TYPE_CHECKING:
     from .latticesheet import LatticeSheet
 
+TOL = 1e-12
 FOURPI = 4*pi
 
 class LatticePanel():
@@ -113,27 +114,24 @@ class LatticePanel():
         return gain*hvec.cross(self.nrml)
 
     def velocity(self, pnt: Vector) -> Vector:
-        r = pnt
-        ra = self.pnta
-        rb = self.pntb
-        a = r-ra
-        b = r-rb
+        vel = Vector(0.0, 0.0, 0.0)
+        a = pnt - self.pnta
+        b = pnt - self.pntb
+        adb = a.dot(b)
         am = a.return_magnitude()
         bm = b.return_magnitude()
-        vel = Vector(0.0, 0.0, 0.0)
-        if pnt != self.pnti:
+        denab = am*bm + adb
+        if abs(denab) > TOL and am > TOL and bm > TOL:
             axb = a.cross(b)
-            if axb.return_magnitude() != 0.0:
-                den = am*bm+a*b
-                vel += axb/den*(1/am+1/bm)
-        axx = Vector(0.0, a.z, -a.y)
-        if axx.return_magnitude() != 0.0:
-            den = am-a.x
-            vel += axx/den/am
-        bxx = Vector(0.0, b.z, -b.y)
-        if bxx.return_magnitude() != 0.0:
-            den = bm-b.x
-            vel -= bxx/den/bm
+            vel += axb/denab*(1/am + 1/bm)
+        dena = am - a.x
+        if abs(dena) > TOL:
+            axx = Vector(0.0, a.z, -a.y)
+            vel += axx/dena/am
+        denb = bm - b.x
+        if abs(denb) > TOL:
+            bxx = Vector(0.0, b.z, -b.y)
+            vel -= bxx/denb/bm
         vel = vel/FOURPI
         return vel
 

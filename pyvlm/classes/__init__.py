@@ -1,13 +1,8 @@
-from .latticesystem import LatticeSystem, latticesystem_from_dict
-from .latticesurface import LatticeSurface
-from .latticesection import LatticeSection
-from .latticesheet import LatticeSheet
-from .latticestrip import LatticeStrip
-from .latticepanel import LatticePanel
-from .latticeresult import LatticeResult
-from .latticeoptimum import LatticeOptimum
-from .latticecontrol import LatticeControl
-from .latticetrim import LatticeTrim
+from .latticeoptimum import LatticeOptimum as LatticeOptimum
+from .latticeresult import LatticeResult as LatticeResult
+from .latticesystem import LatticeSystem as LatticeSystem
+from .latticesystem import latticesystem_from_dict as latticesystem_from_dict
+from .latticetrim import LatticeTrim as LatticeTrim
 
 cfrm = '.5f'
 dfrm = '.7f'
