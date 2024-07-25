@@ -14,9 +14,9 @@ def latticeresult_to_prf(lsys: LatticeSystem, prffilepath: str):
         for csp in csps:
             cspc.append(csp[0])
         cspc.append(csps[-1][-1])
-        for i in range(srfc.pnts.shape[0]):
-            pntle = srfc.pnts[i, 0]
-            pntte = srfc.pnts[i, -1]
+        for i in range(len(srfc.pnts)):
+            pntle = srfc.pnts[i][0]
+            pntte = srfc.pnts[i][-1]
             x, y, z = pntle.x, pntle.y, pntle.z
             chord = pntte.x-pntle.x
             xpos.append(x)
@@ -39,13 +39,14 @@ def latticeresult_to_prf(lsys: LatticeSystem, prffilepath: str):
         casedata['name'] = case
         casedata['surfaces'] = []
         for srfc in lsys.srfcs:
-            prtop = zeros(srfc.pnls.shape)
-            prbot = zeros(srfc.pnls.shape)
-            for i in range(srfc.pnls.shape[0]):
-                for j in range(srfc.pnls.shape[1]):
-                    pnl = srfc.pnls[i, j]
+            shape = (len(srfc.pnls), len(srfc.pnls[0]))
+            prtop = zeros(shape)
+            prbot = zeros(shape)
+            for i in range(shape[0]):
+                for j in range(shape[1]):
+                    pnl = srfc.pnls[i][j]
                     lpid = pnl.lpid
-                    pnlfrc = result.nfres.nffrc[lpid, 0]
+                    pnlfrc = result.nfres.nffrc[lpid]
                     frcnrm = pnl.nrml.dot(pnlfrc)
                     deltap = frcnrm/pnl.area
                     prtop[i, j] = dynprs+deltap/2
