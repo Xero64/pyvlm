@@ -27,7 +27,7 @@ lres = lsys.results['Positive 1g Cruise + 15deg Side Slip']
 latticeresult_to_msh(lres, '../results/Aircraft.msh')
 
 #%%
-# Pessure File Output
+# Pressure File Output
 latticeresult_to_prf(lsys, '../results/Aircraft_pressures.json')
 
 #%%
