@@ -111,20 +111,20 @@ def latticesection_from_json(sectdata: Dict[str, Any]) -> LatticeSection:
     if 'xpos' in sectdata:
         xpos = sectdata['xpos']
     else:
-        raise ValueError()
+        raise ValueError('xpos not found in section data.')
     if 'ypos' in sectdata:
         ypos = sectdata['ypos']
     else:
-        raise ValueError()
+        raise ValueError('ypos not found in section data.')
     if 'zpos' in sectdata:
         zpos = sectdata['zpos']
     else:
-        raise ValueError()
+        raise ValueError('zpos not found in section data.')
     point = Vector(xpos, ypos, zpos)
     if 'chord' in sectdata:
         chord = sectdata['chord']
     else:
-        raise ValueError()
+        raise ValueError('chord not found in section data.')
     if 'twist' in sectdata:
         twist = sectdata['twist']
     else:

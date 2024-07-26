@@ -271,7 +271,7 @@ def latticesurface_from_json(surfdata: dict, display: bool=False) -> LatticeSurf
         a.append(sct.twist)
     if None in y:
         if None is z:
-            raise ValueError()
+            raise ValueError('Either y or z must be defined.')
         else:
             y = linear_interpolate_none(z, y)
     else:
