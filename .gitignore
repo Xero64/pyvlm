@@ -25,12 +25,7 @@ wheels/
 *.egg
 MANIFEST
 
-# Folders
-excel/
-notes/
-symbolic/
-notebooks/
-research/
+# Results
 results/*
 
 # Requirements
