@@ -18,7 +18,7 @@ def latticeresult_to_prf(lsys: LatticeSystem, prffilepath: str):
             pntle = srfc.pnts[i][0]
             pntte = srfc.pnts[i][-1]
             x, y, z = pntle.x, pntle.y, pntle.z
-            chord = pntte.x-pntle.x
+            chord = pntte.x - pntle.x
             xpos.append(x)
             ypos.append(y)
             zpos.append(z)

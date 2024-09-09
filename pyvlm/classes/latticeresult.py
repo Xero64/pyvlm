@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from matplotlib.pyplot import figure
 from numpy import cos, pi, radians, sin, tan, zeros
 from py2md.classes import MDReport
-from pygeom.array3d import ArrayVector, zero_arrayvector
+from pygeom.geom3d import Vector, zero_vector
 from pygeom.geom3d import Coordinate, Vector
 
 if TYPE_CHECKING:
@@ -35,12 +35,12 @@ class LatticeResult():
     _vfs: Vector = None
     _qfs: float = None
     _ofs: Vector = None
-    _ungam: ArrayVector = None
+    _ungam: Vector = None
     _gamma: 'NDArray[float64]' = None
-    _avg: ArrayVector = None
-    _avv: ArrayVector = None
-    _afg: ArrayVector = None
-    _afv: ArrayVector = None
+    _avg: Vector = None
+    _avv: Vector = None
+    _afg: Vector = None
+    _afv: Vector = None
     _arm = None
     _armt = None
     _phi = None
@@ -145,7 +145,7 @@ class LatticeResult():
         return self._wcs
 
     @property
-    def ungam(self) -> ArrayVector:
+    def ungam(self) -> Vector:
         if self._ungam is None:
             self._ungam = self.sys.ungam(self.mach)
         return self._ungam
@@ -234,26 +234,26 @@ class LatticeResult():
         return self._qfs
 
     @property
-    def avg(self) -> ArrayVector:
+    def avg(self) -> Vector:
         if self._avg is None:
             self._avg = self.sys.avg(self.mach)
         return self._avg
 
     @property
-    def avv(self) -> ArrayVector:
+    def avv(self) -> Vector:
         if self._avv is None:
             num = len(self.sys.pnls)
-            self._avv = zero_arrayvector(num)
+            self._avv = zero_vector(num)
             for pnl in self.sys.pnls:
                 i = pnl.lpid
                 self._avv[i] = self.vfs - self.ofs.cross(self.arm[i])
         return self._avv
 
     @property
-    def bvv(self) -> ArrayVector:
+    def bvv(self) -> Vector:
         if self._bvv is None:
             num = len(self.sys.strps)
-            self._bvv = zero_arrayvector(num)
+            self._bvv = zero_vector(num)
             for strp in self.sys.strps:
                 if not strp.noload:
                     i = strp.lsid
@@ -261,36 +261,36 @@ class LatticeResult():
         return self._bvv
 
     @property
-    def arm(self) -> ArrayVector:
+    def arm(self) -> Vector:
         if self._arm is None:
             num = len(self.sys.pnls)
-            self._arm = zero_arrayvector(num)
+            self._arm = zero_vector(num)
             for pnl in self.sys.pnls:
                 i = pnl.lpid
                 self._arm[i] = pnl.pnti - self.rcg
         return self._arm
 
     @property
-    def brm(self) -> ArrayVector:
+    def brm(self) -> Vector:
         if self._brm is None:
             num = len(self.sys.strps)
-            self._brm = zero_arrayvector(num)
+            self._brm = zero_vector(num)
             for strp in self.sys.strps:
                 i = strp.lsid
                 self._brm[i] = strp.pntq - self.rcg
         return self._brm
 
     @property
-    def afg(self) -> ArrayVector:
+    def afg(self) -> Vector:
         if self._afg is None:
             self._afg = self.sys.afg(self.mach)
         return self._afg
 
     @property
-    def afv(self) -> ArrayVector:
+    def afv(self) -> Vector:
         if self._afv is None:
             num = len(self.sys.pnls)
-            self._afv = zero_arrayvector(num)
+            self._afv = zero_vector(num)
             for pnl in self.sys.pnls:
                 if not pnl.noload:
                     i = pnl.lpid
@@ -990,9 +990,9 @@ class GammaResult():
     res: LatticeResult = None
     gamma: 'NDArray[float64]' = None
     _rhogamma: 'NDArray[float64]' = None
-    _nfvel: ArrayVector = None
-    _nffrc: ArrayVector = None
-    _nfmom: ArrayVector = None
+    _nfvel: Vector = None
+    _nffrc: Vector = None
+    _nfmom: Vector = None
     _nffrctot: Vector = None
     _nfmomtot: Vector = None
     _Cx: float = None
@@ -1020,20 +1020,20 @@ class GammaResult():
         return self._rhogamma
 
     @property
-    def nfvel(self) -> ArrayVector:
+    def nfvel(self) -> Vector:
         if self._nfvel is None:
             self._nfvel = self.res.avg@self.gamma + self.res.avv
         return self._nfvel
 
     @property
-    def nffrc(self) -> ArrayVector:
+    def nffrc(self) -> Vector:
         if self._nffrc is None:
             tmp = self.res.afg@self.gamma + self.res.afv
             self._nffrc = tmp*self.rhogamma
         return self._nffrc
 
     @property
-    def nfmom(self) -> ArrayVector:
+    def nfmom(self) -> Vector:
         if self._nfmom is None:
             self._nfmom = self.res.arm.cross(self.nffrc)
         return self._nfmom
@@ -1155,8 +1155,8 @@ class GammaResult():
 
 class StripResult():
     gamres: GammaResult = None
-    _stfrc: ArrayVector = None
-    _stmom: ArrayVector = None
+    _stfrc: Vector = None
+    _stmom: Vector = None
     _lift: float = None
     _side: float = None
     _drag: float = None
@@ -1166,11 +1166,11 @@ class StripResult():
         self.gamres = gamres
 
     @property
-    def stfrc(self) -> ArrayVector:
+    def stfrc(self) -> Vector:
         if self._stfrc is None:
             sys = self.gamres.res.sys
             num = len(sys.strps)
-            self._stfrc = zero_arrayvector(num)
+            self._stfrc = zero_vector(num)
             for strp in sys.strps:
                 i = strp.lsid
                 for pnl in strp.pnls:
@@ -1179,11 +1179,11 @@ class StripResult():
         return self._stfrc
 
     @property
-    def stmom(self) -> ArrayVector:
+    def stmom(self) -> Vector:
         if self._stmom is None:
             sys = self.gamres.res.sys
             num = len(sys.strps)
-            self._stmom = zero_arrayvector(num)
+            self._stmom = zero_vector(num)
             for strp in sys.strps:
                 i = strp.lsid
                 for pnl in strp.pnls:
@@ -1221,8 +1221,8 @@ class PhiResult():
     res: LatticeResult = None
     phi: 'NDArray[float64]' = None
     _trwsh: 'NDArray[float64]' = None
-    _trfrc: ArrayVector = None
-    _trmom: ArrayVector = None
+    _trfrc: Vector = None
+    _trmom: Vector = None
     _trfrctot: Vector = None
     _trmomtot: Vector = None
     _CDi: float = None
@@ -1250,7 +1250,7 @@ class PhiResult():
             x = self.res.rho*self.phi*(self.res.sys.bdg@self.phi)
             y = self.res.rho*self.res.speed*self.phi*self.res.sys.byg
             z = self.res.rho*self.res.speed*self.phi*self.res.sys.blg
-            self._trfrc = ArrayVector(x, y, z)
+            self._trfrc = Vector(x, y, z)
         return self._trfrc
 
     @property
@@ -1335,8 +1335,8 @@ class PhiResult():
 
 class ParasiticDragResult():
     res: LatticeResult = None
-    _pdfrc: ArrayVector = None
-    _pdmom: ArrayVector = None
+    _pdfrc: Vector = None
+    _pdmom: Vector = None
     _pdfrctot: Vector = None
     _pdmomtot: Vector = None
     _CDo: float = None
@@ -1350,17 +1350,17 @@ class ParasiticDragResult():
         self.res = res
 
     @property
-    def pdfrc(self) -> ArrayVector:
+    def pdfrc(self) -> Vector:
         if self._pdfrc is None:
             dynpr = self.res.bvv.dot(self.res.bvv)*(self.res.rho/2)
             tmp = dynpr*self.res.sys.bda
-            self._pdfrc = ArrayVector(tmp*self.res.acs.dirx.x,
+            self._pdfrc = Vector(tmp*self.res.acs.dirx.x,
                                       tmp*self.res.acs.dirx.y,
                                       tmp*self.res.acs.dirx.z)
         return self._pdfrc
 
     @property
-    def pdmom(self) -> ArrayVector:
+    def pdmom(self) -> Vector:
         if self._pdmom is None:
             self._pdmom = self.res.brm.cross(self.pdfrc)
         return self._pdmom

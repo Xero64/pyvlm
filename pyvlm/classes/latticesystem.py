@@ -2,8 +2,7 @@ from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 from numpy import absolute, divide, multiply, pi, reciprocal, sqrt, zeros
 from py2md.classes import MDTable
-from pygeom.array3d import ArrayVector, solve_arrayvector, zero_arrayvector
-from pygeom.geom3d import Vector
+from pygeom.geom3d import Vector, solve_vector, zero_vector
 
 if TYPE_CHECKING:
     from numpy import float64
@@ -34,18 +33,18 @@ class LatticeSystem():
     nump: int = None # Number of Panels
     nums: int = None # Number of Strips
     masses: Dict[str, 'MassLike'] = None # Store Mass Options
-    _ra: ArrayVector = None # Horseshoe Vortex Vector A
-    _rb: ArrayVector = None # Horseshoe Vortex Vector B
-    _rc: ArrayVector = None # Panel Control Vector
-    _rg: ArrayVector = None # Panel Induced Vector
-    _ungam: ArrayVector = None # System Unit Solution
-    _avg: ArrayVector = None # Induced Vector Velocity Matrix
-    _afg: ArrayVector = None # Induced Vector Force Matrix
-    _avc: ArrayVector = None # Control Vector Velocity Matrix
+    _ra: Vector = None # Horseshoe Vortex Vector A
+    _rb: Vector = None # Horseshoe Vortex Vector B
+    _rc: Vector = None # Panel Control Vector
+    _rg: Vector = None # Panel Induced Vector
+    _ungam: Vector = None # System Unit Solution
+    _avg: Vector = None # Induced Vector Velocity Matrix
+    _afg: Vector = None # Induced Vector Force Matrix
+    _avc: Vector = None # Control Vector Velocity Matrix
     _aic: 'NDArray[float64]' = None # Influence Coefficient Matrix
-    _afs: ArrayVector = None
+    _afs: Vector = None
     _ada: 'NDArray[float64]' = None
-    _bvg: ArrayVector = None
+    _bvg: Vector = None
     _bdg: 'NDArray[float64]' = None
     _blg: 'NDArray[float64]' = None
     _byg: 'NDArray[float64]' = None
@@ -97,38 +96,38 @@ class LatticeSystem():
                 self.__dict__[attr] = None
 
     @property
-    def ra(self) -> ArrayVector:
+    def ra(self) -> Vector:
         if self._ra is None:
-            self._ra = zero_arrayvector(self.nump, dtype=float)
+            self._ra = zero_vector(self.nump, dtype=float)
             for pnl in self.pnls:
                 self._ra[pnl.lpid] = pnl.pnta
         return self._ra
 
     @property
-    def rb(self) -> ArrayVector:
+    def rb(self) -> Vector:
         if self._rb is None:
-            self._rb = zero_arrayvector(self.nump, dtype=float)
+            self._rb = zero_vector(self.nump, dtype=float)
             for pnl in self.pnls:
                 self._rb[pnl.lpid] = pnl.pntb
         return self._rb
 
     @property
-    def rc(self) -> ArrayVector:
+    def rc(self) -> Vector:
         if self._rc is None:
-            self._rc = zero_arrayvector(self.nump, dtype=float)
+            self._rc = zero_vector(self.nump, dtype=float)
             for pnl in self.pnls:
                 self._rc[pnl.lpid] = pnl.pntc
         return self._rc
 
     @property
-    def rg(self) -> ArrayVector:
+    def rg(self) -> Vector:
         if self._rg is None:
-            self._rg = zero_arrayvector(self.nump, dtype=float)
+            self._rg = zero_vector(self.nump, dtype=float)
             for pnl in self.pnls:
                 self._rg[pnl.lpid] = pnl.pnti
         return self._rg
 
-    def avc(self, mach: float) -> ArrayVector:
+    def avc(self, mach: float) -> Vector:
         if self._avc is None:
             self._avc = {}
         if mach not in self._avc:
@@ -149,11 +148,11 @@ class LatticeSystem():
         return self._aic[mach]
 
     @property
-    def afs(self) -> ArrayVector:
+    def afs(self) -> Vector:
         if self._afs is None:
             num = len(self.pnls)
             numc = len(self.ctrls)
-            self._afs = zero_arrayvector((num, 2+4*numc), dtype=float)
+            self._afs = zero_vector((num, 2+4*numc), dtype=float)
             for pnl in self.pnls:
                 lpid = pnl.lpid
                 rrel = pnl.pntc-self.rref
@@ -175,15 +174,15 @@ class LatticeSystem():
                             self._afs[lpid, ctup[3]] = rrel.cross(dndln)
         return self._afs
 
-    def ungam(self, mach: float) -> ArrayVector:
+    def ungam(self, mach: float) -> Vector:
         if self._ungam is None:
             self._ungam = {}
         if mach not in self._ungam:
             aic = self.aic(mach)
-            self._ungam[mach] = -solve_arrayvector(aic, self.afs)
+            self._ungam[mach] = -solve_vector(aic, self.afs)
         return self._ungam[mach]
 
-    def avg(self, mach: float) -> ArrayVector:
+    def avg(self, mach: float) -> Vector:
         if self._avg is None:
             self._avg = {}
         if mach not in self._avg:
@@ -192,12 +191,12 @@ class LatticeSystem():
             self._avg[mach] = (veli + vela - velb)/FOURPI
         return self._avg[mach]
 
-    def afg(self, mach: float) -> ArrayVector:
+    def afg(self, mach: float) -> Vector:
         if self._afg is None:
             self._afg = {}
         if mach not in self._afg:
             avg = self.avg(mach)
-            afg = zero_arrayvector(avg.shape, dtype=float)
+            afg = zero_vector(avg.shape, dtype=float)
             for pnl in self.pnls:
                 if not pnl.noload:
                     afg[pnl.lpid, :] = avg[pnl.lpid, :].cross(pnl.leni)
@@ -370,7 +369,7 @@ class LatticeSystem():
                 lsys.__dict__[attr] = self.__dict__[attr].copy()
         return lsys
 
-    def velocity_matrix(self, rc: ArrayVector) -> ArrayVector:
+    def velocity_matrix(self, rc: Vector) -> Vector:
         veli, vela, velb = velocity_matrix(self.ra, self.rb, rc)
         return (veli + vela - velb)/FOURPI
 
@@ -481,8 +480,8 @@ def latticesystem_from_dict(sysdct: dict) -> LatticeSystem:
 
     return lsys
 
-def velocity_matrix(ra: ArrayVector, rb: ArrayVector, rc: ArrayVector,
-                    betm: float=1.0, tol: float=1e-12) -> ArrayVector:
+def velocity_matrix(ra: Vector, rb: Vector, rc: Vector,
+                    betm: float=1.0, tol: float=1e-12) -> Vector:
 
     if ra.size != rb.size:
         raise ValueError('ra and rb sizes do not match.')
@@ -527,7 +526,7 @@ def velocity_matrix(ra: ArrayVector, rb: ArrayVector, rc: ArrayVector,
     # veli.z[chki] = 0.0
 
     # Velocity from Trailing Vortex A
-    axx = ArrayVector(zeros(a.shape, dtype=float), a.z, -a.y)
+    axx = Vector(zeros(a.shape, dtype=float), a.z, -a.y)
     dma = multiply(am, am - a.x)
     chka = absolute(dma) > tol
     faca = zeros(dma.shape)
@@ -538,7 +537,7 @@ def velocity_matrix(ra: ArrayVector, rb: ArrayVector, rc: ArrayVector,
     # vela.z[chka] = 0.0
 
     # Velocity from Trailing Vortex B
-    bxx = ArrayVector(zeros(b.shape, dtype=float), b.z, -b.y)
+    bxx = Vector(zeros(b.shape, dtype=float), b.z, -b.y)
     dmb = multiply(bm, bm - b.x)
     chkb = absolute(dmb) > tol
     facb = zeros(dmb.shape)

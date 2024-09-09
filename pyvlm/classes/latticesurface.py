@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, List, Tuple, Union
 from matplotlib.pyplot import figure
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 from numpy import ptp, sqrt, zeros
-from pygeom.array3d import zero_arrayvector
+from pygeom.geom3d import zero_vector
 from pygeom.geom1d import CubicSpline, LinearSpline
 from pygeom.geom3d import Vector
 from pyvlm.tools import equal_spacing, full_cosine_spacing, normalise_spacing
@@ -15,7 +15,7 @@ from .latticesheet import LatticeSheet
 if TYPE_CHECKING:
     from numpy import float64
     from numpy.typing import NDArray
-    from pygeom.array3d import ArrayVector
+    from pygeom.geom3d import Vector
 
     from .latticesection import LatticeSection
     from .latticestrip import LatticeStrip
@@ -234,10 +234,10 @@ class LatticeSurface():
                 lpids.append(self.pnls[i][j].lpid)
         return lpids
 
-    def vortex_line_points(self, indp: int, nump: int) -> 'ArrayVector':
+    def vortex_line_points(self, indp: int, nump: int) -> 'Vector':
         nums = len(self.strps)
         num = nums*nump+1
-        rpt = zero_arrayvector((num, 1))
+        rpt = zero_vector((num, 1))
         j = 0
         for strp in self.strps:
             pnl = strp.pnls[indp]
