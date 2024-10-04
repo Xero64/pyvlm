@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING, Union
 
 from pygeom.geom3d import Vector
-from .mass import Mass, MassCollection
+
 from ..classes import LatticeTrim
+from .mass import Mass, MassCollection
 
 if TYPE_CHECKING:
     from ..classes import LatticeSystem
@@ -221,7 +222,7 @@ class TurningTrim():
     @property
     def loadfac(self) -> float:
         if self._loadfac is None:
-            from math import radians, cos
+            from math import cos, radians
             brad = radians(self.bankang)
             self._loadfac = 1.0/cos(brad)
         return self._loadfac

@@ -1,7 +1,6 @@
 #%%
 # Load Dependencies
-from pyvlm import LatticeResult
-from pyvlm import latticesystem_from_json
+from pyvlm import LatticeResult, latticesystem_from_json
 
 #%%
 # Create Lattice System

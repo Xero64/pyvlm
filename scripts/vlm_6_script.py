@@ -1,14 +1,14 @@
 #%%
 # Import Dependencies
-from math import atan2, degrees, radians, pi, asin
+from math import asin, atan2, degrees, pi, radians
+
 from IPython.display import display
-from pyvlm import LatticeResult, LatticeOptimum
-from pyvlm import latticesystem_from_json
-from pyvlm.tools import bell_lift_force_distribution
-from pyvlm.tools.trim import LevelTrim
-from pyvlm.tools import Bell, Mass
 from matplotlib.pyplot import figure
 from pygeom.geom1d import LinearSpline
+
+from pyvlm import LatticeOptimum, LatticeResult, latticesystem_from_json
+from pyvlm.tools import Bell, Mass, bell_lift_force_distribution
+from pyvlm.tools.trim import LevelTrim
 
 #%%
 # Create Lattice System

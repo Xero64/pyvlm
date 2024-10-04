@@ -1,6 +1,6 @@
 #%%
 # Import Dependencies
-from pyvlm.tools import masses_from_json, MassCollection
+from pyvlm.tools import MassCollection, masses_from_json
 
 #%%
 # Read in Mass File

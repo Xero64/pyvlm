@@ -239,7 +239,7 @@ class LatticeTrim(LatticeResult):
 
 def latticetrim_from_json(lsys: LatticeSystem, resdata: Dict[str, Any]) -> LatticeTrim:
 
-    from ..tools.trim import LoopingTrim, TurningTrim, LevelTrim, GRAVACC
+    from ..tools.trim import GRAVACC, LevelTrim, LoopingTrim, TurningTrim
 
     name = resdata['name']
 

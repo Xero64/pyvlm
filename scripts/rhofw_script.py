@@ -1,6 +1,7 @@
 #%%
 # Import Dependencies
 from IPython.display import display_markdown
+
 from pyvlm import latticesystem_from_json
 
 #%%

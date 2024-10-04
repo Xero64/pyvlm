@@ -1,8 +1,8 @@
 #%%
 # Import Dependencies
 from pyvlm.tools import full_cosine_spacing
-from pyvlm.tools.camber import NACA4
 from pyvlm.tools.airfoil import airfoil_from_dat
+from pyvlm.tools.camber import NACA4
 
 #%%
 # Calculate Spacing

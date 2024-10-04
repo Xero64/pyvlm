@@ -1,10 +1,11 @@
 #%%
 # Import Dependencies
 from IPython.display import display
-from pyvlm import LatticeOptimum
-from pyvlm.tools import bell_lift_force_distribution, elliptical_lift_force_distribution
-from pyvlm import latticesystem_from_json
 from matplotlib.pyplot import subplots
+
+from pyvlm import LatticeOptimum, latticesystem_from_json
+from pyvlm.tools import (bell_lift_force_distribution,
+                         elliptical_lift_force_distribution)
 
 #%%
 # Inputs

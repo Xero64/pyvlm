@@ -1,4 +1,5 @@
-from math import pi, cos
+from math import cos, pi
+
 
 def normalise_spacing(spacing: list) -> list:
     s = sorted(spacing)

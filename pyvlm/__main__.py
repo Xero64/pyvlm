@@ -1,7 +1,9 @@
-from sys import argv
 from json import load
+from sys import argv
+
 from .classes import latticesystem_from_dict
 from .outputs import latticesystem_to_md, outputs_from_json
+
 
 def main(jsonfilepath: str='', mdfilepath: str=''):
 

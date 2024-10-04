@@ -1,7 +1,9 @@
 from matplotlib.pyplot import figure
-from pygeom.geom2d import CubicSpline2D, Vector2D
-from .spacing import full_cosine_spacing
 from pygeom.geom1d import CubicSpline
+from pygeom.geom2d import CubicSpline2D, Vector2D
+
+from .spacing import full_cosine_spacing
+
 
 class Airfoil():
     name = None
@@ -97,7 +99,7 @@ class Airfoil():
         return self.splinec.single_interpolate_gradient(xc)
 
     def return_camber_angle(self, xc: float):
-        from math import degrees, atan
+        from math import atan, degrees
         dydx = self.return_camber_slope(xc)
         return degrees(atan(dydx))
 

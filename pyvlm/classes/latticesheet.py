@@ -1,14 +1,14 @@
-from typing import TYPE_CHECKING, List, Dict, Tuple
-from numpy import arctan2, cos, degrees, radians, sin
+from typing import TYPE_CHECKING, Dict, List, Tuple
 
-from pygeom.geom3d import IHAT, Vector, Coordinate
+from numpy import arctan2, cos, degrees, radians, sin
+from pygeom.geom3d import IHAT, Coordinate, Vector
 
 from .latticestrip import LatticeStrip
 
 if TYPE_CHECKING:
-    from .latticesection import LatticeSection
     from .latticecontrol import LatticeControl
     from .latticepanel import LatticePanel
+    from .latticesection import LatticeSection
 
 
 class LatticeSheet():

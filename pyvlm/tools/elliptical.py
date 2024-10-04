@@ -1,5 +1,7 @@
-from math import pi, acos, sin
+from math import acos, pi, sin
+
 from matplotlib.pyplot import figure
+
 
 class Elliptical():
     lift = None

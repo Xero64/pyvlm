@@ -1,4 +1,4 @@
-from math import log, pi, copysign
+from math import copysign, log, pi
 
 
 class FlatPlate():
@@ -61,7 +61,7 @@ class NACA4():
         return dydx
 
     def return_camber_angle(self, xc: float):
-        from math import degrees, atan
+        from math import atan, degrees
         dydx = self.return_camber_slope(xc)
         return degrees(atan(dydx))
 
@@ -128,7 +128,7 @@ class NACA6Series():
         return dydx
 
     def return_camber_angle(self, xc: float):
-        from math import degrees, atan
+        from math import atan, degrees
         dydx = self.return_camber_slope(xc)
         return degrees(atan(dydx))
 

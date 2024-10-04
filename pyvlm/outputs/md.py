@@ -1,5 +1,6 @@
 from pyvlm.classes import LatticeSystem
 
+
 def latticesystem_to_md(lsys: LatticeSystem, mdfilepath: str, outputs: dict=None):
     with open(mdfilepath, 'wt') as mdfile:
         mdfile.write(lsys.__str__())

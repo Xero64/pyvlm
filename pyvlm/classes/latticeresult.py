@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Any, Dict
 from matplotlib.pyplot import figure
 from numpy import cos, pi, radians, sin, tan, zeros
 from py2md.classes import MDReport
-from pygeom.geom3d import Vector, zero_vector
 from pygeom.geom3d import Coordinate, Vector
 
 if TYPE_CHECKING:
@@ -243,7 +242,7 @@ class LatticeResult():
     def avv(self) -> Vector:
         if self._avv is None:
             num = len(self.sys.pnls)
-            self._avv = zero_vector(num)
+            self._avv = Vector.zeros(num)
             for pnl in self.sys.pnls:
                 i = pnl.lpid
                 self._avv[i] = self.vfs - self.ofs.cross(self.arm[i])
@@ -253,7 +252,7 @@ class LatticeResult():
     def bvv(self) -> Vector:
         if self._bvv is None:
             num = len(self.sys.strps)
-            self._bvv = zero_vector(num)
+            self._bvv = Vector.zeros(num)
             for strp in self.sys.strps:
                 if not strp.noload:
                     i = strp.lsid
@@ -264,7 +263,7 @@ class LatticeResult():
     def arm(self) -> Vector:
         if self._arm is None:
             num = len(self.sys.pnls)
-            self._arm = zero_vector(num)
+            self._arm = Vector.zeros(num)
             for pnl in self.sys.pnls:
                 i = pnl.lpid
                 self._arm[i] = pnl.pnti - self.rcg
@@ -274,7 +273,7 @@ class LatticeResult():
     def brm(self) -> Vector:
         if self._brm is None:
             num = len(self.sys.strps)
-            self._brm = zero_vector(num)
+            self._brm = Vector.zeros(num)
             for strp in self.sys.strps:
                 i = strp.lsid
                 self._brm[i] = strp.pntq - self.rcg
@@ -290,7 +289,7 @@ class LatticeResult():
     def afv(self) -> Vector:
         if self._afv is None:
             num = len(self.sys.pnls)
-            self._afv = zero_vector(num)
+            self._afv = Vector.zeros(num)
             for pnl in self.sys.pnls:
                 if not pnl.noload:
                     i = pnl.lpid
@@ -1170,7 +1169,7 @@ class StripResult():
         if self._stfrc is None:
             sys = self.gamres.res.sys
             num = len(sys.strps)
-            self._stfrc = zero_vector(num)
+            self._stfrc = Vector.zeros(num)
             for strp in sys.strps:
                 i = strp.lsid
                 for pnl in strp.pnls:
@@ -1183,7 +1182,7 @@ class StripResult():
         if self._stmom is None:
             sys = self.gamres.res.sys
             num = len(sys.strps)
-            self._stmom = zero_vector(num)
+            self._stmom = Vector.zeros(num)
             for strp in sys.strps:
                 i = strp.lsid
                 for pnl in strp.pnls:

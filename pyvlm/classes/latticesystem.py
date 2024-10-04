@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 from numpy import absolute, divide, multiply, pi, reciprocal, sqrt, zeros
 from py2md.classes import MDTable
-from pygeom.geom3d import Vector, solve_vector, zero_vector
+from pygeom.geom3d import Vector, solve_vector
 
 if TYPE_CHECKING:
     from numpy import float64
@@ -98,7 +98,7 @@ class LatticeSystem():
     @property
     def ra(self) -> Vector:
         if self._ra is None:
-            self._ra = zero_vector(self.nump, dtype=float)
+            self._ra = Vector.zeros(self.nump, dtype=float)
             for pnl in self.pnls:
                 self._ra[pnl.lpid] = pnl.pnta
         return self._ra
@@ -106,7 +106,7 @@ class LatticeSystem():
     @property
     def rb(self) -> Vector:
         if self._rb is None:
-            self._rb = zero_vector(self.nump, dtype=float)
+            self._rb = Vector.zeros(self.nump, dtype=float)
             for pnl in self.pnls:
                 self._rb[pnl.lpid] = pnl.pntb
         return self._rb
@@ -114,7 +114,7 @@ class LatticeSystem():
     @property
     def rc(self) -> Vector:
         if self._rc is None:
-            self._rc = zero_vector(self.nump, dtype=float)
+            self._rc = Vector.zeros(self.nump, dtype=float)
             for pnl in self.pnls:
                 self._rc[pnl.lpid] = pnl.pntc
         return self._rc
@@ -122,7 +122,7 @@ class LatticeSystem():
     @property
     def rg(self) -> Vector:
         if self._rg is None:
-            self._rg = zero_vector(self.nump, dtype=float)
+            self._rg = Vector.zeros(self.nump, dtype=float)
             for pnl in self.pnls:
                 self._rg[pnl.lpid] = pnl.pnti
         return self._rg
@@ -152,7 +152,7 @@ class LatticeSystem():
         if self._afs is None:
             num = len(self.pnls)
             numc = len(self.ctrls)
-            self._afs = zero_vector((num, 2+4*numc), dtype=float)
+            self._afs = Vector.zeros((num, 2+4*numc), dtype=float)
             for pnl in self.pnls:
                 lpid = pnl.lpid
                 rrel = pnl.pntc-self.rref
@@ -196,7 +196,7 @@ class LatticeSystem():
             self._afg = {}
         if mach not in self._afg:
             avg = self.avg(mach)
-            afg = zero_vector(avg.shape, dtype=float)
+            afg = Vector.zeros(avg.shape, dtype=float)
             for pnl in self.pnls:
                 if not pnl.noload:
                     afg[pnl.lpid, :] = avg[pnl.lpid, :].cross(pnl.leni)

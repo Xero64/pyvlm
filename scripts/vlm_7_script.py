@@ -1,8 +1,8 @@
 #%%
 # Load Dependencies
 from IPython.display import display
-from pyvlm import LatticeOptimum
-from pyvlm import latticesystem_from_json
+
+from pyvlm import LatticeOptimum, latticesystem_from_json
 from pyvlm.tools import elliptical_lift_force_distribution
 
 #%%

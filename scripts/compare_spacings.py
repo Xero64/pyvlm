@@ -1,8 +1,8 @@
 #%%
 # Import Dependencies
-from pyvlm.tools import equal_spacing
-from pyvlm.tools import semi_cosine_spacing, semi_elliptical_spacing
-from pyvlm.tools import full_cosine_spacing, full_elliptical_spacing
+from pyvlm.tools import (equal_spacing, full_cosine_spacing,
+                         full_elliptical_spacing, semi_cosine_spacing,
+                         semi_elliptical_spacing)
 
 #%%
 # Create Spacings

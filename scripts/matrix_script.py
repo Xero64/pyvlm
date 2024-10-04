@@ -2,10 +2,12 @@
 # Load Dependencies
 from math import pi
 from time import perf_counter
-from pyvlm import latticesystem_from_json, LatticeSystem
-from pyvlm.classes.latticesystem import velocity_matrix
-from numpy.linalg import norm
+
 from numpy import fill_diagonal
+from numpy.linalg import norm
+
+from pyvlm import LatticeSystem, latticesystem_from_json
+from pyvlm.classes.latticesystem import velocity_matrix
 
 #%%
 # Create Lattice System

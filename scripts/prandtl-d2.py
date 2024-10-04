@@ -1,8 +1,8 @@
 #%%
 # Import Dependencies
 from IPython.display import display_markdown
-from pyvlm import LatticeResult
-from pyvlm import latticesystem_from_json
+
+from pyvlm import LatticeResult, latticesystem_from_json
 
 #%%
 # Create Lattice System

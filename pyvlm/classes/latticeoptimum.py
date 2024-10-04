@@ -1,10 +1,13 @@
 from typing import List
-from numpy import asarray, degrees
-from numpy.matlib import zeros, matrix
-from numpy.linalg import solve, norm
-from pygeom.geom3d import Vector
+
 from matplotlib.pyplot import figure
+from numpy import asarray, degrees
+from numpy.linalg import norm, solve
+from numpy.matlib import matrix, zeros
+from pygeom.geom3d import Vector
+
 from .latticeresult import LatticeResult
+
 
 class LatticeOptimum(LatticeResult):
     constr = None

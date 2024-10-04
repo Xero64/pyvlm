@@ -1,8 +1,8 @@
 #%%
 # Import Dependencies
 from IPython.display import display_markdown
-from pyvlm import LatticeOptimum
-from pyvlm import latticesystem_from_json
+
+from pyvlm import LatticeOptimum, latticesystem_from_json
 from pyvlm.tools import Bell
 
 #%%
