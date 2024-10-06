@@ -4,8 +4,8 @@ from math import atan2, degrees, pi, radians
 
 from IPython.display import display
 from matplotlib.pyplot import figure
-from pygeom.geom1d import LinearSpline
 
+from pygeom.geom1d import LinearSpline
 from pyvlm import LatticeOptimum, LatticeResult, latticesystem_from_json
 from pyvlm.tools import bell_lift_force_distribution
 

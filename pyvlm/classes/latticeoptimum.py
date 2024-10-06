@@ -4,6 +4,7 @@ from matplotlib.pyplot import figure
 from numpy import asarray, degrees
 from numpy.linalg import norm, solve
 from numpy.matlib import matrix, zeros
+
 from pygeom.geom3d import Vector
 
 from .latticeresult import LatticeResult

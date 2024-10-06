@@ -1,8 +1,8 @@
 #%%
 # Import Dependencies
 from IPython.display import display_markdown
-from pygeom.geom3d import Point
 
+from pygeom.geom3d import Point
 from pyvlm.classes import LatticeSystem
 from pyvlm.tools.trim import TurningTrim
 

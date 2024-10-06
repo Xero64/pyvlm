@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, List, Tuple
 
 from numpy import arctan2, cos, pi, radians, sin
+
 from pygeom.geom3d import Vector
 
 from .latticestrip import LatticeStrip

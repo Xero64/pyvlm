@@ -25,6 +25,7 @@ display_markdown(lsys.panel_geometry)
 # Original Case
 lres_org = LatticeResult('Baseline', lsys)
 lres_org.set_state(alpha=3.0)
+display_markdown(lres_org)
 
 #%%
 # Original Strip Forces

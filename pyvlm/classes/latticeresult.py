@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Any, Dict
 
 from matplotlib.pyplot import figure
 from numpy import cos, pi, radians, sin, tan, zeros
+
 from py2md.classes import MDReport
 from pygeom.geom3d import Coordinate, Vector
 

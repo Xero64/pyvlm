@@ -2,10 +2,10 @@ from typing import TYPE_CHECKING, List, Tuple, Union
 
 from matplotlib.pyplot import figure
 from mpl_toolkits.mplot3d.axes3d import Axes3D
-from numpy import ptp, sqrt, zeros
-from pygeom.geom1d import CubicSpline, LinearSpline
-from pygeom.geom3d import Vector
+from numpy import asarray, ptp, sqrt, zeros
 
+from pygeom.geom1d import CubicSpline1D, LinearSpline1D
+from pygeom.geom3d import Vector
 from pyvlm.tools import equal_spacing, full_cosine_spacing, normalise_spacing
 
 from .latticepanel import LatticePanel
@@ -15,6 +15,7 @@ from .latticesheet import LatticeSheet
 if TYPE_CHECKING:
     from numpy import float64
     from numpy.typing import NDArray
+
     from pygeom.geom3d import Vector
 
     from .latticesection import LatticeSection
@@ -339,27 +340,26 @@ class SurfaceFunction():
     var: str = None
     interp: str = None
     values: List[float] = None
-    spline: Union[LinearSpline, CubicSpline] = None
+    spline: Union[LinearSpline1D, CubicSpline1D] = None
 
     def __init__(self, var: str, spacing: str, interp: str,
                  values: List[float]) -> None:
         self.var = var
         self.spacing = spacing
         self.interp = interp
-        self.values = values
+        self.values = asarray(values)
 
     def set_spline(self, bmax: float) -> None:
         if self.spacing == 'equal':
             num = len(self.values)
             nspc = equal_spacing(num-1)
-            spc = [bmax*nspci for nspci in nspc]
         if self.interp == 'linear':
-            self.spline = LinearSpline(spc, self.values)
+            self.spline = LinearSpline1D(nspc, self.values)
         elif self.interp == 'cubic':
-            self.spline = CubicSpline(spc, self.values)
+            self.spline = CubicSpline1D(nspc, self.values)
 
     def interpolate(self, value: float) -> float:
-        return self.spline.single_interpolate_spline(value)
+        return self.spline.evaluate_points_at_t(value)
 
 def surffunc_from_json(funcdata: dict) -> SurfaceFunction:
     variable = funcdata.get('variable')

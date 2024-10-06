@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, List, Tuple
 
 from numpy import arctan2, degrees, pi, sqrt
+
 from pygeom.geom3d import IHAT, Vector
 
 if TYPE_CHECKING:

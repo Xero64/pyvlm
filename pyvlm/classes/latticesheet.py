@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Dict, List, Tuple
 
 from numpy import arctan2, cos, degrees, radians, sin
+
 from pygeom.geom3d import IHAT, Coordinate, Vector
 
 from .latticestrip import LatticeStrip

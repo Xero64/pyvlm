@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 from numpy import absolute, divide, multiply, pi, reciprocal, sqrt, zeros
+
 from py2md.classes import MDTable
-from pygeom.geom3d import Vector, solve_vector
+from pygeom.geom3d import Vector
 
 if TYPE_CHECKING:
     from numpy import float64
@@ -179,7 +180,7 @@ class LatticeSystem():
             self._ungam = {}
         if mach not in self._ungam:
             aic = self.aic(mach)
-            self._ungam[mach] = -solve_vector(aic, self.afs)
+            self._ungam[mach] = -Vector.solve(aic, self.afs)
         return self._ungam[mach]
 
     def avg(self, mach: float) -> Vector:

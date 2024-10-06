@@ -65,6 +65,7 @@ display(lres_org.control_derivatives)
 ctres = lres_org.ctresp['aileron']
 
 from matplotlib.pyplot import figure
+
 #%%
 # Plot Aileron Deflection Plots
 from pygeom.geom3d import Vector
