@@ -88,7 +88,7 @@ class LatticeResult():
 
     def set_state(self, mach: float=None, speed: float=None,
                   alpha: float=None, beta: float=None,
-                  pbo2V: float=None, qco2V: float=None,rbo2V: float=None) -> None:
+                  pbo2V: float=None, qco2V: float=None, rbo2V: float=None) -> None:
         if mach is not None:
             self.mach = mach
         if speed is not None:

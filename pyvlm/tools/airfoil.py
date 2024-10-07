@@ -1,5 +1,5 @@
 from matplotlib.pyplot import figure
-
+from numpy import asarray, logical_and
 from pygeom.geom1d import CubicSpline1D
 from pygeom.geom2d import CubicSpline2D, Vector2D
 
@@ -39,9 +39,10 @@ class Airfoil():
                 self.ile = i
                 break
         self.crd = self.xte-self.xpos
-        self.xn = [(xi-self.xpos)/self.crd for xi in self.x]
-        self.yn = [(yi-self.ypos)/self.crd for yi in self.y]
-        pnts = [Vector2D(xi, yi) for xi, yi in zip(self.xn, self.yn)]
+        self.xn = asarray([(xi-self.xpos)/self.crd for xi in self.x])
+        self.yn = asarray([(yi-self.ypos)/self.crd for yi in self.y])
+        # pnts = [Vector2D(xi, yi) for xi, yi in zip(self.xn, self.yn)]
+        pnts = Vector2D(self.xn, self.yn)
         self.spline = CubicSpline2D(pnts)
         dr = self.spline.evaluate_first_derivatives_at_t(self.spline.s)
         dxpos = dr[self.ile].x
@@ -66,13 +67,11 @@ class Airfoil():
         x2, y2 = self.spline.evaluate_points_at_t(slst2).to_xy()
         x1 = x1[::-1]
         y1 = y1[::-1]
-        xc = [(x1i+x2i)/2 for x1i, x2i in zip(x1, x2)]
-        yc = [(y1i+y2i)/2 for y1i, y2i in zip(y1, y2)]
-        xnc, ync = [], []
-        for xi, yi in zip(xc, yc):
-            if 0.0 <= xi <= 1.0:
-                xnc.append(xi)
-                ync.append(yi)
+        xc = (x1 + x2)/2
+        yc = (y1 + y2)/2
+        check = logical_and(xc >= 0.0, xc <= 1.0)
+        xnc = xc[check]
+        ync = yc[check]
         xnc[0], ync[0] = 0.0, 0.0
         self.splinec = CubicSpline1D(xnc, ync)
 

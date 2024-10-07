@@ -180,7 +180,7 @@ class LatticeSystem():
             self._ungam = {}
         if mach not in self._ungam:
             aic = self.aic(mach)
-            self._ungam[mach] = -Vector.solve(aic, self.afs)
+            self._ungam[mach] = -self.afs.solve(aic)
         return self._ungam[mach]
 
     def avg(self, mach: float) -> Vector:
