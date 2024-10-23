@@ -2,8 +2,7 @@ from matplotlib.pyplot import figure
 from numpy import asarray, logical_and
 from pygeom.geom1d import CubicSpline1D
 from pygeom.geom2d import CubicSpline2D, Vector2D
-
-from .spacing import full_cosine_spacing
+from pygeom.tools.spacing import full_cosine_spacing
 
 
 class Airfoil():

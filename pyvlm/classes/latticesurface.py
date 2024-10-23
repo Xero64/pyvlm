@@ -1,22 +1,20 @@
-from typing import TYPE_CHECKING, List, Tuple, Union
+from typing import TYPE_CHECKING
 
 from matplotlib.pyplot import figure
 from mpl_toolkits.mplot3d.axes3d import Axes3D
-from numpy import asarray, ptp, sqrt, zeros
-
+from numpy import asarray, concatenate, ptp, sqrt, zeros
 from pygeom.geom1d import CubicSpline1D, LinearSpline1D
 from pygeom.geom3d import Vector
-from pyvlm.tools import equal_spacing, full_cosine_spacing, normalise_spacing
+from pygeom.tools.spacing import (equal_spacing, full_cosine_spacing,
+                                  normalise_spacing)
 
+from .latticegrid import LatticeGrid
 from .latticepanel import LatticePanel
 from .latticesection import latticesection_from_json
 from .latticesheet import LatticeSheet
 
 if TYPE_CHECKING:
-    from numpy import float64
     from numpy.typing import NDArray
-
-    from pygeom.geom3d import Vector
 
     from .latticesection import LatticeSection
     from .latticestrip import LatticeStrip
@@ -24,15 +22,15 @@ if TYPE_CHECKING:
 
 class LatticeSurface():
     name: str = None
-    scts: List['LatticeSection'] = None
-    shts: List[LatticeSheet] = None
-    cspc: List[float] = None
-    strps: List['LatticeStrip'] = None
-    pnts: List[List[Vector]] = None
-    pnls: List[List[LatticePanel]] = None
+    scts: list['LatticeSection'] = None
+    shts: list[LatticeSheet] = None
+    cspc: list[float] = None
+    strps: list['LatticeStrip'] = None
+    pnts: list[list[LatticeGrid]] = None
+    pnls: list[list[LatticePanel]] = None
     area: float = None
-    sgrp: List[List[int]] = None
-    funcs: List['SurfaceFunction'] = None
+    sgrp: list[list[int]] = None
+    funcs: list['SurfaceFunction'] = None
 
     def __init__(self, name: str, scts: list, mirror: bool, funcs: list) -> None:
         self.name = name
@@ -56,18 +54,18 @@ class LatticeSurface():
             print(f'Warning: Cannot mirror {self.name}.')
             self.mirror = False
 
-    def set_chord_distribution(self, cspc: List[float]) -> None:
+    def set_chord_distribution(self, cspc: list[float]) -> None:
         self.cspc = normalise_spacing(cspc)
 
     def set_chord_equal_distribution(self, cnum: int) -> None:
         csp = equal_spacing(4*cnum)
-        self.cspc = [tuple(csp[i*4:i*4+5]) for i in range(cnum)]
+        self.cspc = [csp[i*4:i*4 + 5] for i in range(cnum)]
 
     def set_chord_cosine_distribution(self, cnum: int) -> None:
         if cnum > 1:
-            csp = full_cosine_spacing(4*cnum+2)
-            csp = [0.0]+csp[2:-2]+[1.0]
-            self.cspc = [tuple(csp[i*4:i*4+5]) for i in range(cnum)]
+            csp = full_cosine_spacing(4*cnum + 2)
+            csp = concatenate(([0.0], csp[2:-2], [1.0]))
+            self.cspc = [csp[i*4:i*4 + 5] for i in range(cnum)]
         else:
             self.set_chord_equal_distribution(cnum)
 
@@ -98,11 +96,11 @@ class LatticeSurface():
             y = pnts[i].y
             z = pnts[i].z
             self.pnts.append([])
-            self.pnts[i].append(Vector(x, y, z))
+            self.pnts[i].append(LatticeGrid(x, y, z))
             for j in range(1, lenc+1):
                 cd = self.cspc[j-1][-1]
                 x = minx + cd*c
-                self.pnts[i].append(Vector(x, y, z))
+                self.pnts[i].append(LatticeGrid(x, y, z))
         self.pnls = []
         for i, strp in enumerate(self.strps):
             self.pnls.append([])
@@ -171,8 +169,7 @@ class LatticeSurface():
                 self.area += sht.area
         return lsid, lpid
 
-    def point_xyz(self) -> Tuple['NDArray[float64]', 'NDArray[float64]',
-                                 'NDArray[float64]']:
+    def point_xyz(self) -> tuple['NDArray', 'NDArray', 'NDArray']:
         shape = (len(self.pnts), len(self.pnts[0]))
         x = zeros(shape)
         y = zeros(shape)
@@ -185,7 +182,7 @@ class LatticeSurface():
                 z[i, j] = pnt.z
         return x, y, z
 
-    def return_panels(self) -> List[LatticePanel]:
+    def return_panels(self) -> list[LatticePanel]:
         pnls = []
         for i in range(len(self.pnls)):
             for j in range(len(self.pnls[i])):
@@ -204,38 +201,38 @@ class LatticeSurface():
         return ax
 
     @property
-    def strpb(self) -> List['LatticeStrip']:
+    def strpb(self) -> list['LatticeStrip']:
         return [strp.bpos for strp in self.strps]
 
     @property
-    def strpy(self) -> List['LatticeStrip']:
+    def strpy(self) -> list['LatticeStrip']:
         return [strp.pnti.y for strp in self.strps]
 
     @property
-    def strpz(self) -> List['LatticeStrip']:
+    def strpz(self) -> list['LatticeStrip']:
         return [strp.pnti.z for strp in self.strps]
 
     @property
-    def strpi(self) -> List['LatticeStrip']:
+    def strpi(self) -> list['LatticeStrip']:
         return [strp.lsid for strp in self.strps]
 
     @property
-    def lstrpi(self) -> List[int]:
+    def lstrpi(self) -> list[int]:
         return self.sgrp[0]
 
     @property
-    def mstrpi(self) -> List[int]:
+    def mstrpi(self) -> list[int]:
         return self.sgrp[1]
 
     @property
-    def pnli(self) -> List[int]:
+    def pnli(self) -> list[int]:
         lpids = []
         for i in range(len(self.pnls)):
             for j in range(len(self.pnls[i])):
                 lpids.append(self.pnls[i][j].lpid)
         return lpids
 
-    def vortex_line_points(self, indp: int, nump: int) -> 'Vector':
+    def vortex_line_points(self, indp: int, nump: int) -> Vector:
         nums = len(self.strps)
         num = nums*nump+1
         rpt = Vector.zeros((num, 1))
@@ -258,7 +255,7 @@ def latticesurface_from_json(surfdata: dict, display: bool=False) -> LatticeSurf
     mirror = surfdata.get('mirror', False)
     if display: print(f'Loading Surface: {name:s}')
     # Read Section Variables
-    scts: List['LatticeSection'] = []
+    scts: list['LatticeSection'] = []
     for sectdata in surfdata['sections']:
         sct = latticesection_from_json(sectdata)
         scts.append(sct)
@@ -319,7 +316,7 @@ def latticesurface_from_json(surfdata: dict, display: bool=False) -> LatticeSurf
             surf.set_chord_cosine_distribution(cnum)
     return surf
 
-def linear_interpolate_none(x: List[float], y: List[float]) -> List[float]:
+def linear_interpolate_none(x: list[float], y: list[float]) -> list[float]:
     for i, yi in enumerate(y):
         if yi is None:
             for j in range(i, -1, -1):
@@ -339,11 +336,11 @@ def linear_interpolate_none(x: List[float], y: List[float]) -> List[float]:
 class SurfaceFunction():
     var: str = None
     interp: str = None
-    values: List[float] = None
-    spline: Union[LinearSpline1D, CubicSpline1D] = None
+    values: 'NDArray' = None
+    spline: LinearSpline1D | CubicSpline1D = None
 
     def __init__(self, var: str, spacing: str, interp: str,
-                 values: List[float]) -> None:
+                 values: list[float]) -> None:
         self.var = var
         self.spacing = spacing
         self.interp = interp

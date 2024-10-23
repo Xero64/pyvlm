@@ -1,8 +1,9 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 from pygeom.geom3d import IHAT, Vector
+from pygeom.tools.spacing import (equal_spacing, full_cosine_spacing,
+                                  semi_cosine_spacing)
 
-from ..tools import equal_spacing, full_cosine_spacing, semi_cosine_spacing
 from ..tools.airfoil import airfoil_from_dat
 from ..tools.camber import NACA4, FlatPlate, NACA6Series
 from .latticecontrol import LatticeControl, latticecontrol_from_json
@@ -10,19 +11,18 @@ from .latticecontrol import LatticeControl, latticecontrol_from_json
 if TYPE_CHECKING:
     from ..tools.airfoil import Airfoil
     from .latticecontrol import LatticeControl
-    AirfoilType = Union[Airfoil, FlatPlate, NACA4, NACA6Series]
 
 class LatticeSection():
     pnt: Vector = None
     chord: float = None
     twist: float = None
-    camber: 'AirfoilType' = None
+    camber: 'Airfoil | FlatPlate | NACA4 | NACA6Series' = None
     airfoil: str = None
-    bspc: List[Tuple[float, float, float]] = None
+    bspc: list[tuple[float, float, float]] = None
     mirror: bool = None
     noload: bool = None
     ruled: bool = None
-    ctrls: Dict[str, 'LatticeControl'] = None
+    ctrls: dict[str, 'LatticeControl'] = None
     cdo: float = None
     bpos: float = None
     xoc: float = None
@@ -107,7 +107,7 @@ class LatticeSection():
     def __repr__(self):
         return '<LatticeSection>'
 
-def latticesection_from_json(sectdata: Dict[str, Any]) -> LatticeSection:
+def latticesection_from_json(sectdata: dict[str, Any]) -> LatticeSection:
     if 'xpos' in sectdata:
         xpos = sectdata['xpos']
     else:

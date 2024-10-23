@@ -1,8 +1,7 @@
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 from matplotlib.pyplot import figure
 from numpy import cos, pi, radians, sin, tan, zeros
-
 from py2md.classes import MDReport
 from pygeom.geom3d import Coordinate, Vector
 
@@ -27,7 +26,7 @@ class LatticeResult():
     pbo2V: float = None
     qco2V: float = None
     rbo2V: float = None
-    ctrls: Dict[str, 'LatticeControl'] = None
+    ctrls: dict[str, 'LatticeControl'] = None
     rcg: Vector = None
     _acs: Coordinate = None
     _scs: Coordinate = None
@@ -53,9 +52,9 @@ class LatticeResult():
     _stgam = None
     _stres = None
     _ctgamp = None
-    _ctresp: Dict[str, 'GammaResult'] = None
+    _ctresp: dict[str, 'GammaResult'] = None
     _ctgamn = None
-    _ctresn: Dict[str, 'GammaResult'] = None
+    _ctresn: dict[str, 'GammaResult'] = None
 
     def __init__(self, name: str, sys: 'LatticeSystem') -> None:
         self.name = name
@@ -175,7 +174,7 @@ class LatticeResult():
         indo = self.sys.ctrls[control][1]
         return self.ungam[:, indv].dot(self.vfs) + self.ungam[:, indo].dot(self.ofs)
 
-    def gctrlp(self) -> Dict[str, 'GammaResult']:
+    def gctrlp(self) -> dict[str, 'GammaResult']:
         gmats = {}
         for control in self.sys.ctrls:
             gmats[control] = self.gctrlp_single(control)
@@ -186,7 +185,7 @@ class LatticeResult():
         indo = self.sys.ctrls[control][3]
         return self.ungam[:, indv].dot(self.vfs) + self.ungam[:, indo].dot(self.ofs)
 
-    def gctrln(self) -> Dict[str, 'GammaResult']:
+    def gctrln(self) -> dict[str, 'GammaResult']:
         gmats = {}
         for control in self.sys.ctrls:
             gmats[control] = self.gctrln_single(control)
@@ -363,14 +362,11 @@ class LatticeResult():
             ax.grid(True)
         py = [pnl.pnti.y for pnl in self.sys.pnls]
         if component is None or component == 'x':
-            vx = [vel.x for vel in self.nfres.nfvel.transpose().tolist()[0]]
-            ax.plot(py, vx, label=self.name+' Velocity X')
+            ax.plot(py, self.nfres.nfvel.x, label=self.name+' Velocity X')
         if component is None or component == 'y':
-            vy = [vel.y for vel in self.nfres.nfvel.transpose().tolist()[0]]
-            ax.plot(py, vy, label=self.name+' Velocity Y')
+            ax.plot(py, self.nfres.nfvel.y, label=self.name+' Velocity Y')
         if component is None or component == 'z':
-            vz = [vel.z for vel in self.nfres.nfvel.transpose().tolist()[0]]
-            ax.plot(py, vz, label=self.name+' Velocity Z')
+            ax.plot(py, self.nfres.nfvel.z, label=self.name+' Velocity Z')
         ax.legend()
         return ax
 
@@ -1717,7 +1713,7 @@ def fix_zero(value: float, tol: float=1e-8):
         value = 0.0
     return value
 
-def latticeresult_from_json(lsys: 'LatticeSystem', resdata: Dict[str, Any]) -> LatticeResult:
+def latticeresult_from_json(lsys: 'LatticeSystem', resdata: dict[str, Any]) -> LatticeResult:
     name = resdata['name']
     if 'inherit' in resdata:
         inherit = resdata['inherit']

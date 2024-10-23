@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING
 
 from numpy import arctan2, degrees, pi, sqrt
-
 from pygeom.geom3d import IHAT, Vector
 
 if TYPE_CHECKING:
@@ -18,12 +17,12 @@ class LatticeStrip():
     ang2: float = None
     cdo1: float = None
     cdo2: float = None
-    bspc: Tuple[float, float, float] = None
+    bspc: tuple[float, float, float] = None
     bfrc: float = None
     leni: Vector = None
     pnti: Vector = None
     pntq: Vector = None
-    pnls: List['LatticePanel'] = None
+    pnls: list['LatticePanel'] = None
     msid: int = None
     sht: 'LatticeSheet' = None
     lent: Vector = None
@@ -37,7 +36,7 @@ class LatticeStrip():
     _area: float = None
 
     def __init__(self, lsid: int, pnt1: Vector, pnt2: Vector, crd1: float,
-                 crd2: float, bspc: Tuple[float, float, float]) -> None:
+                 crd2: float, bspc: tuple[float, float, float]) -> None:
         self.lsid = lsid
         self.pnt1 = pnt1
         self.pnt2 = pnt2
@@ -74,7 +73,7 @@ class LatticeStrip():
     def add_panel(self, pnl) -> None:
         self.pnls.append(pnl)
 
-    def return_points(self, percrd: float) -> Tuple[Vector, Vector]:
+    def return_points(self, percrd: float) -> tuple[Vector, Vector]:
         pnt1 = self.pnt1 + self.crd1*percrd*IHAT
         pnt2 = self.pnt2 + self.crd2*percrd*IHAT
         return pnt1, pnt2

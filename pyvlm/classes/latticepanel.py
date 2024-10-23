@@ -1,12 +1,12 @@
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING
 
 from numpy import arctan2, cos, pi, radians, sin
-
 from pygeom.geom3d import Vector
 
 from .latticestrip import LatticeStrip
 
 if TYPE_CHECKING:
+    from .latticegrid import LatticeGrid
     from .latticesheet import LatticeSheet
 
 TOL = 1e-12
@@ -14,8 +14,8 @@ FOURPI = 4*pi
 
 class LatticePanel():
     lpid: int = None
-    pnts: List[Vector] = None
-    cspc: List[float] = None
+    pnts: list['LatticeGrid'] = None
+    cspc: list[float] = None
     cfr1: float = None
     cfr2: float = None
     pntc: Vector = None
@@ -28,8 +28,8 @@ class LatticePanel():
     crd: float = None
     area: float = None
 
-    def __init__(self, lpid: int, pnts: List[Vector],
-                 cspc: List[float], strp: LatticeStrip) -> None:
+    def __init__(self, lpid: int, pnts: list['LatticeGrid'],
+                 cspc: list[float], strp: LatticeStrip) -> None:
         self.lpid = lpid
         self.pnts = pnts
         self.cspc = cspc
@@ -83,7 +83,7 @@ class LatticePanel():
         return self.strp.sht
 
     @property
-    def bspc(self) -> Tuple[float, float, float]:
+    def bspc(self) -> tuple[float, float, float]:
         return self.strp.bspc
 
     @property

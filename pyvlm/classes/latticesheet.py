@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING, Dict, List, Tuple
+from typing import TYPE_CHECKING
 
 from numpy import arctan2, cos, degrees, radians, sin
-
 from pygeom.geom3d import IHAT, Coordinate, Vector
 
 from .latticestrip import LatticeStrip
@@ -15,13 +14,13 @@ if TYPE_CHECKING:
 class LatticeSheet():
     sct1: 'LatticeSection' = None
     sct2: 'LatticeSection' = None
-    bspc: List[Tuple[float, float, float]] = None
+    bspc: list[tuple[float, float, float]] = None
     mirror: bool = None
     levec: Vector = None
     cord: Coordinate = None
-    strps: List['LatticeStrip'] = None
-    pnls: List['LatticePanel'] = None
-    ctrls: Dict[str, 'LatticeControl'] = None
+    strps: list['LatticeStrip'] = None
+    pnls: list['LatticePanel'] = None
+    ctrls: dict[str, 'LatticeControl'] = None
     noload: bool = None
     ruled: bool = None
     width: float = None

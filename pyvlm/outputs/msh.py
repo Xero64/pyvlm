@@ -1,23 +1,19 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from pygeom.geom3d import Vector
 
 if TYPE_CHECKING:
-    from ..classes import LatticePanel, LatticeResult, LatticeSurface
-
-
-class LatticePoint(Vector):
-    pntid: int = None
-
-    def __init__(self, pnt: Vector) -> None:
-        super().__init__(pnt.x, pnt.y, pnt.z)
+    from ..classes.latticegrid import LatticeGrid
+    from ..classes.latticepanel import LatticePanel
+    from ..classes.latticeresult import LatticeResult
+    from ..classes.latticesurface import LatticeSurface
 
 
 class SurfaceMesh():
     sid: int = None
     srfc: 'LatticeSurface' = None
-    pnts: List[LatticePoint] = None
-    pnls: List['LatticePanel'] = None
+    pnts: list['LatticeGrid'] = None
+    pnls: list['LatticePanel'] = None
 
     def __init__(self, srfc: 'LatticeSurface'):
         self.srfc = srfc
@@ -30,11 +26,11 @@ class SurfaceMesh():
             for j in range(len(srfc.pnls[i])):
                 self.pnls.append(srfc.pnls[i][j])
 
-    def number_points(self, pntid: int):
+    def number_points(self, gid: int):
         for pnt in self.pnts:
-            pnt.pntid = pntid
-            pntid += 1
-        return pntid
+            pnt.gid = gid
+            gid += 1
+        return gid
 
     def min_max_coordinates(self):
         x = [pnt.x for pnt in self.pnts]
@@ -44,21 +40,21 @@ class SurfaceMesh():
 
 def latticeresult_to_msh(lres: 'LatticeResult', mshfilepath: str):
     pnts = []
-    pntid = 1
+    gid = 1
     sid = 1
     srfcmshs = [SurfaceMesh(srfc) for srfc in lres.sys.srfcs]
     for srfcmsh in srfcmshs:
         srfcmsh.sid = sid
         sid += 1
         pnts += srfcmsh.pnts
-        pntid = srfcmsh.number_points(pntid)
+        gid = srfcmsh.number_points(gid)
     ns = len(srfcmshs)
     pnlids = []
     for pnl in lres.sys.pnls:
         pnlids.append(pnl.lpid+1)
     minpnt = 1
-    maxpnt = pntid-1
-    lenpnt = pntid-1
+    maxpnt = gid-1
+    lenpnt = gid-1
     minpnl = min(pnlids)
     maxpnl = max(pnlids)
     lenpnl = len(pnlids)
@@ -82,7 +78,7 @@ def latticeresult_to_msh(lres: 'LatticeResult', mshfilepath: str):
             mshfile.write('{:d} {:d} {:d} {:d}\n'.format(2, sid, 0, nsp))
             frmstr = '{:d}\n'
             for pnt in srfcmsh.pnts:
-                mshfile.write(frmstr.format(pnt.pntid))
+                mshfile.write(frmstr.format(pnt.gid))
             frmstr = '{:} {:} {:}\n'
             for pnt in srfcmsh.pnts:
                 x, y, z = pnt.x, pnt.y, pnt.z
@@ -96,10 +92,10 @@ def latticeresult_to_msh(lres: 'LatticeResult', mshfilepath: str):
             mshfile.write('{:d} {:d} {:d} {:d}\n'.format(2, sid, 3, nsp))
             for pnl in srfcmsh.pnls:
                 outstr = '{:d}'.format(pnl.lpid+1)
-                outstr += ' {:d}'.format(pnl.pnts[0].pntid)
-                outstr += ' {:d}'.format(pnl.pnts[1].pntid)
-                outstr += ' {:d}'.format(pnl.pnts[3].pntid)
-                outstr += ' {:d}'.format(pnl.pnts[2].pntid)
+                outstr += ' {:d}'.format(pnl.pnts[0].gid)
+                outstr += ' {:d}'.format(pnl.pnts[1].gid)
+                outstr += ' {:d}'.format(pnl.pnts[3].gid)
+                outstr += ' {:d}'.format(pnl.pnts[2].gid)
                 outstr += '\n'
                 mshfile.write(outstr)
         mshfile.write('$EndElements\n')

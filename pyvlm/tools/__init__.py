@@ -5,8 +5,6 @@ from .bell import Bell
 from .camber import NACA4, NACA6Series
 from .elliptical import Elliptical
 from .mass import Mass, MassCollection, masses_from_data, masses_from_json
-from .spacing import (equal_spacing, full_cosine_spacing, normalise_spacing,
-                      semi_cosine_spacing)
 from .stability import StabilityApproximation
 
 

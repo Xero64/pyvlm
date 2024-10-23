@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any
 
 from pygeom.geom3d import Vector
 
@@ -13,7 +13,7 @@ class LatticeControl():
     xhinge: float = None
     uhvec: Vector = None
     reverse: bool = None
-    pnls: List['LatticePanel'] = None
+    pnls: list['LatticePanel'] = None
 
     def __init__(self, name: str, posgain: float, neggain: float,
                  xhinge: float) -> None:
@@ -46,7 +46,7 @@ class LatticeControl():
     def add_panel(self, pnl: 'LatticePanel') -> None:
         self.pnls.append(pnl)
 
-def latticecontrol_from_json(name: str, controldata: Dict[str, Any]) -> LatticeControl:
+def latticecontrol_from_json(name: str, controldata: dict[str, Any]) -> LatticeControl:
     xhinge = controldata['xhinge']
     posgain = controldata.get('posgain', 1.0)
     neggain = controldata.get('neggain', 1.0)
@@ -58,7 +58,7 @@ def latticecontrol_from_json(name: str, controldata: Dict[str, Any]) -> LatticeC
     ctrl.reverse = controldata.get('reverse', False)
     return ctrl
 
-def vector_from_json(vectordata: Dict[str, float]) -> Vector:
+def vector_from_json(vectordata: dict[str, float]) -> Vector:
     x, y, z = None, None, None
     if 'x' in vectordata:
         x = vectordata['x']

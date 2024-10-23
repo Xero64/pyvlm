@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from pygeom.geom3d import Vector
 
@@ -7,7 +7,6 @@ from .mass import Mass, MassCollection
 
 if TYPE_CHECKING:
     from ..classes import LatticeSystem
-    MassLike = Union[Mass, MassCollection]
 
 
 GRAVACC = 9.80665
@@ -18,7 +17,7 @@ class LoopingTrim():
     gravacc: float = None
     speed: float = None
     density: float = None
-    mass: 'MassLike' = None
+    mass: 'Mass | MassCollection' = None
     loadfac: float = None
     _weight: float = None
     _lift: float = None
@@ -55,7 +54,7 @@ class LoopingTrim():
         self.loadfac = value
         self.reset()
 
-    def set_mass(self, mass: Union[str, float, 'MassLike']) -> None:
+    def set_mass(self, mass: 'Mass | MassCollection | str | float') -> None:
         if isinstance(mass, str):
             self.mass = self.sys.masses[mass]
         elif isinstance(mass, float):
@@ -160,7 +159,7 @@ class TurningTrim():
     gravacc: float = None
     speed: float = None
     density: float = None
-    mass: 'MassLike' = None
+    mass: 'Mass | MassCollection' = None
     bankang: float = None
     _loadfac: float = None
     _weight: float = None
@@ -200,7 +199,7 @@ class TurningTrim():
         self.bankang = value
         self.reset()
 
-    def set_mass(self, mass: Union[str, float, 'MassLike']) -> None:
+    def set_mass(self, mass: 'Mass | MassCollection | str | float') -> None:
         if isinstance(mass, str):
             self.mass = self.sys.masses[mass]
         elif isinstance(mass, float):
@@ -334,7 +333,7 @@ class LevelTrim():
     gravacc: float = None
     speed: float = None
     density: float = None
-    mass: 'MassLike' = None
+    mass: 'Mass | MassCollection' = None
     _weight: float = None
     _lift: float = None
     _dynpres: float = None
@@ -362,7 +361,7 @@ class LevelTrim():
         self.density = value
         self.reset()
 
-    def set_mass(self, mass: Union[str, float, 'MassLike']) -> None:
+    def set_mass(self, mass: 'Mass | MassCollection | str | float') -> None:
         if isinstance(mass, str):
             self.mass = self.sys.masses[mass]
         elif isinstance(mass, float):

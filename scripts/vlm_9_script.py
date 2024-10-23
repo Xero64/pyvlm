@@ -65,7 +65,6 @@ display(lres_org.control_derivatives)
 ctres = lres_org.ctresp['aileron']
 
 from matplotlib.pyplot import figure
-
 #%%
 # Plot Aileron Deflection Plots
 from pygeom.geom3d import Vector
@@ -87,7 +86,7 @@ for srfc in ctres.res.sys.srfcs:
         force = Vector(0.0, 0.0, 0.0)
         for pnl in strp.pnls:
             i = pnl.lpid
-            force += ctres.nffrc[i, 0]
+            force += ctres.nffrc[i]
         locfrc = ctres.res.acs.vector_to_local(force)
         li = locfrc.z
         l.append(li)

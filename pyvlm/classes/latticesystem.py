@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING
 
 from numpy import absolute, divide, multiply, pi, reciprocal, sqrt, zeros
-
 from py2md.classes import MDTable
 from pygeom.geom3d import Vector
 
@@ -15,25 +14,23 @@ if TYPE_CHECKING:
     from .latticestrip import LatticeStrip
     from .latticesurface import LatticeSurface
 
-    MassLike = Union[Mass, MassCollection]
-
 FOURPI = 4*pi
 
 
 class LatticeSystem():
     source: str = None # System Source
     name: str = None # System Name
-    srfcs: List['LatticeSurface'] = None # System Surfaces
-    strps: List['LatticeStrip'] = None # System Strips
-    pnls: List['LatticePanel'] = None # System Panels
+    srfcs: list['LatticeSurface'] = None # System Surfaces
+    strps: list['LatticeStrip'] = None # System Strips
+    pnls: list['LatticePanel'] = None # System Panels
     bref: float = None # Reference Span
     cref: float = None # Reference Chord
     sref: float = None # Reference Area
     rref: Vector = None # Reference Vector
-    ctrls: Dict[str, Tuple[int, int, int, int]] = None # System Controls
+    ctrls: dict[str, tuple[int, int, int, int]] = None # System Controls
     nump: int = None # Number of Panels
     nums: int = None # Number of Strips
-    masses: Dict[str, 'MassLike'] = None # Store Mass Options
+    masses: dict[str, 'Mass | MassCollection'] = None # Store Mass Options
     _ra: Vector = None # Horseshoe Vortex Vector A
     _rb: Vector = None # Horseshoe Vortex Vector B
     _rc: Vector = None # Panel Control Vector
@@ -54,7 +51,7 @@ class LatticeSystem():
     _ar: float = None # Aspect Ratio
     _cdo: float = None
     _cdo_ff: float = None
-    results: Dict[str, 'LatticeResult'] = None
+    results: dict[str, 'LatticeResult'] = None
 
     def __init__(self, name: str, srfcs: list,
                        bref: float, cref: float, sref: float,
@@ -99,7 +96,7 @@ class LatticeSystem():
     @property
     def ra(self) -> Vector:
         if self._ra is None:
-            self._ra = Vector.zeros(self.nump, dtype=float)
+            self._ra = Vector.zeros(self.nump)
             for pnl in self.pnls:
                 self._ra[pnl.lpid] = pnl.pnta
         return self._ra
@@ -107,7 +104,7 @@ class LatticeSystem():
     @property
     def rb(self) -> Vector:
         if self._rb is None:
-            self._rb = Vector.zeros(self.nump, dtype=float)
+            self._rb = Vector.zeros(self.nump)
             for pnl in self.pnls:
                 self._rb[pnl.lpid] = pnl.pntb
         return self._rb
@@ -115,7 +112,7 @@ class LatticeSystem():
     @property
     def rc(self) -> Vector:
         if self._rc is None:
-            self._rc = Vector.zeros(self.nump, dtype=float)
+            self._rc = Vector.zeros(self.nump)
             for pnl in self.pnls:
                 self._rc[pnl.lpid] = pnl.pntc
         return self._rc
@@ -123,7 +120,7 @@ class LatticeSystem():
     @property
     def rg(self) -> Vector:
         if self._rg is None:
-            self._rg = Vector.zeros(self.nump, dtype=float)
+            self._rg = Vector.zeros(self.nump)
             for pnl in self.pnls:
                 self._rg[pnl.lpid] = pnl.pnti
         return self._rg
@@ -142,7 +139,7 @@ class LatticeSystem():
             self._aic = {}
         if mach not in self._aic:
             avc = self.avc(mach)
-            aic = zeros(avc.shape, dtype=float)
+            aic = zeros(avc.shape)
             for pnl in self.pnls:
                 aic[pnl.lpid, :] = avc[pnl.lpid, :].dot(pnl.nrml)
             self._aic[mach] = aic
@@ -153,7 +150,7 @@ class LatticeSystem():
         if self._afs is None:
             num = len(self.pnls)
             numc = len(self.ctrls)
-            self._afs = Vector.zeros((num, 2+4*numc), dtype=float)
+            self._afs = Vector.zeros((num, 2+4*numc))
             for pnl in self.pnls:
                 lpid = pnl.lpid
                 rrel = pnl.pntc-self.rref
@@ -197,7 +194,7 @@ class LatticeSystem():
             self._afg = {}
         if mach not in self._afg:
             avg = self.avg(mach)
-            afg = Vector.zeros(avg.shape, dtype=float)
+            afg = Vector.zeros(avg.shape)
             for pnl in self.pnls:
                 if not pnl.noload:
                     afg[pnl.lpid, :] = avg[pnl.lpid, :].cross(pnl.leni)
@@ -208,7 +205,7 @@ class LatticeSystem():
     def ada(self) -> 'NDArray[float64]':
         if self._ada is None:
             num = len(self.pnls)
-            self._ada = zeros(num, dtype=float)
+            self._ada = zeros(num)
             for pnl in self.pnls:
                 self._ada[pnl.lpid] = pnl.cdoarea
         return self._ada
@@ -226,7 +223,7 @@ class LatticeSystem():
     def bvg(self) -> 'NDArray[float64]':
         if self._bvg is None:
             num = len(self.strps)
-            self._bvg = zeros((num, num), dtype=float)
+            self._bvg = zeros((num, num))
             for strpi in self.strps:
                 for strpj in self.strps:
                     self._bvg[strpi.lsid, strpj.lsid] = strpj.trefftz_velocity(strpi.pnti).dot(strpi.nrmt)
@@ -236,7 +233,7 @@ class LatticeSystem():
     def bdg(self) -> 'NDArray[float64]':
         if self._bdg is None:
             num = len(self.strps)
-            self._bdg = zeros((num, num), dtype=float)
+            self._bdg = zeros((num, num))
             for strpi in self.strps:
                 for strpj in self.strps:
                     self._bdg[strpi.lsid, strpj.lsid] = strpi.trefftz_drag(self.bvg[strpi.lsid, strpj.lsid])
@@ -246,7 +243,7 @@ class LatticeSystem():
     def blg(self) -> 'NDArray[float64]':
         if self._blg is None:
             num = len(self.strps)
-            self._blg = zeros(num, dtype=float)
+            self._blg = zeros(num)
             for strp in self.strps:
                 self._blg[strp.lsid] = strp.trefftz_lift()
         return self._blg
@@ -255,7 +252,7 @@ class LatticeSystem():
     def byg(self) -> 'NDArray[float64]':
         if self._byg is None:
             num = len(self.strps)
-            self._byg = zeros(num, dtype=float)
+            self._byg = zeros(num)
             for strp in self.strps:
                 self._byg[strp.lsid] = strp.trefftz_yfrc()
         return self._byg
@@ -264,7 +261,7 @@ class LatticeSystem():
     def bmg(self) -> 'NDArray[float64]':
         if self._bmg is None:
             num = len(self.strps)
-            self._bmg = zeros(num, dtype=float)
+            self._bmg = zeros(num)
             for strp in self.strps:
                 self._bmg[strp.lsid] += strp.pnti.y*self.blg[strp.lsid]
                 self._bmg[strp.lsid] -= strp.pnti.z*self.byg[strp.lsid]
@@ -274,7 +271,7 @@ class LatticeSystem():
     def bda(self) -> 'NDArray[float64]':
         if self._bda is None:
             num = len(self.strps)
-            self._bda = zeros(num, dtype=float)
+            self._bda = zeros(num)
             for strp in self.strps:
                 self._bda[strp.lsid] = strp.cdoarea
         return self._bda
@@ -295,20 +292,20 @@ class LatticeSystem():
         return self._ar
 
     @property
-    def lstrpi(self) -> List['LatticeStrip']:
+    def lstrpi(self) -> list['LatticeStrip']:
         sgrp = []
         for srfc in self.srfcs:
             sgrp += srfc.sgrp[0]
         return sgrp
 
     @property
-    def mstrpi(self) -> List['LatticeStrip']:
+    def mstrpi(self) -> list['LatticeStrip']:
         sgrp = []
         for srfc in self.srfcs:
             sgrp += srfc.sgrp[1]
         return sgrp
 
-    def set_strip_alpha(self, alpha: List[float]) -> None:
+    def set_strip_alpha(self, alpha: list[float]) -> None:
         for strp in self.strps:
             strp.set_twist(alpha[strp.lsid])
         self._aic = None
@@ -527,7 +524,7 @@ def velocity_matrix(ra: Vector, rb: Vector, rc: Vector,
     # veli.z[chki] = 0.0
 
     # Velocity from Trailing Vortex A
-    axx = Vector(zeros(a.shape, dtype=float), a.z, -a.y)
+    axx = Vector(zeros(a.shape), a.z, -a.y)
     dma = multiply(am, am - a.x)
     chka = absolute(dma) > tol
     faca = zeros(dma.shape)
@@ -538,7 +535,7 @@ def velocity_matrix(ra: Vector, rb: Vector, rc: Vector,
     # vela.z[chka] = 0.0
 
     # Velocity from Trailing Vortex B
-    bxx = Vector(zeros(b.shape, dtype=float), b.z, -b.y)
+    bxx = Vector(zeros(b.shape), b.z, -b.y)
     dmb = multiply(bm, bm - b.x)
     chkb = absolute(dmb) > tol
     facb = zeros(dmb.shape)

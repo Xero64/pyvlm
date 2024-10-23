@@ -1,11 +1,10 @@
 #%%
 # Import Dependencies
-from math import atan2, degrees, pi, radians
-
 from IPython.display import display
 from matplotlib.pyplot import figure
+from numpy import arctan2, asarray, degrees, pi, radians
+from pygeom.geom1d import LinearSpline1D
 
-from pygeom.geom1d import LinearSpline
 from pyvlm import LatticeOptimum, LatticeResult, latticesystem_from_json
 from pyvlm.tools import bell_lift_force_distribution
 
@@ -176,10 +175,10 @@ leg = axa.legend()
 
 #%%
 # Induced Angle
-alf = LinearSpline(yspec, alspec)
-als = alf.list_interpolation(lsys.srfcs[0].strpy)
+alf = LinearSpline1D(asarray(yspec), asarray(alspec))
+als = alf.evaluate_points_at_t(asarray(lsys.srfcs[0].strpy))
 
-ali = [degrees(atan2(lopt_bll.trres.trwsh[i], V)) for i in range(len(lopt_bll.trres.trwsh))]
+ali = [degrees(arctan2(lopt_bll.trres.trwsh[i], V)) for i in range(len(lopt_bll.trres.trwsh))]
 al0 = [1.0-abs(yi)*2/lsys_bll.bref for yi in lsys.srfcs[0].strpy]
 
 alp = [als[i]+ali[i]+al0[i] for i in range(len(lsys.srfcs[0].strpy))]

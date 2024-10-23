@@ -1,6 +1,6 @@
 from math import degrees, radians
 from time import perf_counter
-from typing import Any, Dict
+from typing import Any
 
 from numpy.linalg import inv, norm
 from numpy.matlib import zeros
@@ -39,33 +39,33 @@ class LatticeTrim(LatticeResult):
         return Ctgt-Ccur
     def target_Cmat(self):
         if self.trmlft:
-            Ctgt = zeros((1, 1), dtype=float)
+            Ctgt = zeros((1, 1))
             Ctgt[0, 0] = self.CLt
         elif self.trmfrc and self.trmmom:
-            Ctgt = zeros((5, 1), dtype=float)
+            Ctgt = zeros((5, 1))
             Ctgt[0, 0] = self.CLt
             Ctgt[1, 0] = self.CYt
             Ctgt[2, 0] = self.Clt
             Ctgt[3, 0] = self.Cmt
             Ctgt[4, 0] = self.Cnt
         elif self.trmfrc:
-            Ctgt = zeros((2, 1), dtype=float)
+            Ctgt = zeros((2, 1))
             Ctgt[0, 0] = self.CLt
             Ctgt[1, 0] = self.CYt
         elif self.trmmom:
-            Ctgt = zeros((3, 1), dtype=float)
+            Ctgt = zeros((3, 1))
             Ctgt[0, 0] = self.Clt
             Ctgt[1, 0] = self.Cmt
             Ctgt[2, 0] = self.Cnt
         else:
-            Ctgt = zeros((0, 1), dtype=float)
+            Ctgt = zeros((0, 1))
         return Ctgt
     def current_Cmat(self):
         if self.trmlft:
-            Ccur = zeros((1, 1), dtype=float)
+            Ccur = zeros((1, 1))
             Ccur[0, 0] = self.nfres.CL
         elif self.trmfrc and self.trmmom:
-            Ccur = zeros((5, 1), dtype=float)
+            Ccur = zeros((5, 1))
             Ccur[0, 0] = self.nfres.CL
             Ccur[1, 0] = self.nfres.CY
             Ccur[2, 0] = self.nfres.Cl
@@ -78,14 +78,14 @@ class LatticeTrim(LatticeResult):
                 Ccur[3, 0] += self.pdres.Cm
                 Ccur[4, 0] += self.pdres.Cn
         elif self.trmfrc:
-            Ccur = zeros((2, 1), dtype=float)
+            Ccur = zeros((2, 1))
             Ccur[0, 0] = self.nfres.CL
             Ccur[1, 0] = self.nfres.CY
             if self.sys.cdo != 0.0:
                 Ccur[0, 0] += self.pdres.CL
                 Ccur[1, 0] += self.pdres.CY
         elif self.trmmom:
-            Ccur = zeros((3, 1), dtype=float)
+            Ccur = zeros((3, 1))
             Ccur[0, 0] = self.nfres.Cl
             Ccur[1, 0] = self.nfres.Cm
             Ccur[2, 0] = self.nfres.Cn
@@ -94,7 +94,7 @@ class LatticeTrim(LatticeResult):
                 Ccur[1, 0] += self.pdres.Cm
                 Ccur[2, 0] += self.pdres.Cn
         else:
-            Ccur = zeros((0, 1), dtype=float)
+            Ccur = zeros((0, 1))
         return Ccur
     def current_Dmat(self):
         if self.trmmom:
@@ -102,11 +102,11 @@ class LatticeTrim(LatticeResult):
         else:
             numc = 0
         if self.trmlft:
-            Dcur = zeros((1, 1), dtype=float)
+            Dcur = zeros((1, 1))
             Dcur[0, 0] = radians(self.alpha)
         else:
             num = numc+2
-            Dcur = zeros((num, 1), dtype=float)
+            Dcur = zeros((num, 1))
             Dcur[0, 0] = radians(self.alpha)
             Dcur[1, 0] = radians(self.beta)
         if self.trmmom:
@@ -122,10 +122,10 @@ class LatticeTrim(LatticeResult):
             numc = 0
         num = numc+2
         if self.trmlft:
-            H = zeros((1, 1), dtype=float)
+            H = zeros((1, 1))
             H[0, 0] = self.stres.alpha.CL
         elif self.trmfrc and self.trmmom:
-            H = zeros((5, num), dtype=float)
+            H = zeros((5, num))
             H[0, 0] = self.stres.alpha.CL
             H[1, 0] = self.stres.alpha.CY
             H[2, 0] = self.stres.alpha.Cl
@@ -151,13 +151,13 @@ class LatticeTrim(LatticeResult):
                 H[4, 2+c] = ctres.Cn
                 c += 1
         elif self.trmfrc:
-            H = zeros((2, num), dtype=float)
+            H = zeros((2, num))
             H[0, 0] = self.stres.alpha.CL
             H[1, 0] = self.stres.alpha.CY
             H[0, 1] = self.stres.beta.CL
             H[1, 1] = self.stres.beta.CY
         elif self.trmmom:
-            H = zeros((3, num), dtype=float)
+            H = zeros((3, num))
             H[0, 0] = self.stres.alpha.Cl
             H[1, 0] = self.stres.alpha.Cm
             H[2, 0] = self.stres.alpha.Cn
@@ -177,7 +177,7 @@ class LatticeTrim(LatticeResult):
                 H[2, 2+c] = ctres.Cn
                 c += 1
         else:
-            H = zeros((0, 0), dtype=float)
+            H = zeros((0, 0))
         return H
     def trim_iteration(self):
         Ctgt = self.target_Cmat()
@@ -237,7 +237,7 @@ class LatticeTrim(LatticeResult):
                 print(f'Convergence failed for {self.name}.')
                 return False
 
-def latticetrim_from_json(lsys: LatticeSystem, resdata: Dict[str, Any]) -> LatticeTrim:
+def latticetrim_from_json(lsys: LatticeSystem, resdata: dict[str, Any]) -> LatticeTrim:
 
     from ..tools.trim import GRAVACC, LevelTrim, LoopingTrim, TurningTrim
 
