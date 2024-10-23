@@ -1,13 +1,14 @@
-from typing import List
+from typing import TYPE_CHECKING
 
 from matplotlib.pyplot import figure
-from numpy import asarray, degrees
+from numpy import asarray, degrees, zeros
 from numpy.linalg import norm, solve
-from numpy.matlib import matrix, zeros
-
 from pygeom.geom3d import Vector
 
 from .latticeresult import LatticeResult
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 class LatticeOptimum(LatticeResult):
@@ -30,7 +31,7 @@ class LatticeOptimum(LatticeResult):
         record = Record(self, param, point, strplst)
         self.record.append(record)
 
-    def set_target_phi(self, phi: List[float]) -> None:
+    def set_target_phi(self, phi: list[float]) -> None:
         if len(phi) != len(self.sys.strps):
             raise Exception('The length of phi must equal the number of strips.')
         self.phiopt = asarray(phi)
@@ -54,7 +55,7 @@ class LatticeOptimum(LatticeResult):
             self._adg = self.bdg + self.bdg.transpose()
         return self._adg
 
-    def old_iteration(self, pmat: matrix):
+    def old_iteration(self, pmat: 'NDArray'):
         nump = self.sys.nums
         num = nump + len(self.constr)
         amat = zeros((num, num))
@@ -98,8 +99,8 @@ class LatticeOptimum(LatticeResult):
                 for pnl in strp.pnls:
                     k = pnl.lpid
                     if k == i:
-                        dafsda[i, j] += self.vfs*pnl.dnda
-                        daicda[i, j] += avc[i, k]*pnl.dnda
+                        dafsda[i, j] += self.vfs.dot(pnl.dnda)
+                        daicda[i, j] += avc[i, k].dot(pnl.dnda)
 
         dgda = -solve(aic, dafsda + daicda*self.phi)
 
@@ -115,12 +116,10 @@ class LatticeOptimum(LatticeResult):
         dal = solve(dpda, dphi)
 
         for i in range(nums):
-            dal[i, 0] = degrees(dal[i, 0])
+            dal[i] = degrees(dal[i])
 
-        da = dal.transpose().tolist()[0]
-
-        al = [strp.twist for i, strp in enumerate(self.sys.strps)]
-        alc = [al[i]+da[i] for i in range(nums)]
+        al = [strp.twist for strp in self.sys.strps]
+        alc = [al[i] + dal[i] for i in range(nums)]
 
         self.sys.set_strip_alpha(alc)
         self._ungam = None
@@ -231,36 +230,36 @@ class Record():
         if self._bcv is None:
             num = self.opt.sys.nums
             if self.param == 'L':
-                self._bcv = zeros((num, 1))
+                self._bcv = zeros(num)
                 for i in self.strplst:
-                    self._bcv[i, 0] += self.rhov*self.opt.sys.blg[i, 0]
+                    self._bcv[i] += self.rhov*self.opt.sys.blg[i]
             elif self.param == 'Y':
-                self._bcv = zeros((num, 1))
+                self._bcv = zeros(num)
                 for i in self.strplst:
-                    self._bcv[i, 0] += self.rhov*self.opt.sys.bdg[i, 0]
+                    self._bcv[i] += self.rhov*self.opt.sys.bdg[i]
             elif self.param == 'l':
-                self._bcv = zeros((num, 1))
+                self._bcv = zeros(num)
                 for i in self.strplst:
                     strp = self.opt.sys.strps[i]
-                    bli = self.opt.sys.blg[i, 0]
-                    byi = self.opt.sys.byg[i, 0]
-                    ryi = strp.pnti.y-self.point.y
-                    rzi = strp.pnti.z-self.point.z
-                    self._bcv[i, 0] += self.rhov*(ryi*bli-rzi*byi)
+                    bli = self.opt.sys.blg[i]
+                    byi = self.opt.sys.byg[i]
+                    ryi = strp.pnti.y - self.point.y
+                    rzi = strp.pnti.z - self.point.z
+                    self._bcv[i] += self.rhov*(ryi*bli-rzi*byi)
             elif self.param == 'm':
-                self._bcv = zeros((num, 1))
+                self._bcv = zeros(num)
                 for i in self.strplst:
                     strp = self.opt.sys.strps[i]
-                    bli = self.opt.sys.blg[i, 0]
-                    rxi = strp.pnti.x-self.point.x
-                    self._bcv[i, 0] -= self.rhov*rxi*bli
+                    bli = self.opt.sys.blg[i]
+                    rxi = strp.pnti.x - self.point.x
+                    self._bcv[i] -= self.rhov*rxi*bli
             elif self.param == 'n':
-                self._bcv = zeros((num, 1))
+                self._bcv = zeros(num)
                 for i in self.strplst:
                     strp = self.opt.sys.strps[i]
-                    byi = self.opt.sys.byg[i, 0]
-                    rxi = strp.pnti.x-self.point.x
-                    self._bcv[i, 0] += self.rhov*rxi*byi
+                    byi = self.opt.sys.byg[i]
+                    rxi = strp.pnti.x - self.point.x
+                    self._bcv[i] += self.rhov*rxi*byi
         return self._bcv
 
     @property
@@ -291,18 +290,18 @@ class Record():
             self._rhov = self.opt.rho*self.opt.speed
         return self._rhov
 
-    def return_matrices(self, phi: matrix):
+    def return_matrices(self, phi: 'NDArray'):
         ach = self.bcv.transpose()
         acv = self.bcv
         if self.bcm is not None:
-            ach = ach + phi.transpose()*self.bcm
+            ach = ach + phi@self.bcm
             acv = acv + (self.bcm.transpose() + self.bcm)*phi
         return acv, ach
 
     def evaluate(self) -> float:
         phi = self.opt.phi
         _, ach = self.return_matrices(phi)
-        value = (ach*phi)[0, 0]
+        value = ach@phi
         if self._value is None:
             self._value = value
         return value
