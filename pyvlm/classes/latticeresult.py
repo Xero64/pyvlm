@@ -8,7 +8,6 @@ from pygeom.geom3d import Coordinate, Vector
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from mpl_toolkits.mplot3d import Axes3D
-    from numpy import float64
     from numpy.typing import NDArray
 
     from .latticecontrol import LatticeControl
@@ -35,25 +34,23 @@ class LatticeResult():
     _qfs: float = None
     _ofs: Vector = None
     _ungam: Vector = None
-    _gamma: 'NDArray[float64]' = None
+    _gamma: 'NDArray' = None
     _avg: Vector = None
     _avv: Vector = None
     _afg: Vector = None
     _afv: Vector = None
-    _arm = None
-    _armt = None
-    _phi = None
-    _bvv = None
-    _brm = None
-    _nfres = None
-    _trres = None
-    _pdres = None
-    _stripres = None
-    _stgam = None
-    _stres = None
-    _ctgamp = None
+    _arm: Vector = None
+    _phi: 'NDArray' = None
+    _bvv: Vector = None
+    _brm: Vector = None
+    _nfres: 'GammaResult' = None
+    _trres: 'PhiResult' = None
+    _pdres: 'ParasiticDragResult' = None
+    _stripres: 'StripResult' = None
+    _stres: 'StabilityResult' = None
+    _ctgamp: dict[str, 'NDArray'] = None
     _ctresp: dict[str, 'GammaResult'] = None
-    _ctgamn = None
+    _ctgamn: dict[str, 'NDArray'] = None
     _ctresn: dict[str, 'GammaResult'] = None
 
     def __init__(self, name: str, sys: 'LatticeSystem') -> None:
@@ -104,7 +101,7 @@ class LatticeResult():
             self.rbo2V = rbo2V
         self.reset()
 
-    def set_controls(self, **kwargs) -> None:
+    def set_controls(self, **kwargs: dict[str, float]) -> None:
         for control in kwargs:
             self.ctrls[control] = kwargs[control]
         self.reset()
@@ -169,30 +166,30 @@ class LatticeResult():
                     self._gamma += ctrlrad*(self.ungam[:, indo].dot(self.ofs))
         return self._gamma
 
-    def gctrlp_single(self, control: str) -> 'GammaResult':
+    def gctrlp_single(self, control: str) -> 'NDArray':
         indv = self.sys.ctrls[control][0]
         indo = self.sys.ctrls[control][1]
         return self.ungam[:, indv].dot(self.vfs) + self.ungam[:, indo].dot(self.ofs)
 
-    def gctrlp(self) -> dict[str, 'GammaResult']:
+    def gctrlp(self) -> dict[str, 'NDArray']:
         gmats = {}
         for control in self.sys.ctrls:
             gmats[control] = self.gctrlp_single(control)
         return gmats
 
-    def gctrln_single(self, control: str) -> 'GammaResult':
+    def gctrln_single(self, control: str) -> 'NDArray':
         indv = self.sys.ctrls[control][2]
         indo = self.sys.ctrls[control][3]
         return self.ungam[:, indv].dot(self.vfs) + self.ungam[:, indo].dot(self.ofs)
 
-    def gctrln(self) -> dict[str, 'GammaResult']:
+    def gctrln(self) -> dict[str, 'NDArray']:
         gmats = {}
         for control in self.sys.ctrls:
             gmats[control] = self.gctrln_single(control)
         return gmats
 
     @property
-    def phi(self) -> 'NDArray[float64]':
+    def phi(self) -> 'NDArray':
         if self._phi is None:
             num = len(self.sys.strps)
             self._phi = zeros(num)
@@ -779,8 +776,8 @@ class LatticeResult():
         table.add_column('#', 'd')
         table.add_column('Chord', '.4f')
         table.add_column('Area', '.6f')
-        table.add_column('cn', '.5f') # Strip Normal Load
-        table.add_column('ca', '.5f') # String Axial Load
+        table.add_column('cn', '.5f')
+        table.add_column('ca', '.5f')
         table.add_column('cl', '.5f')
         table.add_column('cd', '.5f')
         table.add_column('dw', '.5f')
@@ -952,7 +949,6 @@ class LatticeResult():
             table.add_column('Cm', cfrm, data=[self.nfres.Cm])
             table.add_column('Cn', cfrm, data=[self.nfres.Cn])
 
-            # table.add_column('e', efrm, data=[self.nfres.e])
             if self.sys.cdo != 0.0:
                 lod = self.nfres.CL/(self.pdres.CDo+self.nfres.CDi)
                 table.add_column('L/D', '.5g', data=[lod])
@@ -962,9 +958,6 @@ class LatticeResult():
             table.add_column('CDi_ff', dfrm, data=[self.trres.CDi])
             table.add_column('CY_ff', cfrm, data=[self.trres.CY])
             table.add_column('CL_ff', cfrm, data=[self.trres.CL])
-            # table.add_column('Cl_ff', cfrm, data=[self.trres.Cl])
-            # table.add_column('Cm_ff', cfrm, data=[self.trres.Cm])
-            # table.add_column('Cn_ff', cfrm, data=[self.trres.Cn])
             table.add_column('e', efrm, data=[self.trres.e])
             if self.sys.cdo != 0.0:
                 lod_ff = self.trres.CL/(self.pdres.CDo+self.trres.CDi)
@@ -984,8 +977,8 @@ class LatticeResult():
 
 class GammaResult():
     res: LatticeResult = None
-    gamma: 'NDArray[float64]' = None
-    _rhogamma: 'NDArray[float64]' = None
+    gamma: 'NDArray' = None
+    _rhogamma: 'NDArray' = None
     _nfvel: Vector = None
     _nffrc: Vector = None
     _nfmom: Vector = None
@@ -1005,12 +998,12 @@ class GammaResult():
     _Cm: float = None
     _Cn: float = None
 
-    def __init__(self, res: LatticeResult, gamma: 'NDArray[float64]') -> None:
+    def __init__(self, res: LatticeResult, gamma: 'NDArray') -> None:
         self.res = res
         self.gamma = gamma
 
     @property
-    def rhogamma(self) -> 'NDArray[float64]':
+    def rhogamma(self) -> 'NDArray':
         if self._rhogamma is None:
             self._rhogamma = self.res.rho*self.gamma
         return self._rhogamma
@@ -1215,8 +1208,8 @@ class StripResult():
 
 class PhiResult():
     res: LatticeResult = None
-    phi: 'NDArray[float64]' = None
-    _trwsh: 'NDArray[float64]' = None
+    phi: 'NDArray' = None
+    _trwsh: 'NDArray' = None
     _trfrc: Vector = None
     _trmom: Vector = None
     _trfrctot: Vector = None
@@ -1230,7 +1223,7 @@ class PhiResult():
     _e: float = None
     _lod: float = None
 
-    def __init__(self, res: LatticeResult, phi: 'NDArray[float64]') -> None:
+    def __init__(self, res: LatticeResult, phi: 'NDArray') -> None:
         self.res = res
         self.phi = phi
 
@@ -1586,7 +1579,7 @@ class StabilityResult():
         dxoc = dCmdal/dCzdal
         return self.res.rcg.x - dxoc*self.res.sys.cref
 
-    def system_aerodynamic_matrix(self) -> 'NDArray[float64]':
+    def system_aerodynamic_matrix(self) -> 'NDArray':
         A = zeros((6, 6))
         F = self.u.nffrctot
         A[0, 0], A[1, 0], A[2, 0] = F.x, F.y, F.z

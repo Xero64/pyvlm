@@ -19,24 +19,29 @@ class LatticeTrim(LatticeResult):
     trmfrc = None
     trmmom = None
     trmlft = None
+
     def __init__(self, name: str, sys: LatticeSystem):
         super().__init__(name, sys)
         self.set_trim_loads()
-    def set_targets(self, CLt: float=0.0, CYt: float=0.0,
-                    Clt: float=0.0, Cmt: float=0.0, Cnt: float=0.0):
+
+    def set_targets(self, CLt: float = 0.0, CYt: float = 0.0,
+                    Clt: float = 0.0, Cmt: float = 0.0, Cnt: float = 0.0):
         self.CLt = CLt
         self.CYt = CYt
         self.Clt = Clt
         self.Cmt = Cmt
         self.Cnt = Cnt
+
     def set_trim_loads(self, trmfrc: bool=True, trmmom: bool=True, trmlft: bool=False):
         self.trmfrc = trmfrc
         self.trmmom = trmmom
         self.trmlft = trmlft
+
     def delta_C(self):
         Ctgt = self.target_Cmat()
         Ccur = self.current_Cmat()
-        return Ctgt-Ccur
+        return Ctgt - Ccur
+
     def target_Cmat(self):
         if self.trmlft:
             Ctgt = zeros((1, 1))
@@ -60,6 +65,7 @@ class LatticeTrim(LatticeResult):
         else:
             Ctgt = zeros((0, 1))
         return Ctgt
+
     def current_Cmat(self):
         if self.trmlft:
             Ccur = zeros((1, 1))
@@ -96,6 +102,7 @@ class LatticeTrim(LatticeResult):
         else:
             Ccur = zeros((0, 1))
         return Ccur
+
     def current_Dmat(self):
         if self.trmmom:
             numc = len(self.sys.ctrls)
@@ -115,6 +122,7 @@ class LatticeTrim(LatticeResult):
                 Dcur[2+c, 0] = radians(self.ctrls[control])
                 c += 1
         return Dcur
+
     def Hmat(self):
         if self.trmmom:
             numc = len(self.sys.ctrls)
@@ -179,6 +187,7 @@ class LatticeTrim(LatticeResult):
         else:
             H = zeros((0, 0))
         return H
+
     def trim_iteration(self):
         Ctgt = self.target_Cmat()
         Ccur = self.current_Cmat()
@@ -191,6 +200,7 @@ class LatticeTrim(LatticeResult):
         Ddff = Ainv*B
         Dcur = Dcur+Ddff
         return Dcur
+
     def trim(self, crit: float=1e-6, imax: int=100, display=False):
         Ctgt = self.target_Cmat()
         Ccur = self.current_Cmat()
