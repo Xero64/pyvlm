@@ -5,7 +5,6 @@ from py2md.classes import MDTable
 from pygeom.geom3d import Vector
 
 if TYPE_CHECKING:
-    from numpy import float64
     from numpy.typing import NDArray
 
     from ..tools.mass import Mass, MassCollection
@@ -13,6 +12,7 @@ if TYPE_CHECKING:
     from .latticeresult import LatticeResult
     from .latticestrip import LatticeStrip
     from .latticesurface import LatticeSurface
+    from .latticetrim import LatticeTrim
 
 FOURPI = 4*pi
 
@@ -39,19 +39,19 @@ class LatticeSystem():
     _avg: Vector = None # Induced Vector Velocity Matrix
     _afg: Vector = None # Induced Vector Force Matrix
     _avc: Vector = None # Control Vector Velocity Matrix
-    _aic: 'NDArray[float64]' = None # Influence Coefficient Matrix
+    _aic: 'NDArray' = None # Influence Coefficient Matrix
     _afs: Vector = None
-    _ada: 'NDArray[float64]' = None
+    _ada: 'NDArray' = None
     _bvg: Vector = None
-    _bdg: 'NDArray[float64]' = None
-    _blg: 'NDArray[float64]' = None
-    _byg: 'NDArray[float64]' = None
-    _bmg: 'NDArray[float64]' = None
-    _bda: 'NDArray[float64]' = None
+    _bdg: 'NDArray' = None
+    _blg: 'NDArray' = None
+    _byg: 'NDArray' = None
+    _bmg: 'NDArray' = None
+    _bda: 'NDArray' = None
     _ar: float = None # Aspect Ratio
     _cdo: float = None
     _cdo_ff: float = None
-    results: dict[str, 'LatticeResult'] = None
+    results: dict[str, 'LatticeResult | LatticeTrim'] = None
 
     def __init__(self, name: str, srfcs: list,
                        bref: float, cref: float, sref: float,
@@ -125,7 +125,7 @@ class LatticeSystem():
                 self._rg[pnl.lpid] = pnl.pnti
         return self._rg
 
-    def avc(self, mach: float) -> Vector:
+    def avc(self, mach: float = 0.0) -> Vector:
         if self._avc is None:
             self._avc = {}
         if mach not in self._avc:
@@ -134,7 +134,7 @@ class LatticeSystem():
             self._avc[mach] = (veli + vela - velb)/FOURPI
         return self._avc[mach]
 
-    def aic(self, mach: float) -> 'NDArray[float64]':
+    def aic(self, mach: float = 0.0) -> 'NDArray':
         if self._aic is None:
             self._aic = {}
         if mach not in self._aic:
@@ -172,7 +172,7 @@ class LatticeSystem():
                             self._afs[lpid, ctup[3]] = rrel.cross(dndln)
         return self._afs
 
-    def ungam(self, mach: float) -> Vector:
+    def ungam(self, mach: float = 0.0) -> Vector:
         if self._ungam is None:
             self._ungam = {}
         if mach not in self._ungam:
@@ -180,16 +180,16 @@ class LatticeSystem():
             self._ungam[mach] = -self.afs.solve(aic)
         return self._ungam[mach]
 
-    def avg(self, mach: float) -> Vector:
+    def avg(self, mach: float = 0.0) -> Vector:
         if self._avg is None:
             self._avg = {}
         if mach not in self._avg:
-            beta = (1 - mach**2)**0.5
+            beta = (1.0 - mach**2)**0.5
             veli, vela, velb = velocity_matrix(self.ra, self.rb, self.rg, beta)
             self._avg[mach] = (veli + vela - velb)/FOURPI
         return self._avg[mach]
 
-    def afg(self, mach: float) -> Vector:
+    def afg(self, mach: float = 0.0) -> Vector:
         if self._afg is None:
             self._afg = {}
         if mach not in self._afg:
@@ -202,7 +202,7 @@ class LatticeSystem():
         return self._afg[mach]
 
     @property
-    def ada(self) -> 'NDArray[float64]':
+    def ada(self) -> 'NDArray':
         if self._ada is None:
             num = len(self.pnls)
             self._ada = zeros(num)
@@ -211,7 +211,7 @@ class LatticeSystem():
         return self._ada
 
     @property
-    def cdo(self) -> 'NDArray[float64]':
+    def cdo(self) -> 'NDArray':
         if self._cdo is None:
             dragarea = 0.0
             for pnl in self.pnls:
@@ -220,7 +220,7 @@ class LatticeSystem():
         return self._cdo
 
     @property
-    def bvg(self) -> 'NDArray[float64]':
+    def bvg(self) -> 'NDArray':
         if self._bvg is None:
             num = len(self.strps)
             self._bvg = zeros((num, num))
@@ -230,7 +230,7 @@ class LatticeSystem():
         return self._bvg
 
     @property
-    def bdg(self) -> 'NDArray[float64]':
+    def bdg(self) -> 'NDArray':
         if self._bdg is None:
             num = len(self.strps)
             self._bdg = zeros((num, num))
@@ -240,7 +240,7 @@ class LatticeSystem():
         return self._bdg
 
     @property
-    def blg(self) -> 'NDArray[float64]':
+    def blg(self) -> 'NDArray':
         if self._blg is None:
             num = len(self.strps)
             self._blg = zeros(num)
@@ -249,7 +249,7 @@ class LatticeSystem():
         return self._blg
 
     @property
-    def byg(self) -> 'NDArray[float64]':
+    def byg(self) -> 'NDArray':
         if self._byg is None:
             num = len(self.strps)
             self._byg = zeros(num)
@@ -258,7 +258,7 @@ class LatticeSystem():
         return self._byg
 
     @property
-    def bmg(self) -> 'NDArray[float64]':
+    def bmg(self) -> 'NDArray':
         if self._bmg is None:
             num = len(self.strps)
             self._bmg = zeros(num)
@@ -268,7 +268,7 @@ class LatticeSystem():
         return self._bmg
 
     @property
-    def bda(self) -> 'NDArray[float64]':
+    def bda(self) -> 'NDArray':
         if self._bda is None:
             num = len(self.strps)
             self._bda = zeros(num)

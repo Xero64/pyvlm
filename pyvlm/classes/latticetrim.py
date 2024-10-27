@@ -1,310 +1,299 @@
-from math import degrees, radians
 from time import perf_counter
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from numpy.linalg import inv, norm
-from numpy.matlib import zeros
+from numpy import degrees, radians, zeros
+from numpy.linalg import norm, solve
 
 from ..tools.mass import Mass
-from .latticeresult import GammaResult, LatticeResult
-from .latticesystem import LatticeSystem
+from .latticeresult import LatticeResult
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+    from .latticesystem import LatticeSystem
+
+ANGTOL = 30.0
 
 
 class LatticeTrim(LatticeResult):
-    CLt = None
-    CYt = None
-    Clt = None
-    Cmt = None
-    Cnt = None
-    trmfrc = None
-    trmmom = None
-    trmlft = None
+    targets: dict[str, tuple[str, float]] = None
 
-    def __init__(self, name: str, sys: LatticeSystem):
+    def __init__(self, name: str, sys: 'LatticeSystem') -> None:
         super().__init__(name, sys)
-        self.set_trim_loads()
+        self.targets = {
+            'alpha': ('alpha', 0.0),
+            'beta': ('beta', 0.0),
+            'pbo2V': ('pbo2V', 0.0),
+            'qco2V': ('qco2V', 0.0),
+            'rbo2V': ('rbo2V', 0.0),
+        }
+        for control in self.ctrls:
+            self.targets[control] = (control, 0.0)
 
-    def set_targets(self, CLt: float = 0.0, CYt: float = 0.0,
-                    Clt: float = 0.0, Cmt: float = 0.0, Cnt: float = 0.0):
-        self.CLt = CLt
-        self.CYt = CYt
-        self.Clt = Clt
-        self.Cmt = Cmt
-        self.Cnt = Cnt
+    def set_state(self, mach: float | None = None, speed: float | None = None,
+                  alpha: float | None = None, beta: float | None = None,
+                  pbo2V: float | None = None, qco2V: float | None = None,
+                  rbo2V: float | None = None) -> None:
+        super().set_state(mach=mach, speed=speed, alpha=alpha, beta=beta,
+                          pbo2V=pbo2V, qco2V=qco2V, rbo2V=rbo2V)
+        if self.targets['alpha'][0] == 'alpha':
+            self.targets['alpha'] = ('alpha', self.alpha)
+        if self.targets['beta'][0] == 'beta':
+            self.targets['beta'] = ('beta', self.beta)
+        if self.targets['pbo2V'][0] == 'pbo2V':
+            self.targets['pbo2V'] = ('pbo2V', self.pbo2V)
+        if self.targets['qco2V'][0] == 'qco2V':
+            self.targets['qco2V'] = ('qco2V', self.qco2V)
+        if self.targets['rbo2V'][0] == 'rbo2V':
+            self.targets['rbo2V'] = ('rbo2V', self.rbo2V)
 
-    def set_trim_loads(self, trmfrc: bool=True, trmmom: bool=True, trmlft: bool=False):
-        self.trmfrc = trmfrc
-        self.trmmom = trmmom
-        self.trmlft = trmlft
+    def set_controls(self, **kwargs: dict[str, float]) -> None:
+        super().set_controls(**kwargs)
+        for control in kwargs:
+            if control in self.targets:
+                self.targets[control] = (control, kwargs[control])
 
-    def delta_C(self):
+    def set_targets(self, CLt: float | None = None, CYt: float | None = None,
+                    Clt: float | None = None, Cmt: float | None = None,
+                    Cnt: float | None = None) -> None:
+        if CLt is not None:
+            self.targets['alpha'] = ('CL', CLt)
+        if CYt is not None:
+            self.targets['beta'] = ('CY', CYt)
+        controls = self.ctrls.keys()
+        moment = {}
+        if Clt is not None:
+            moment['Cl'] = Clt
+        if Cmt is not None:
+            moment['Cm'] = Cmt
+        if Cnt is not None:
+            moment['Cn'] = Cnt
+        for control, (name, value) in zip(controls, moment.items()):
+            self.targets[control] = (name, value)
+
+    def set_initial_state(self, initstate: dict[str, float]) -> None:
+        if 'alpha' in self.targets:
+            if self.targets['alpha'][0] == 'alpha':
+                initstate['alpha'] = self.targets['alpha'][1]
+        if 'beta' in self.targets:
+            if self.targets['beta'][0] == 'beta':
+                initstate['beta'] = self.targets['beta'][1]
+        if 'pbo2V' in self.targets:
+            if self.targets['pbo2V'][0] == 'pbo2V':
+                initstate['pbo2V'] = self.targets['pbo2V'][1]
+        if 'qco2V' in self.targets:
+            if self.targets['qco2V'][0] == 'qco2V':
+                initstate['qco2V'] = self.targets['qco2V'][1]
+        if 'rbo2V' in self.targets:
+            if self.targets['rbo2V'][0] == 'rbo2V':
+                initstate['rbo2V'] = self.targets['rbo2V'][1]
+        self.initstate = initstate
+        super().set_state(**self.initstate)
+
+    def set_initial_controls(self, initctrls: dict[str, float]) -> None:
+        for control in self.ctrls:
+            if control in self.targets:
+                if self.targets[control][0] == control:
+                    initctrls[control] = self.targets[control][1]
+        self.initctrls = initctrls
+        super().set_controls(**self.initctrls)
+
+    def target_Cmat(self) -> 'NDArray':
+        Ctgt = zeros(len(self.targets))
+        for i, value in enumerate(self.targets.values()):
+            Ctgt[i] = value[1]
+        return Ctgt
+
+    def current_Cmat(self) -> 'NDArray':
+        Ccur = zeros(len(self.targets))
+        for i, value in enumerate(self.targets.values()):
+            if hasattr(self, value[0]):
+                Ccur[i] = getattr(self, value[0])
+            elif hasattr(self.nfres, value[0]):
+                Ccur[i] = getattr(self.nfres, value[0])
+        return Ccur
+
+    def delta_C(self) -> 'NDArray':
         Ctgt = self.target_Cmat()
         Ccur = self.current_Cmat()
         return Ctgt - Ccur
 
-    def target_Cmat(self):
-        if self.trmlft:
-            Ctgt = zeros((1, 1))
-            Ctgt[0, 0] = self.CLt
-        elif self.trmfrc and self.trmmom:
-            Ctgt = zeros((5, 1))
-            Ctgt[0, 0] = self.CLt
-            Ctgt[1, 0] = self.CYt
-            Ctgt[2, 0] = self.Clt
-            Ctgt[3, 0] = self.Cmt
-            Ctgt[4, 0] = self.Cnt
-        elif self.trmfrc:
-            Ctgt = zeros((2, 1))
-            Ctgt[0, 0] = self.CLt
-            Ctgt[1, 0] = self.CYt
-        elif self.trmmom:
-            Ctgt = zeros((3, 1))
-            Ctgt[0, 0] = self.Clt
-            Ctgt[1, 0] = self.Cmt
-            Ctgt[2, 0] = self.Cnt
-        else:
-            Ctgt = zeros((0, 1))
-        return Ctgt
-
-    def current_Cmat(self):
-        if self.trmlft:
-            Ccur = zeros((1, 1))
-            Ccur[0, 0] = self.nfres.CL
-        elif self.trmfrc and self.trmmom:
-            Ccur = zeros((5, 1))
-            Ccur[0, 0] = self.nfres.CL
-            Ccur[1, 0] = self.nfres.CY
-            Ccur[2, 0] = self.nfres.Cl
-            Ccur[3, 0] = self.nfres.Cm
-            Ccur[4, 0] = self.nfres.Cn
-            if self.sys.cdo != 0.0:
-                Ccur[0, 0] += self.pdres.CL
-                Ccur[1, 0] += self.pdres.CY
-                Ccur[2, 0] += self.pdres.Cl
-                Ccur[3, 0] += self.pdres.Cm
-                Ccur[4, 0] += self.pdres.Cn
-        elif self.trmfrc:
-            Ccur = zeros((2, 1))
-            Ccur[0, 0] = self.nfres.CL
-            Ccur[1, 0] = self.nfres.CY
-            if self.sys.cdo != 0.0:
-                Ccur[0, 0] += self.pdres.CL
-                Ccur[1, 0] += self.pdres.CY
-        elif self.trmmom:
-            Ccur = zeros((3, 1))
-            Ccur[0, 0] = self.nfres.Cl
-            Ccur[1, 0] = self.nfres.Cm
-            Ccur[2, 0] = self.nfres.Cn
-            if self.sys.cdo != 0.0:
-                Ccur[0, 0] += self.pdres.Cl
-                Ccur[1, 0] += self.pdres.Cm
-                Ccur[2, 0] += self.pdres.Cn
-        else:
-            Ccur = zeros((0, 1))
-        return Ccur
-
-    def current_Dmat(self):
-        if self.trmmom:
-            numc = len(self.sys.ctrls)
-        else:
-            numc = 0
-        if self.trmlft:
-            Dcur = zeros((1, 1))
-            Dcur[0, 0] = radians(self.alpha)
-        else:
-            num = numc+2
-            Dcur = zeros((num, 1))
-            Dcur[0, 0] = radians(self.alpha)
-            Dcur[1, 0] = radians(self.beta)
-        if self.trmmom:
-            c = 0
-            for control in self.ctrls:
-                Dcur[2+c, 0] = radians(self.ctrls[control])
-                c += 1
+    def current_Dmat(self) -> 'NDArray':
+        Dcur = zeros(len(self.targets))
+        for i, variable in enumerate(self.targets):
+            if variable == 'alpha':
+                Dcur[i] = radians(self.alpha)
+            elif variable == 'beta':
+                Dcur[i] = radians(self.beta)
+            elif variable == 'pbo2V':
+                Dcur[i] = self.pbo2V
+            elif variable == 'qco2V':
+                Dcur[i] = self.qco2V
+            elif variable == 'rbo2V':
+                Dcur[i] = self.rbo2V
+            elif variable in self.ctrls:
+                Dcur[i] = radians(self.ctrls[variable])
         return Dcur
 
-    def Hmat(self):
-        if self.trmmom:
-            numc = len(self.sys.ctrls)
-        else:
-            numc = 0
-        num = numc+2
-        if self.trmlft:
-            H = zeros((1, 1))
-            H[0, 0] = self.stres.alpha.CL
-        elif self.trmfrc and self.trmmom:
-            H = zeros((5, num))
-            H[0, 0] = self.stres.alpha.CL
-            H[1, 0] = self.stres.alpha.CY
-            H[2, 0] = self.stres.alpha.Cl
-            H[3, 0] = self.stres.alpha.Cm
-            H[4, 0] = self.stres.alpha.Cn
-            H[0, 1] = self.stres.beta.CL
-            H[1, 1] = self.stres.beta.CY
-            H[2, 1] = self.stres.beta.Cl
-            H[3, 1] = self.stres.beta.Cm
-            H[4, 1] = self.stres.beta.Cn
-            ctgam = {}
-            c = 0
-            for control in self.ctrls:
-                if self.ctrls[control] < 0.0:
-                    ctgam = self.gctrln_single(control)
+    def current_Hmat(self) -> 'NDArray':
+        num = len(self.targets)
+        Hcur = zeros((num, num))
+        for i, target in enumerate(self.targets.values()):
+            for j, variable in enumerate(self.targets):
+                if variable == target[0]:
+                    Hcur[i, :] = 0.0
+                    Hcur[i, j] = 1.0
                 else:
-                    ctgam = self.gctrlp_single(control)
-                ctres = GammaResult(self, ctgam)
-                H[0, 2+c] = ctres.CL
-                H[1, 2+c] = ctres.CY
-                H[2, 2+c] = ctres.Cl
-                H[3, 2+c] = ctres.Cm
-                H[4, 2+c] = ctres.Cn
-                c += 1
-        elif self.trmfrc:
-            H = zeros((2, num))
-            H[0, 0] = self.stres.alpha.CL
-            H[1, 0] = self.stres.alpha.CY
-            H[0, 1] = self.stres.beta.CL
-            H[1, 1] = self.stres.beta.CY
-        elif self.trmmom:
-            H = zeros((3, num))
-            H[0, 0] = self.stres.alpha.Cl
-            H[1, 0] = self.stres.alpha.Cm
-            H[2, 0] = self.stres.alpha.Cn
-            H[0, 1] = self.stres.beta.Cl
-            H[1, 1] = self.stres.beta.Cm
-            H[2, 1] = self.stres.beta.Cn
-            ctgam = {}
-            c = 0
-            for control in self.ctrls:
-                if self.ctrls[control] < 0.0:
-                    ctgam = self.gctrln_single(control)
-                else:
-                    ctgam = self.gctrlp_single(control)
-                ctres = GammaResult(self, ctgam)
-                H[0, 2+c] = ctres.Cl
-                H[1, 2+c] = ctres.Cm
-                H[2, 2+c] = ctres.Cn
-                c += 1
-        else:
-            H = zeros((0, 0))
-        return H
+                    if hasattr(self.stres, variable):
+                        stvar = getattr(self.stres, variable)
+                        if hasattr(stvar, target[0]):
+                            Hcur[i, j] = getattr(stvar, target[0])
+                    elif variable in self.ctrls:
+                        if self.ctrls[variable] < 0.0:
+                            ctvar = self.ctresn[variable]
+                        else:
+                            ctvar = self.ctresp[variable]
+                        if hasattr(ctvar, target[0]):
+                            Hcur[i, j] = getattr(ctvar, target[0])
+        return Hcur
 
-    def trim_iteration(self):
+    def trim_iteration(self, display: bool = False) -> 'NDArray':
+        Cdff = self.delta_C()
+        Hcur = self.current_Hmat()
+        Ddff = solve(Hcur, Cdff)
+        if display:
+            print(f'Cdiff = \n{Cdff}\n')
+            print(f'Hcur = \n{Hcur}\n')
+            print(f'Ddiff = \n{Ddff}\n')
+            print(f'Hcur@Ddiff = \n{Hcur@Ddff}\n')
+        return Ddff
+
+    def trim(self, crit: float = 1e-6, imax: int = 100, display: bool = False) -> None:
         Ctgt = self.target_Cmat()
         Ccur = self.current_Cmat()
-        Cdff = Ctgt-Ccur
-        H = self.Hmat()
-        A = H.transpose()*H
-        Ainv = inv(A)
-        Dcur = self.current_Dmat()
-        B = H.transpose()*Cdff
-        Ddff = Ainv*B
-        Dcur = Dcur+Ddff
-        return Dcur
-
-    def trim(self, crit: float=1e-6, imax: int=100, display=False):
-        Ctgt = self.target_Cmat()
-        Ccur = self.current_Cmat()
-        Cdff = Ctgt-Ccur
+        Cdff = Ctgt - Ccur
         nrmC = norm(Cdff)
         if display:
             print(f'normC = {nrmC}')
-        i = 0
+        count = 0
         while nrmC > crit:
             if display:
-                print(f'Iteration {i:d}')
+                print(f'Iteration {count:d}')
                 start = perf_counter()
-            Dcur = self.trim_iteration()
+            Ddff = self.trim_iteration(display = display)
+            Dcur = self.current_Dmat() + Ddff
             if display:
                 finish = perf_counter()
-                elapsed = finish-start
+                elapsed = finish - start
                 print(f'Trim Internal Iteration Duration = {elapsed:.3f} seconds.')
-            if Dcur is False:
-                return
-            alpha = degrees(Dcur[0, 0])
-            if self.trmlft:
-                beta = self.beta
-            else:
-                beta = degrees(Dcur[1, 0])
-            if self.trmmom:
-                ctrls = {}
-                c = 0
-                for control in self.ctrls:
-                    ctrls[control] = degrees(Dcur[2+c, 0])
-                    c += 1
-                self.set_controls(**ctrls)
-            self.set_state(alpha=alpha, beta=beta)
-            Ccur = self.current_Cmat()
-            Cdff = Ctgt-Ccur
+            state = {}
+            ctrls = {}
+            for i, variable in enumerate(self.targets):
+                if variable == 'alpha':
+                    state['alpha'] = degrees(Dcur[i])
+                elif variable == 'beta':
+                    state['beta'] = degrees(Dcur[i])
+                elif variable == 'pbo2V':
+                    state['pbo2V'] = Dcur[i]
+                elif variable == 'qco2V':
+                    state['qco2V'] = Dcur[i]
+                elif variable == 'rbo2V':
+                    state['rbo2V'] = Dcur[i]
+                elif variable in self.ctrls:
+                    ctrls[variable] = degrees(Dcur[i])
+            super().set_state(**state)
+            super().set_controls(**ctrls)
+            Cdff = self.delta_C()
             nrmC = norm(Cdff)
             if display:
-                print(f'alpha = {alpha:.6f} deg')
-                print(f'beta = {beta:.6f} deg')
+                print(f'alpha = {state['alpha']:.6f} deg')
+                print(f'beta = {state['beta']:.6f} deg')
+                print(f'pbo2V = {state['pbo2V']:.6f}')
+                print(f'qco2V = {state['qco2V']:.6f}')
+                print(f'rbo2V = {state['rbo2V']:.6f}')
                 for control in ctrls:
                     print(f'{control} = {ctrls[control]:.6f} deg')
                 print(f'normC = {nrmC}')
-            i += 1
-            if i >= imax:
+            count += 1
+            if count >= imax:
                 print(f'Convergence failed for {self.name}.')
                 return False
 
-def latticetrim_from_json(lsys: LatticeSystem, resdata: dict[str, Any]) -> LatticeTrim:
 
-    from ..tools.trim import GRAVACC, LevelTrim, LoopingTrim, TurningTrim
+def latticetrim_from_json(system: 'LatticeSystem', resdata: dict[str, Any]) -> LatticeTrim:
+
+    from ..tools.trim import GRAVACC, LevelTrim, LoadTrim, LoopingTrim, TurningTrim
 
     name = resdata['name']
 
-    if resdata['trim'] == 'Looping Trim':
-        trim = LoopingTrim(name, lsys)
-        trim.set_loadfac(resdata.get('load factor', 1.0))
+    if resdata['trim'] == 'Load Trim':
+        trim = LoadTrim(name, system)
+        lift = resdata.get('L', None)
+        side = resdata.get('Y', None)
+        roll = resdata.get('l', None)
+        pitch = resdata.get('m', None)
+        yaw = resdata.get('n', None)
+        trim.set_loads(lift, side, roll, pitch, yaw)
+
+    elif resdata['trim'] == 'Looping Trim':
+        trim = LoopingTrim(name, system)
+        load_factor = resdata.get('load factor', 1.0)
+        trim.set_load_factor(load_factor)
 
     elif resdata['trim'] == 'Turning Trim':
-        trim = TurningTrim(name, lsys)
-        trim.set_bankang(resdata.get('bank angle', 1.0))
+        trim = TurningTrim(name, system)
+        bang = resdata.get('bank angle', 0.0)
+        trim.set_bankang(bang)
 
     elif resdata['trim'] == 'Level Trim':
-        trim = LevelTrim(name, lsys)
+        trim = LevelTrim(name, system)
 
-    trim.set_density(resdata.get('density', 1.0))
-    trim.set_speed(resdata.get('speed', 1.0))
-    trim.set_gravacc(resdata.get('gravacc', GRAVACC))
+    rho = resdata.get('density', 1.0)
+    trim.set_density(rho)
 
-    m = 1.0
-    xcm, ycm, zcm = lsys.rref.x, lsys.rref.y, lsys.rref.z
-    if 'mass' in resdata:
-        if isinstance(resdata['mass'], str):
-            mass = lsys.masses[resdata['mass']]
-        elif isinstance(resdata['mass'], float):
-            if 'rcg' in resdata:
-                rcgdata = resdata['rcg']
-                xcm, ycm, zcm = rcgdata['x'], rcgdata['y'], rcgdata['z']
-            m = resdata['mass']
-            mass = Mass(name + ' Mass', m, xcm, ycm, zcm)
-    else:
-        mass = Mass(name + ' Mass', m, xcm, ycm, zcm)
+    speed = resdata.get('speed', 1.0)
+    trim.set_speed(speed)
 
-    trim.set_mass(mass)
+    gravacc = resdata.get('gravacc', GRAVACC)
+    trim.set_gravitational_acceleration(gravacc)
 
-    ltrm = trim.create_trim_result()
+    initstate = {}
+    initstate['alpha'] = resdata.get('alpha', 0.0)
+    initstate['beta'] = resdata.get('beta', 0.0)
+    initstate['pbo2V'] = resdata.get('pbo2V', 0.0)
+    initstate['qco2V'] = resdata.get('qco2V', 0.0)
+    initstate['rbo2V'] = resdata.get('rbo2V', 0.0)
+    trim.set_initial_state(initstate)
 
-    if 'mach' in resdata:
-        mach = resdata['mach']
-        ltrm.set_state(mach=mach)
+    initctrls = {}
+    for control in system.ctrls:
+        initctrls[control] = resdata.get(control, 0.0)
+    trim.set_initial_controls(initctrls)
 
-    trim_force = True
-    trim_moment = True
-    trim_lift = False
-    if 'trim moment' in resdata:
-        trim_moment = resdata['trim moment']
-    if 'trim lift' in resdata:
-        trim_lift = resdata['trim lift']
-    if trim_lift:
-        trim_force = False
-        trim_moment = False
+    if isinstance(trim, (LoopingTrim, TurningTrim)):
 
-    ltrm.set_trim_loads(trmfrc=trim_force, trmmom=trim_moment, trmlft=trim_lift)
+        mval = 1.0
+        xcm, ycm, zcm = system.rref.x, system.rref.y, system.rref.z
+        if 'mass' in resdata:
+            if isinstance(resdata['mass'], str):
+                mass = system.masses[resdata['mass']]
+            elif isinstance(resdata['mass'], float):
+                if 'rcg' in resdata:
+                    rcgdata = resdata['rcg']
+                    xcm, ycm, zcm = rcgdata['x'], rcgdata['y'], rcgdata['z']
+                mval = resdata['mass']
+                mass = Mass(name + ' Mass', mval, xcm, ycm, zcm)
+        else:
+            mass = Mass(name + ' Mass', mval, xcm, ycm, zcm)
 
-    lsys.results[name] = ltrm
+        trim.set_mass(mass)
 
-    ltrm.trim()
+    trimres = trim.create_trim_result()
 
-    return ltrm
+    mach = resdata.get('mach', 0.0)
+    trimres.set_state(mach = mach)
+
+    system.results[name] = trimres
+
+    trimres.trim()
+
+    return trimres
