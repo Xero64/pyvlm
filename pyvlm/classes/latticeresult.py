@@ -995,7 +995,10 @@ class LatticeResult():
             result = sys.results[inherit].to_result(name=name)
         else:
             result = cls(name, sys)
+        # Density
         rho = resdict.get('density', 1.0)
+        result.set_density(rho=rho)
+        # State
         mach = resdict.get('mach', None)
         speed = resdict.get('speed', None)
         alpha = resdict.get('alpha', None)
@@ -1003,12 +1006,20 @@ class LatticeResult():
         pbo2V = resdict.get('pbo2V', None)
         qco2V = resdict.get('qco2V', None)
         rbo2V = resdict.get('rbo2V', None)
-        rcgdata = resdict.get('rcg', {'x': 0.0, 'y': 0.0, 'z': 0.0})
-        rcg = Vector(rcgdata['x'], rcgdata['y'], rcgdata['z'])
-        result.set_density(rho=rho)
         result.set_state(mach=mach, speed=speed, alpha=alpha, beta=beta,
                          pbo2V=pbo2V, qco2V=qco2V, rbo2V=rbo2V)
-        result.set_cg(rcg)
+        # Controls
+        ctrls: dict[str, float] = {}
+        for control in sys.ctrls:
+            value = resdict.get(control, None)
+            if value is not None:
+                ctrls[control] = value
+        result.set_controls(**ctrls)
+        # Centre of Gravity
+        rcgdict = resdict.get('rcg', None)
+        if rcgdict is not None:
+            rcg = Vector(rcgdict['x'], rcgdict['y'], rcgdict['z'])
+            result.set_cg(rcg)
         sys.results[name] = result
         return result
 
