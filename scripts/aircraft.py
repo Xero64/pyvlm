@@ -73,7 +73,6 @@ CYt = 0.0
 
 ltrm2 = LatticeTrim(f'CL = {CLt}, CY = {CYt}', lsys)
 ltrm2.set_targets(CLt = CLt, CYt = CYt)
-ltrm2.set_trim_loads(trmmom=False)
 ltrm2.trim()
 
 display_markdown(ltrm2)

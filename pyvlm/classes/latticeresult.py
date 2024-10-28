@@ -1816,39 +1816,39 @@ class StabilityResult():
             self._rdbo2V = StabilityGammaResult(self.res, dofs = dofs)
         return self._rdbo2V
 
-    # def neutral_point(self) -> float:
-    #     dCzdal = self.alpha.Cz
-    #     dCmdal = self.alpha.Cm
-    #     dxoc = dCmdal/dCzdal
-    #     return self.res.rcg.x - dxoc*self.res.sys.cref
+    def neutral_point(self) -> float:
+        dCzdal = self.alpha.Cz
+        dCmdal = self.alpha.Cm
+        dxoc = dCmdal/dCzdal
+        return self.res.rcg.x - dxoc*self.res.sys.cref
 
-    # def system_aerodynamic_matrix(self) -> 'NDArray':
-    #     A = zeros((6, 6))
-    #     F = self.u.nffrctot
-    #     A[0, 0], A[1, 0], A[2, 0] = F.x, F.y, F.z
-    #     M = self.res.scs.vector_to_local(self.u.nfmomtot)
-    #     A[3, 0], A[4, 0], A[5, 0] = M.x, M.y, M.z
-    #     F = self.v.nffrctot
-    #     A[0, 1], A[1, 1], A[2, 1] = F.x, F.y, F.z
-    #     M = self.res.scs.vector_to_local(self.v.nfmomtot)
-    #     A[3, 1], A[4, 1], A[5, 1] = M.x, M.y, M.z
-    #     F = self.w.nffrctot
-    #     A[0, 2], A[1, 2], A[2, 2] = F.x, F.y, F.z
-    #     M = self.res.scs.vector_to_local(self.w.nfmomtot)
-    #     A[3, 2], A[4, 2], A[5, 2] = M.x, M.y, M.z
-    #     F = self.p.nffrctot
-    #     A[0, 3], A[1, 3], A[2, 3] = F.x, F.y, F.z
-    #     M = self.res.scs.vector_to_local(self.p.nfmomtot)
-    #     A[3, 3], A[4, 3], A[5, 3] = M.x, M.y, M.z
-    #     F = self.q.nffrctot
-    #     A[0, 4], A[1, 4], A[2, 4] = F.x, F.y, F.z
-    #     M = self.res.scs.vector_to_local(self.q.nfmomtot)
-    #     A[3, 4], A[4, 4], A[5, 4] = M.x, M.y, M.z
-    #     F = self.r.nffrctot
-    #     A[0, 5], A[1, 5], A[2, 5] = F.x, F.y, F.z
-    #     M = self.res.scs.vector_to_local(self.r.nfmomtot)
-    #     A[3, 5], A[4, 5], A[5, 5] = M.x, M.y, M.z
-    #     return A
+    def system_aerodynamic_matrix(self) -> 'NDArray':
+        A = zeros((6, 6))
+        F = self.u.dfrctot
+        A[0, 0], A[1, 0], A[2, 0] = F.x, F.y, F.z
+        M = self.res.scs.vector_to_local(self.u.dmomtot)
+        A[3, 0], A[4, 0], A[5, 0] = M.x, M.y, M.z
+        F = self.v.dfrctot
+        A[0, 1], A[1, 1], A[2, 1] = F.x, F.y, F.z
+        M = self.res.scs.vector_to_local(self.v.dmomtot)
+        A[3, 1], A[4, 1], A[5, 1] = M.x, M.y, M.z
+        F = self.w.dfrctot
+        A[0, 2], A[1, 2], A[2, 2] = F.x, F.y, F.z
+        M = self.res.scs.vector_to_local(self.w.dmomtot)
+        A[3, 2], A[4, 2], A[5, 2] = M.x, M.y, M.z
+        F = self.p.dfrctot
+        A[0, 3], A[1, 3], A[2, 3] = F.x, F.y, F.z
+        M = self.res.scs.vector_to_local(self.p.dmomtot)
+        A[3, 3], A[4, 3], A[5, 3] = M.x, M.y, M.z
+        F = self.q.dfrctot
+        A[0, 4], A[1, 4], A[2, 4] = F.x, F.y, F.z
+        M = self.res.scs.vector_to_local(self.q.dmomtot)
+        A[3, 4], A[4, 4], A[5, 4] = M.x, M.y, M.z
+        F = self.r.dfrctot
+        A[0, 5], A[1, 5], A[2, 5] = F.x, F.y, F.z
+        M = self.res.scs.vector_to_local(self.r.dmomtot)
+        A[3, 5], A[4, 5], A[5, 5] = M.x, M.y, M.z
+        return A
 
     @property
     def stability_derivatives(self) -> MDReport:

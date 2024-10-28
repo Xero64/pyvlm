@@ -35,6 +35,8 @@ class LoopingTrim():
         self.name = name
         self.sys = sys
         self.gravacc = GRAVACC
+        self.initstate = {}
+        self.initctrls = {}
 
     def reset(self) -> None:
         for attr in self.__dict__:
@@ -195,6 +197,8 @@ class TurningTrim():
         self.name = name
         self.sys = sys
         self.gravacc = GRAVACC
+        self.initstate = {}
+        self.initctrls = {}
 
     def reset(self) -> None:
         for attr in self.__dict__:
@@ -376,6 +380,8 @@ class LevelTrim():
         self.name = name
         self.sys = sys
         self.gravacc = GRAVACC
+        self.initstate = {}
+        self.initctrls = {}
 
     def reset(self) -> None:
         for attr in self.__dict__:
@@ -504,6 +510,8 @@ class LoadTrim():
     def __init__(self, name: str, sys: 'System') -> None:
         self.name = name
         self.sys = sys
+        self.initstate = {}
+        self.initctrls = {}
 
     def reset(self) -> None:
         for attr in self.__dict__:
