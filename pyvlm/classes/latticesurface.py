@@ -250,7 +250,7 @@ class LatticeSurface():
         return '<LatticeSurface {:s}>'.format(self.name)
 
 
-def latticesurface_from_json(surfdata: dict, display: bool=False) -> LatticeSurface:
+def latticesurface_from_dict(surfdata: dict, display: bool=False) -> LatticeSurface:
     name = surfdata['name']
     mirror = surfdata.get('mirror', False)
     if display: print(f'Loading Surface: {name:s}')

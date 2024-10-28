@@ -10,13 +10,12 @@ if TYPE_CHECKING:
     from mpl_toolkits.mplot3d import Axes3D
     from numpy.typing import NDArray
 
-    from .latticecontrol import LatticeControl
-    from .latticesystem import LatticeSystem
+    from .latticesystem import LatticeSystem as System
 
 
 class LatticeResult():
     name: str = None
-    sys: 'LatticeSystem' = None
+    sys: 'System' = None
     rho: float = None
     mach: float = None
     speed: float = None
@@ -25,25 +24,24 @@ class LatticeResult():
     pbo2V: float = None
     qco2V: float = None
     rbo2V: float = None
-    ctrls: dict[str, 'LatticeControl'] = None
+    ctrls: dict[str, float] = None
     rcg: Vector = None
     _acs: Coordinate = None
     _scs: Coordinate = None
     _dacsa: dict[str, Vector] = None
     _dacsb: dict[str, Vector] = None
     _dscsa: dict[str, Vector] = None
-    _wcs: Coordinate = None
     _vfs: Vector = None
-    _qfs: float = None
     _pqr: Vector = None
     _ofs: Vector = None
+    _qfs: float = None
+    _arm: Vector = None
     _ungam: Vector = None
     _gamma: 'NDArray' = None
     _avg: Vector = None
     _avv: Vector = None
     _afg: Vector = None
     _afv: Vector = None
-    _arm: Vector = None
     _phi: 'NDArray' = None
     _bvv: Vector = None
     _brm: Vector = None
@@ -57,7 +55,7 @@ class LatticeResult():
     _ctgamn: dict[str, 'NDArray'] = None
     _ctresn: dict[str, 'GammaResult'] = None
 
-    def __init__(self, name: str, sys: 'LatticeSystem') -> None:
+    def __init__(self, name: str, sys: 'System') -> None:
         self.name = name
         self.sys = sys
         self.initialise()
@@ -78,17 +76,16 @@ class LatticeResult():
 
     def reset(self) -> None:
         for attr in self.__dict__:
-            if attr[0] == '_':
-                self.__dict__[attr] = None
+            if attr.startswith('_'):
+                setattr(self, attr, None)
 
-    def set_density(self, rho: float=None) -> None:
-        if rho is not None:
-            self.rho = rho
+    def set_density(self, rho: float) -> None:
+        self.rho = rho
         self.reset()
 
-    def set_state(self, mach: float=None, speed: float=None,
-                  alpha: float=None, beta: float=None,
-                  pbo2V: float=None, qco2V: float=None, rbo2V: float=None) -> None:
+    def set_state(self, mach: float | None = None, speed: float | None = None,
+                  alpha: float | None = None, beta: float | None = None,
+                  pbo2V: float | None = None, qco2V: float | None = None, rbo2V: float | None = None) -> None:
         if mach is not None:
             self.mach = mach
         if speed is not None:
@@ -170,6 +167,43 @@ class LatticeResult():
         return self._dscsa
 
     @property
+    def vfs(self) -> Vector:
+        if self._vfs is None:
+            self._vfs = self.acs.dirx*self.speed
+        return self._vfs
+
+    @property
+    def pqr(self) -> Vector:
+        if self._pqr is None:
+            p = self.pbo2V*2*self.speed/self.sys.bref
+            q = self.qco2V*2*self.speed/self.sys.cref
+            r = self.rbo2V*2*self.speed/self.sys.bref
+            self._pqr = Vector(p, q, r)
+        return self._pqr
+
+    @property
+    def ofs(self) -> Vector:
+        if self._ofs is None:
+            self._ofs = self.scs.vector_to_global(self.pqr)
+        return self._ofs
+
+    @property
+    def qfs(self) -> float:
+        if self._qfs is None:
+            self._qfs = self.rho*self.speed**2/2
+        return self._qfs
+
+    @property
+    def arm(self) -> Vector:
+        if self._arm is None:
+            num = len(self.sys.pnls)
+            self._arm = Vector.zeros(num)
+            for pnl in self.sys.pnls:
+                i = pnl.lpid
+                self._arm[i] = pnl.pnti - self.rcg
+        return self._arm
+
+    @property
     def ungam(self) -> Vector:
         if self._ungam is None:
             self._ungam = self.sys.ungam(self.mach)
@@ -228,39 +262,6 @@ class LatticeResult():
         return self._phi
 
     @property
-    def vfs(self) -> Vector:
-        if self._vfs is None:
-            if self.alpha is None:
-                self.alpha = 0.0
-            if self.beta is None:
-                self.beta = 0.0
-            if self.speed is None:
-                self.speed = 1.0
-            self._vfs = self.acs.dirx*self.speed
-        return self._vfs
-
-    @property
-    def pqr(self) -> Vector:
-        if self._pqr is None:
-            p = self.pbo2V*2*self.speed/self.sys.bref
-            q = self.qco2V*2*self.speed/self.sys.cref
-            r = self.rbo2V*2*self.speed/self.sys.bref
-            self._pqr = Vector(p, q, r)
-        return self._pqr
-
-    @property
-    def ofs(self) -> Vector:
-        if self._ofs is None:
-            self._ofs = self.scs.vector_to_global(self.pqr)
-        return self._ofs
-
-    @property
-    def qfs(self) -> float:
-        if self._qfs is None:
-            self._qfs = self.rho*self.speed**2/2
-        return self._qfs
-
-    @property
     def avg(self) -> Vector:
         if self._avg is None:
             self._avg = self.sys.avg(self.mach)
@@ -286,16 +287,6 @@ class LatticeResult():
                     i = strp.lsid
                     self._bvv[i] = self.vfs - self.ofs.cross(self.brm[i])
         return self._bvv
-
-    @property
-    def arm(self) -> Vector:
-        if self._arm is None:
-            num = len(self.sys.pnls)
-            self._arm = Vector.zeros(num)
-            for pnl in self.sys.pnls:
-                i = pnl.lpid
-                self._arm[i] = pnl.pnti - self.rcg
-        return self._arm
 
     @property
     def brm(self) -> Vector:
@@ -383,7 +374,7 @@ class LatticeResult():
         return self._ctresn
 
     def plot_panel_near_field_velocities(self, ax: 'Axes' = None,
-                                         component=None) -> 'Axes':
+                                         component: str | None = None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -409,8 +400,8 @@ class LatticeResult():
         return ax
 
     def plot_strip_lift_force_distribution(self, ax: 'Axes' = None, axis: str='b',
-                                           surfaces: list=None, normalise: bool=False,
-                                           label: str=None) -> 'Axes':
+                                           surfaces: list | None = None, normalise: bool=False,
+                                           label: str | None = None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -450,8 +441,8 @@ class LatticeResult():
         return ax
 
     def plot_strip_side_force_distribution(self, ax: 'Axes' = None, axis: str='b',
-                                           surfaces: list=None, normalise: bool=False,
-                                           label: str=None) -> 'Axes':
+                                           surfaces: list | None = None, normalise: bool=False,
+                                           label: str | None = None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -491,8 +482,8 @@ class LatticeResult():
         return ax
 
     def plot_strip_drag_force_distribution(self, ax: 'Axes' = None, axis: str='b',
-                                           surfaces: list=None, normalise: bool=False,
-                                           label: str=None) -> 'Axes':
+                                           surfaces: list | None = None, normalise: bool=False,
+                                           label: str | None = None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -532,8 +523,8 @@ class LatticeResult():
         return ax
 
     def plot_trefftz_lift_force_distribution(self, ax: 'Axes' = None, axis: str='b',
-                                             surfaces: list=None, normalise: bool=False,
-                                             label: str=None) -> 'Axes':
+                                             surfaces: list | None = None, normalise: bool=False,
+                                             label: str | None = None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -573,8 +564,8 @@ class LatticeResult():
         return ax
 
     def plot_trefftz_side_force_distribution(self, ax: 'Axes' = None, axis: str='b',
-                                             surfaces: list=None, normalise: bool=False,
-                                             label: str=None) -> 'Axes':
+                                             surfaces: list | None = None, normalise: bool=False,
+                                             label: str | None = None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -614,8 +605,8 @@ class LatticeResult():
         return ax
 
     def plot_trefftz_drag_force_distribution(self, ax: 'Axes' = None, axis: str='b',
-                                             surfaces: list=None, normalise: bool=False,
-                                             label: str=None) -> 'Axes':
+                                             surfaces: list | None = None, normalise: bool=False,
+                                             label: str | None = None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -655,8 +646,8 @@ class LatticeResult():
         return ax
 
     def plot_trefftz_wash_distribution(self, ax: 'Axes' = None, axis: str='b',
-                                       surfaces: list=None, normalise: bool=False,
-                                       label: str=None) -> 'Axes':
+                                       surfaces: list | None = None, normalise: bool=False,
+                                       label: str | None = None) -> 'Axes':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
@@ -995,6 +986,31 @@ class LatticeResult():
                 table.add_column('L/D_ff', '.5g', data=[lod_ff])
 
         return report
+
+    @classmethod
+    def from_dict(cls, sys: 'System', resdict: dict[str, Any]) -> 'LatticeResult':
+        name = resdict.get('name', 'Lattice Result')
+        inherit = resdict.get('inherit', None)
+        if inherit is not None:
+            result = sys.results[inherit].to_result(name=name)
+        else:
+            result = cls(name, sys)
+        rho = resdict.get('density', 1.0)
+        mach = resdict.get('mach', None)
+        speed = resdict.get('speed', None)
+        alpha = resdict.get('alpha', None)
+        beta = resdict.get('beta', None)
+        pbo2V = resdict.get('pbo2V', None)
+        qco2V = resdict.get('qco2V', None)
+        rbo2V = resdict.get('rbo2V', None)
+        rcgdata = resdict.get('rcg', {'x': 0.0, 'y': 0.0, 'z': 0.0})
+        rcg = Vector(rcgdata['x'], rcgdata['y'], rcgdata['z'])
+        result.set_density(rho=rho)
+        result.set_state(mach=mach, speed=speed, alpha=alpha, beta=beta,
+                         pbo2V=pbo2V, qco2V=qco2V, rbo2V=rbo2V)
+        result.set_cg(rcg)
+        sys.results[name] = result
+        return result
 
     def __str__(self) -> str:
         return self.to_mdobj()._repr_markdown_()
@@ -1922,51 +1938,9 @@ def fix_zero(value: float, tol: float=1e-8):
         value = 0.0
     return value
 
-def latticeresult_from_json(lsys: 'LatticeSystem', resdata: dict[str, Any]) -> LatticeResult:
-    name = resdata['name']
-    if 'inherit' in resdata:
-        inherit = resdata['inherit']
-        if inherit in lsys.results:
-            lres = lsys.results[inherit].to_result(name=name)
-    else:
-        lres = LatticeResult(name, lsys)
-    for key in resdata:
-        if key == 'name':
-            continue
-        elif key == 'inherit':
-            continue
-        elif key == 'density':
-            rho = resdata['density']
-            lres.set_density(rho=rho)
-        elif key == 'mach':
-            mach = resdata['mach']
-            lres.set_state(mach=mach)
-        elif key == 'speed':
-            speed = resdata['speed']
-            lres.set_state(speed=speed)
-        elif key ==  'alpha':
-            alpha = resdata['alpha']
-            lres.set_state(alpha=alpha)
-        elif key ==  'beta':
-            beta = resdata['beta']
-            lres.set_state(beta=beta)
-        elif key ==  'pbo2V':
-            pbo2V = resdata['pbo2V']
-            lres.set_state(pbo2V=pbo2V)
-        elif key ==  'qco2V':
-            qco2V = resdata['qco2V']
-            lres.set_state(qco2V=qco2V)
-        elif key ==  'rbo2V':
-            rbo2V = resdata['rbo2V']
-            lres.set_state(rbo2V=rbo2V)
-        elif key in lres.ctrls:
-            lres.ctrls[key] = resdata[key]
-        elif key == 'rcg':
-            rcgdata = resdata[key]
-            rcg = Vector(rcgdata['x'], rcgdata['y'], rcgdata['z'])
-            lres.set_cg(rcg)
-    lsys.results[name] = lres
-    return lres
+def latticeresult_from_dict(lsys: 'System', resdata: dict[str, Any]) -> LatticeResult:
+    result = LatticeResult.from_dict(lsys, resdata)
+    return result
 
 def trig_angle(angle: float) -> float:
     '''Calculates cos(angle) and sin(angle) with angle in degrees.'''

@@ -420,9 +420,9 @@ def latticesystem_from_dict(sysdct: dict) -> LatticeSystem:
 
     from pyvlm.tools import masses_from_data, masses_from_json
 
-    from .latticeresult import latticeresult_from_json
-    from .latticesurface import latticesurface_from_json
-    from .latticetrim import latticetrim_from_json
+    from .latticeresult import latticeresult_from_dict
+    from .latticesurface import latticesurface_from_dict
+    from .latticetrim import latticetrim_from_dict
 
     jsonfilepath = sysdct['source']
 
@@ -443,7 +443,7 @@ def latticesystem_from_dict(sysdct: dict) -> LatticeSystem:
     name = sysdct['name']
     sfcs = []
     for surfdata in sysdct['surfaces']:
-        sfc = latticesurface_from_json(surfdata)
+        sfc = latticesurface_from_dict(surfdata)
         sfcs.append(sfc)
     bref = sysdct['bref']
     cref = sysdct['cref']
@@ -470,9 +470,9 @@ def latticesystem_from_dict(sysdct: dict) -> LatticeSystem:
         for i in range(len(sysdct['cases'])):
             resdata = sysdct['cases'][i]
             if 'trim' in resdata:
-                latticetrim_from_json(lsys, resdata)
+                latticetrim_from_dict(lsys, resdata)
             else:
-                latticeresult_from_json(lsys, resdata)
+                latticeresult_from_dict(lsys, resdata)
 
     lsys.source = jsonfilepath
 

@@ -219,7 +219,7 @@ class LatticeTrim(LatticeResult):
                 return False
 
 
-def latticetrim_from_json(system: 'LatticeSystem', resdata: dict[str, Any]) -> LatticeTrim:
+def latticetrim_from_dict(system: 'LatticeSystem', resdata: dict[str, Any]) -> LatticeTrim:
 
     from ..tools.trim import GRAVACC, LevelTrim, LoadTrim, LoopingTrim, TurningTrim
 
