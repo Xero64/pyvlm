@@ -29,9 +29,13 @@ class LatticeResult():
     rcg: Vector = None
     _acs: Coordinate = None
     _scs: Coordinate = None
+    _dacsa: dict[str, Vector] = None
+    _dacsb: dict[str, Vector] = None
+    _dscsa: dict[str, Vector] = None
     _wcs: Coordinate = None
     _vfs: Vector = None
     _qfs: float = None
+    _pqr: Vector = None
     _ofs: Vector = None
     _ungam: Vector = None
     _gamma: 'NDArray' = None
@@ -110,35 +114,60 @@ class LatticeResult():
         self.rcg = rcg
         self.reset()
 
+    def calc_coordinate_systems(self) -> None:
+        pnt = self.sys.rref
+        cosal, sinal = trig_angle(self.alpha)
+        cosbt, sinbt = trig_angle(self.beta)
+        # Aerodynamic Coordinate System
+        dirx = Vector(cosbt*cosal, -sinbt, cosbt*sinal)
+        diry = Vector(sinbt*cosal, cosbt, sinbt*sinal)
+        self._acs = Coordinate(pnt, dirx, diry)
+        # Stability Coordinate System
+        dirx = Vector(-cosal, 0.0, -sinal)
+        diry = Vector(0.0, 1.0, 0.0)
+        self._scs = Coordinate(pnt, dirx, diry)
+        # Derivatives of Aerodynamic Coordinate System wrt alpha
+        self._dacsa = {'x': Vector(-sinal*cosbt, 0.0, cosal*cosbt),
+                       'y': Vector(-sinal*sinbt, 0.0, cosal*sinbt),
+                       'z': Vector(-cosal, 0.0, -sinal)}
+        # Derivatives of Aerodynamic Coordinate System wrt beta
+        self._dacsb = {'x': Vector(-cosal*sinbt, -cosbt, -sinal*sinbt),
+                       'y': Vector(cosal*cosbt, -sinbt, sinal*cosbt),
+                       'z': Vector(0.0, 0.0, 0.0)}
+        # Derivatives of Stability Coordinate System wrt alpha
+        self._dscsa = {'x': Vector(sinal, 0.0, -cosal),
+                       'y': Vector(0.0, 0.0, 0.0),
+                       'z': Vector(cosal, 0.0, sinal)}
+
     @property
     def acs(self) -> Coordinate:
         if self._acs is None:
-            pnt = self.sys.rref
-            cosal, sinal = trig_angle(self.alpha)
-            cosbt, sinbt = trig_angle(self.beta)
-            dirx = Vector(cosbt*cosal, -sinbt, cosbt*sinal)
-            diry = Vector(sinbt*cosal, cosbt, sinbt*sinal)
-            self._acs = Coordinate(pnt, dirx, diry)
+            self.calc_coordinate_systems()
         return self._acs
 
     @property
     def scs(self) -> Coordinate:
         if self._scs is None:
-            pnt = self.sys.rref
-            cosal, sinal = trig_angle(self.alpha)
-            dirx = Vector(-cosal, 0.0, -sinal)
-            diry = Vector(0.0, 1.0, 0.0)
-            self._scs = Coordinate(pnt, dirx, diry)
+            self.calc_coordinate_systems()
         return self._scs
 
-    # @property
-    # def wcs(self) -> Coordinate:
-    #     if self._wcs is None:
-    #         pnt = self.sys.rref
-    #         dirx = -1.0*self.acs.dirx
-    #         diry = self.acs.diry
-    #         self._wcs = Coordinate(pnt, dirx, diry)
-    #     return self._wcs
+    @property
+    def dacsa(self) -> dict[str, Vector]:
+        if self._dacsa is None:
+            self.calc_coordinate_systems()
+        return self._dacsa
+
+    @property
+    def dacsb(self) -> dict[str, Vector]:
+        if self._dacsb is None:
+            self.calc_coordinate_systems()
+        return self._dacsb
+
+    @property
+    def dscsa(self) -> dict[str, Vector]:
+        if self._dscsa is None:
+            self.calc_coordinate_systems()
+        return self._dscsa
 
     @property
     def ungam(self) -> Vector:
@@ -210,17 +239,19 @@ class LatticeResult():
             self._vfs = self.acs.dirx*self.speed
         return self._vfs
 
-    def calc_ofs(self, pbo2V: float, qco2V: float, rbo2V: float) -> Vector:
-        p = pbo2V*2*self.speed/self.sys.bref
-        q = qco2V*2*self.speed/self.sys.cref
-        r = rbo2V*2*self.speed/self.sys.bref
-        rotvl = Vector(p, q, r)
-        return self.scs.vector_to_global(rotvl)
+    @property
+    def pqr(self) -> Vector:
+        if self._pqr is None:
+            p = self.pbo2V*2*self.speed/self.sys.bref
+            q = self.qco2V*2*self.speed/self.sys.cref
+            r = self.rbo2V*2*self.speed/self.sys.bref
+            self._pqr = Vector(p, q, r)
+        return self._pqr
 
     @property
     def ofs(self) -> Vector:
         if self._ofs is None:
-            self._ofs = self.calc_ofs(self.pbo2V, self.qco2V, self.rbo2V)
+            self._ofs = self.scs.vector_to_global(self.pqr)
         return self._ofs
 
     @property
@@ -1142,6 +1173,217 @@ class GammaResult():
         return self._e
 
 
+class StabilityGammaResult:
+    res: LatticeResult = None
+    dvfs: Vector = None
+    dofs: Vector = None
+    dacs: dict[str, Vector] = None
+    dscs: dict[str, Vector] = None
+    _dgamma: 'NDArray' = None
+    _rhodgamma: 'NDArray' = None
+    _davv: Vector = None
+    _dafv: Vector = None
+    _dvel: Vector = None
+    _dfrc: Vector = None
+    _dmom: Vector = None
+    _dfrctot: Vector = None
+    _dmomtot: Vector = None
+    _Cx: float = None
+    _Cy: float = None
+    _Cz: float = None
+    _Cmx: float = None
+    _Cmy: float = None
+    _Cmz: float = None
+    _CDi: float = None
+    _CY: float = None
+    _CL: float = None
+    _e: float = None
+    _Cl: float = None
+    _Cm: float = None
+    _Cn: float = None
+
+    def __init__(self, res: LatticeResult, dvfs: Vector | None = None, dofs: Vector | None = None,
+                 dacs: dict[str, Vector] = None, dscs: dict[str, Vector] | None = None) -> None:
+        self.res = res
+        self.dvfs = dvfs
+        self.dofs = dofs
+        self.dacs = dacs
+        self.dscs = dscs
+
+    @property
+    def dgamma(self) -> 'NDArray':
+        if self._dgamma is None:
+            self._dgamma = zeros(self.res.gamma.shape)
+            if self.dvfs is not None:
+                self._dgamma += self.res.ungam[:, 0].dot(self.dvfs)
+            if self.dofs is not None:
+                self._dgamma += self.res.ungam[:, 1].dot(self.dofs)
+        return self._dgamma
+
+    @property
+    def rhodgamma(self) -> 'NDArray':
+        if self._rhodgamma is None:
+            self._rhodgamma = self.res.rho*self.dgamma
+        return self._rhodgamma
+
+    @property
+    def davv(self) -> Vector:
+        if self._davv is None:
+            num = len(self.res.sys.pnls)
+            self._davv = Vector.zeros(num)
+            for pnl in self.res.sys.pnls:
+                i = pnl.lpid
+                if self.dvfs is not None:
+                    self._davv[i] += self.dvfs
+                if self.dofs is not None:
+                    self._davv[i] -= self.dofs.cross(self.res.arm[i])
+        return self._davv
+
+    @property
+    def dafv(self) -> Vector:
+        if self._dafv is None:
+            num = len(self.res.sys.pnls)
+            self._dafv = Vector.zeros(num)
+            for pnl in self.res.sys.pnls:
+                if not pnl.noload:
+                    i = pnl.lpid
+                    self._dafv[i] = self.davv[i].cross(pnl.leni)
+        return self._dafv
+
+    @property
+    def dvel(self) -> Vector:
+        if self._dvel is None:
+            self._dvel = self.res.avg@self.dgamma + self.davv
+        return self._dvel
+
+    @property
+    def dfrc(self) -> Vector:
+        if self._dfrc is None:
+            self._dfrc = (self.res.afg@self.dgamma + self.dafv)*self.res.nfres.rhogamma
+            self._dfrc += (self.res.afg@self.res.gamma + self.res.afv)*self.rhodgamma
+        return self._dfrc
+
+    @property
+    def dmom(self) -> Vector:
+        if self._dmom is None:
+            self._dmom = self.res.arm.cross(self.dfrc)
+        return self._dmom
+
+    @property
+    def dfrctot(self) -> Vector:
+        if self._dfrctot is None:
+            self._dfrctot = self.dfrc.sum()
+        return self._dfrctot
+
+    @property
+    def dmomtot(self) -> Vector:
+        if self._dmomtot is None:
+            self._dmomtot = self.dmom.sum()
+        return self._dmomtot
+
+    @property
+    def Cx(self) -> float:
+        if self._Cx is None:
+            self._Cx = self.dfrctot.x/self.res.qfs/self.res.sys.sref
+            self._Cx = fix_zero(self._Cx)
+        return self._Cx
+
+    @property
+    def Cy(self) -> float:
+        if self._Cy is None:
+            self._Cy = self.dfrctot.y/self.res.qfs/self.res.sys.sref
+            self._Cy = fix_zero(self._Cy)
+        return self._Cy
+
+    @property
+    def Cz(self) -> float:
+        if self._Cz is None:
+            self._Cz = self.dfrctot.z/self.res.qfs/self.res.sys.sref
+            self._Cz = fix_zero(self._Cz)
+        return self._Cz
+
+    @property
+    def Cmx(self) -> float:
+        if self._Cmx is None:
+            self._Cmx = self.dmomtot.x/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+            self._Cmx = fix_zero(self._Cmx)
+        return self._Cmx
+
+    @property
+    def Cmy(self) -> float:
+        if self._Cmy is None:
+            self._Cmy = self.dmomtot.y/self.res.qfs/self.res.sys.sref/self.res.sys.cref
+            self._Cmy = fix_zero(self._Cmy)
+        return self._Cmy
+
+    @property
+    def Cmz(self) -> float:
+        if self._Cmz is None:
+            self._Cmz = self.dmomtot.z/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+            self._Cmz = fix_zero(self._Cmz)
+        return self._Cmz
+
+    @property
+    def CDi(self) -> float:
+        if self._CDi is None:
+            Di = self.dfrctot.dot(self.res.acs.dirx)
+            if self.dacs is not None:
+                Di += self.res.nfres.nffrctot.dot(self.dacs['x'])
+            self._CDi = Di/self.res.qfs/self.res.sys.sref
+            self._CDi = fix_zero(self._CDi)
+        return self._CDi
+
+    @property
+    def CY(self) -> float:
+        if self._CY is None:
+            Y = self.dfrctot.dot(self.res.acs.diry)
+            if self.dacs is not None:
+                Y += self.res.nfres.nffrctot.dot(self.dacs['y'])
+            self._CY = Y/self.res.qfs/self.res.sys.sref
+            self._CY = fix_zero(self._CY)
+        return self._CY
+
+    @property
+    def CL(self) -> float:
+        if self._CL is None:
+            L = self.dfrctot.dot(self.res.acs.dirz)
+            if self.dacs is not None:
+                L += self.res.nfres.nffrctot.dot(self.dacs['z'])
+            self._CL = L/self.res.qfs/self.res.sys.sref
+            self._CL = fix_zero(self._CL)
+        return self._CL
+
+    @property
+    def Cl(self) -> float:
+        if self._Cl is None:
+            l = self.dmomtot.dot(self.res.scs.dirx)
+            if self.dscs is not None:
+                l += self.res.nfres.nfmomtot.dot(self.dscs['x'])
+            self._Cl = l/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+            self._Cl = fix_zero(self._Cl)
+        return self._Cl
+
+    @property
+    def Cm(self) -> float:
+        if self._Cm is None:
+            m = self.dmomtot.dot(self.res.scs.diry)
+            if self.dscs is not None:
+                m += self.res.nfres.nfmomtot.dot(self.dscs['y'])
+            self._Cm = m/self.res.qfs/self.res.sys.sref/self.res.sys.cref
+            self._Cm = fix_zero(self._Cm)
+        return self._Cm
+
+    @property
+    def Cn(self) -> float:
+        if self._Cn is None:
+            n = self.dmomtot.dot(self.res.scs.dirz)
+            if self.dscs is not None:
+                n += self.res.nfres.nfmomtot.dot(self.dscs['z'])
+            self._Cn = n/self.res.qfs/self.res.sys.sref/self.res.sys.bref
+            self._Cn = fix_zero(self._Cn)
+        return self._Cn
+
+
 class StripResult():
     gamres: GammaResult = None
     _stfrc: Vector = None
@@ -1415,197 +1657,171 @@ class ParasiticDragResult():
         return self._Cn
 
 
+
 class StabilityResult():
     res: LatticeResult = None
-    _u: GammaResult = None
-    _v: GammaResult = None
-    _w: GammaResult = None
-    _p: GammaResult = None
-    _q: GammaResult = None
-    _r: GammaResult = None
-    _alpha: GammaResult = None
-    _beta: GammaResult = None
-    _pbo2V: GammaResult = None
-    _qco2V: GammaResult = None
-    _rbo2V: GammaResult = None
-    _pdbo2V: GammaResult = None
-    _qdco2V: GammaResult = None
-    _rdbo2V: GammaResult = None
+    _u: StabilityGammaResult = None
+    _v: StabilityGammaResult = None
+    _w: StabilityGammaResult = None
+    _p: StabilityGammaResult = None
+    _q: StabilityGammaResult = None
+    _r: StabilityGammaResult = None
+    _alpha: StabilityGammaResult = None
+    _beta: StabilityGammaResult = None
+    _pbo2V: StabilityGammaResult = None
+    _qco2V: StabilityGammaResult = None
+    _rbo2V: StabilityGammaResult = None
+    _pdbo2V: StabilityGammaResult = None
+    _qdco2V: StabilityGammaResult = None
+    _rdbo2V: StabilityGammaResult = None
 
     def __init__(self, res: LatticeResult) -> None:
         self.res = res
 
     @property
-    def u(self) -> GammaResult:
+    def u(self) -> StabilityGammaResult:
         if self._u is None:
-            uvw = Vector(1.0, 0.0, 0.0)
-            gamu = self.res.ungam[:, 0].dot(uvw)
-            self._u = GammaResult(self.res, gamu)
+            dvfs = Vector(1.0, 0.0, 0.0)
+            self._u = StabilityGammaResult(self.res, dvfs = dvfs)
         return self._u
 
     @property
-    def v(self) -> GammaResult:
+    def v(self) -> StabilityGammaResult:
         if self._v is None:
-            uvw = Vector(0.0, 1.0, 0.0)
-            gamv = self.res.ungam[:, 0].dot(uvw)
-            self._v = GammaResult(self.res, gamv)
+            dvfs = Vector(0.0, 1.0, 0.0)
+            self._v = StabilityGammaResult(self.res, dvfs = dvfs)
         return self._v
 
     @property
-    def w(self) -> GammaResult:
+    def w(self) -> StabilityGammaResult:
         if self._w is None:
-            uvw = Vector(0.0, 0.0, 1.0)
-            gamw = self.res.ungam[:, 0].dot(uvw)
-            self._w = GammaResult(self.res, gamw)
+            dvfs = Vector(0.0, 0.0, 1.0)
+            self._w = StabilityGammaResult(self.res, dvfs = dvfs)
         return self._w
 
     @property
-    def p(self) -> GammaResult:
+    def p(self) -> StabilityGammaResult:
         if self._p is None:
-            pqr = Vector(1.0, 0.0, 0.0)
-            ofs = self.res.scs.vector_to_global(pqr)
-            gamp = self.res.ungam[:, 1].dot(ofs)
-            self._p = GammaResult(self.res, gamp)
+            dpqr = Vector(1.0, 0.0, 0.0)
+            dofs = self.res.scs.vector_to_global(dpqr)
+            self._p = StabilityGammaResult(self.res, dofs = dofs)
         return self._p
 
     @property
-    def q(self) -> GammaResult:
+    def q(self) -> StabilityGammaResult:
         if self._q is None:
-            pqr = Vector(0.0, 1.0, 0.0)
-            ofs = self.res.scs.vector_to_global(pqr)
-            gamq = self.res.ungam[:, 1].dot(ofs)
-            self._q = GammaResult(self.res, gamq)
+            dpqr = Vector(0.0, 1.0, 0.0)
+            dofs = self.res.scs.vector_to_global(dpqr)
+            self._q = StabilityGammaResult(self.res, dofs = dofs)
         return self._q
 
     @property
-    def r(self) -> GammaResult:
+    def r(self) -> StabilityGammaResult:
         if self._r is None:
-            pqr = Vector(0.0, 0.0, 1.0)
-            ofs = self.res.scs.vector_to_global(pqr)
-            gamr = self.res.ungam[:, 1].dot(ofs)
-            self._r = GammaResult(self.res, gamr)
+            dpqr = Vector(0.0, 0.0, 1.0)
+            dofs = self.res.scs.vector_to_global(dpqr)
+            self._r = StabilityGammaResult(self.res, dofs = dofs)
         return self._r
 
     @property
-    def alpha(self) -> GammaResult:
+    def alpha(self) -> StabilityGammaResult:
         if self._alpha is None:
             V = self.res.speed
-            c = self.res.sys.cref
-            b = self.res.sys.bref
-            pbo2V = self.res.pbo2V
-            qco2V = self.res.qco2V
-            rbo2V = self.res.rbo2V
-            cosal, sinal = trig_angle(self.res.alpha)
-            cosbt, sinbt = trig_angle(self.res.beta)
-            vfs = Vector(-V*cosbt*sinal, 0.0, V*cosal*cosbt)
-            ofs = Vector(2*V*(qco2V*sinal*sinbt/c - cosal*rbo2V/b - cosbt*pbo2V*sinal/b), 0.0,
-                         2*V*(cosal*cosbt*pbo2V/b - cosal*qco2V*sinbt/c - rbo2V*sinal/b))
-            gamalpha = self.res.ungam[:, 0].dot(vfs) + self.res.ungam[:, 1].dot(ofs)
-            self._alpha = GammaResult(self.res, gamalpha)
+            dvfs = self.res.dacsa['x']*V
+            dofs = Vector(
+                self.res.dscsa['x'].dot(self.res.pqr),
+                self.res.dscsa['y'].dot(self.res.pqr),
+                self.res.dscsa['z'].dot(self.res.pqr)
+            )
+            self._alpha = StabilityGammaResult(self.res, dvfs = dvfs, dofs = dofs)
         return self._alpha
 
     @property
-    def beta(self) -> GammaResult:
+    def beta(self) -> StabilityGammaResult:
         if self._beta is None:
             V = self.res.speed
-            c = self.res.sys.cref
-            b = self.res.sys.bref
-            pbo2V = self.res.pbo2V
-            qco2V = self.res.qco2V
-            cosal, sinal = trig_angle(self.res.alpha)
-            cosbt, sinbt = trig_angle(self.res.beta)
-            vfs = Vector(-V*cosal*sinbt, -V*cosbt, -V*sinal*sinbt)
-            ofs = Vector(-2*V*cosal*(cosbt*qco2V/c + pbo2V*sinbt/b),
-                         2*V*(cosbt*pbo2V/b - qco2V*sinbt/c),
-                         -2*V*sinal*(cosbt*qco2V/c + pbo2V*sinbt/b))
-            gambeta = self.res.ungam[:, 0].dot(vfs) + self.res.ungam[:, 1].dot(ofs)
-            self._beta = GammaResult(self.res, gambeta)
+            dvfs = self.res.dacsb['x']*V
+            self._beta = StabilityGammaResult(self.res, dvfs = dvfs)
         return self._beta
 
     @property
-    def pbo2V(self) -> GammaResult:
+    def pbo2V(self) -> StabilityGammaResult:
         if self._pbo2V is None:
-            pqr = Vector(2*self.res.speed/self.res.sys.bref, 0.0, 0.0)
-            ofs = self.res.scs.vector_to_global(pqr)
-            gampbo2V = self.res.ungam[:, 1].dot(ofs)
-            self._pbo2V = GammaResult(self.res, gampbo2V)
+            dpqr = Vector(2*self.res.speed/self.res.sys.bref, 0.0, 0.0)
+            dofs = self.res.scs.vector_to_global(dpqr)
+            self._pbo2V = StabilityGammaResult(self.res, dofs = dofs)
         return self._pbo2V
 
     @property
-    def qco2V(self) -> GammaResult:
+    def qco2V(self) -> StabilityGammaResult:
         if self._qco2V is None:
-            pqr = Vector(0.0, 2*self.res.speed/self.res.sys.cref, 0.0)
-            ofs = self.res.scs.vector_to_global(pqr)
-            gamqco2V = self.res.ungam[:, 1].dot(ofs)
-            self._qco2V = GammaResult(self.res, gamqco2V)
+            dpqr = Vector(0.0, 2*self.res.speed/self.res.sys.cref, 0.0)
+            dofs = self.res.scs.vector_to_global(dpqr)
+            self._qco2V = StabilityGammaResult(self.res, dofs = dofs)
         return self._qco2V
 
     @property
-    def rbo2V(self) -> GammaResult:
+    def rbo2V(self) -> StabilityGammaResult:
         if self._rbo2V is None:
-            pqr = Vector(0.0, 0.0, 2*self.res.speed/self.res.sys.bref)
-            ofs = self.res.scs.vector_to_global(pqr)
-            gamrbo2V = self.res.ungam[:, 1].dot(ofs)
-            self._rbo2V = GammaResult(self.res, gamrbo2V)
+            dpqr = Vector(0.0, 0.0, 2*self.res.speed/self.res.sys.bref)
+            dofs = self.res.scs.vector_to_global(dpqr)
+            self._rbo2V = StabilityGammaResult(self.res, dofs = dofs)
         return self._rbo2V
 
     @property
-    def pdbo2V(self) -> GammaResult:
+    def pdbo2V(self) -> StabilityGammaResult:
         if self._pdbo2V is None:
-            ofs = Vector(2*self.res.speed/self.res.sys.bref, 0.0, 0.0)
-            gampdbo2V = self.res.ungam[:, 1].dot(ofs)
-            self._pdbo2V = GammaResult(self.res, gampdbo2V)
+            dofs = Vector(2*self.res.speed/self.res.sys.bref, 0.0, 0.0)
+            self._pdbo2V = StabilityGammaResult(self.res, dofs = dofs)
         return self._pdbo2V
 
     @property
     def qdco2V(self) -> GammaResult:
         if self._qdco2V is None:
-            ofs = Vector(0.0, 2*self.res.speed/self.res.sys.cref, 0.0)
-            gamqdco2V = self.res.ungam[:, 1].dot(ofs)
-            self._qdco2V = GammaResult(self.res, gamqdco2V)
+            dofs = Vector(0.0, 2*self.res.speed/self.res.sys.cref, 0.0)
+            self._qdco2V = StabilityGammaResult(self.res, dofs = dofs)
         return self._qdco2V
 
     @property
     def rdbo2V(self) -> GammaResult:
         if self._rdbo2V is None:
-            ofs = Vector(0.0, 0.0, 2*self.res.speed/self.res.sys.bref)
-            gamrdbo2V = self.res.ungam[:, 1].dot(ofs)
-            self._rdbo2V = GammaResult(self.res, gamrdbo2V)
+            dofs = Vector(0.0, 0.0, 2*self.res.speed/self.res.sys.bref)
+            self._rdbo2V = StabilityGammaResult(self.res, dofs = dofs)
         return self._rdbo2V
 
-    def neutral_point(self) -> float:
-        dCzdal = self.alpha.Cz
-        dCmdal = self.alpha.Cm
-        dxoc = dCmdal/dCzdal
-        return self.res.rcg.x - dxoc*self.res.sys.cref
+    # def neutral_point(self) -> float:
+    #     dCzdal = self.alpha.Cz
+    #     dCmdal = self.alpha.Cm
+    #     dxoc = dCmdal/dCzdal
+    #     return self.res.rcg.x - dxoc*self.res.sys.cref
 
-    def system_aerodynamic_matrix(self) -> 'NDArray':
-        A = zeros((6, 6))
-        F = self.u.nffrctot
-        A[0, 0], A[1, 0], A[2, 0] = F.x, F.y, F.z
-        M = self.res.scs.vector_to_local(self.u.nfmomtot)
-        A[3, 0], A[4, 0], A[5, 0] = M.x, M.y, M.z
-        F = self.v.nffrctot
-        A[0, 1], A[1, 1], A[2, 1] = F.x, F.y, F.z
-        M = self.res.scs.vector_to_local(self.v.nfmomtot)
-        A[3, 1], A[4, 1], A[5, 1] = M.x, M.y, M.z
-        F = self.w.nffrctot
-        A[0, 2], A[1, 2], A[2, 2] = F.x, F.y, F.z
-        M = self.res.scs.vector_to_local(self.w.nfmomtot)
-        A[3, 2], A[4, 2], A[5, 2] = M.x, M.y, M.z
-        F = self.p.nffrctot
-        A[0, 3], A[1, 3], A[2, 3] = F.x, F.y, F.z
-        M = self.res.scs.vector_to_local(self.p.nfmomtot)
-        A[3, 3], A[4, 3], A[5, 3] = M.x, M.y, M.z
-        F = self.q.nffrctot
-        A[0, 4], A[1, 4], A[2, 4] = F.x, F.y, F.z
-        M = self.res.scs.vector_to_local(self.q.nfmomtot)
-        A[3, 4], A[4, 4], A[5, 4] = M.x, M.y, M.z
-        F = self.r.nffrctot
-        A[0, 5], A[1, 5], A[2, 5] = F.x, F.y, F.z
-        M = self.res.scs.vector_to_local(self.r.nfmomtot)
-        A[3, 5], A[4, 5], A[5, 5] = M.x, M.y, M.z
-        return A
+    # def system_aerodynamic_matrix(self) -> 'NDArray':
+    #     A = zeros((6, 6))
+    #     F = self.u.nffrctot
+    #     A[0, 0], A[1, 0], A[2, 0] = F.x, F.y, F.z
+    #     M = self.res.scs.vector_to_local(self.u.nfmomtot)
+    #     A[3, 0], A[4, 0], A[5, 0] = M.x, M.y, M.z
+    #     F = self.v.nffrctot
+    #     A[0, 1], A[1, 1], A[2, 1] = F.x, F.y, F.z
+    #     M = self.res.scs.vector_to_local(self.v.nfmomtot)
+    #     A[3, 1], A[4, 1], A[5, 1] = M.x, M.y, M.z
+    #     F = self.w.nffrctot
+    #     A[0, 2], A[1, 2], A[2, 2] = F.x, F.y, F.z
+    #     M = self.res.scs.vector_to_local(self.w.nfmomtot)
+    #     A[3, 2], A[4, 2], A[5, 2] = M.x, M.y, M.z
+    #     F = self.p.nffrctot
+    #     A[0, 3], A[1, 3], A[2, 3] = F.x, F.y, F.z
+    #     M = self.res.scs.vector_to_local(self.p.nfmomtot)
+    #     A[3, 3], A[4, 3], A[5, 3] = M.x, M.y, M.z
+    #     F = self.q.nffrctot
+    #     A[0, 4], A[1, 4], A[2, 4] = F.x, F.y, F.z
+    #     M = self.res.scs.vector_to_local(self.q.nfmomtot)
+    #     A[3, 4], A[4, 4], A[5, 4] = M.x, M.y, M.z
+    #     F = self.r.nffrctot
+    #     A[0, 5], A[1, 5], A[2, 5] = F.x, F.y, F.z
+    #     M = self.res.scs.vector_to_local(self.r.nfmomtot)
+    #     A[3, 5], A[4, 5], A[5, 5] = M.x, M.y, M.z
+    #     return A
 
     @property
     def stability_derivatives(self) -> MDReport:
