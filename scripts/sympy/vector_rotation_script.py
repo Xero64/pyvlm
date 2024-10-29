@@ -16,3 +16,7 @@ print(f'{vrot = }\n')
 
 dvrot = vrot.diff(theta)
 print(f'{dvrot = }\n')
+
+Dvrot = vrot - v
+Dvrot = Dvrot.simplify()
+print(f'{Dvrot = }\n')
