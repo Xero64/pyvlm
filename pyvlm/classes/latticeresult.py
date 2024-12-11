@@ -1684,7 +1684,6 @@ class ParasiticDragResult():
         return self._Cn
 
 
-
 class StabilityResult():
     res: LatticeResult = None
     _u: StabilityGammaResult = None
