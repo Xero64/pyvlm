@@ -200,6 +200,24 @@ class LatticeTrim(LatticeResult):
                     state['rbo2V'] = Dcur[i]
                 elif variable in self.ctrls:
                     ctrls[variable] = degrees(Dcur[i])
+
+            failure = False
+            for statekey, stateval in state.items():
+                if statekey == 'alpha' and abs(stateval) > ANGTOL:
+                    print(f'alpha = {stateval:.6f} deg')
+                    failure = True
+                elif statekey == 'beta' and abs(stateval) > ANGTOL:
+                    print(f'beta = {stateval:.6f} deg')
+                    failure = True
+            for controlkey, controlval in ctrls.items():
+                if abs(controlval) > ANGTOL:
+                    print(f'{controlkey} = {controlval:.6f} deg')
+                    failure = True
+
+            if failure:
+                print(f'Convergence failed for {self.name}.')
+                return False
+
             super().set_state(**state)
             super().set_controls(**ctrls)
             Cdff = self.delta_C()
