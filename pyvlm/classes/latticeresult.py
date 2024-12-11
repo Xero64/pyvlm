@@ -1760,7 +1760,9 @@ class StabilityResult():
                 self.res.dscsa['y'].dot(self.res.pqr),
                 self.res.dscsa['z'].dot(self.res.pqr)
             )
-            self._alpha = StabilityGammaResult(self.res, dvfs = dvfs, dofs = dofs)
+            self._alpha = StabilityGammaResult(self.res, dvfs = dvfs, dofs = dofs,
+                                               dacs = self.res.dacsa,
+                                               dscs = self.res.dscsa)
         return self._alpha
 
     @property
@@ -1768,7 +1770,8 @@ class StabilityResult():
         if self._beta is None:
             V = self.res.speed
             dvfs = self.res.dacsb['x']*V
-            self._beta = StabilityGammaResult(self.res, dvfs = dvfs)
+            self._beta = StabilityGammaResult(self.res, dvfs = dvfs,
+                                              dacs = self.res.dacsb)
         return self._beta
 
     @property
