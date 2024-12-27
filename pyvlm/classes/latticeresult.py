@@ -31,7 +31,10 @@ class LatticeResult():
     _dacsa: dict[str, Vector] = None
     _dacsb: dict[str, Vector] = None
     _dscsa: dict[str, Vector] = None
+    _dscsb: dict[str, Vector] = None
     _vfs: Vector = None
+    _dvfsa: Vector = None
+    _dvfsb: Vector = None
     _pqr: Vector = None
     _ofs: Vector = None
     _qfs: float = None
@@ -112,29 +115,44 @@ class LatticeResult():
         self.reset()
 
     def calc_coordinate_systems(self) -> None:
-        pnt = self.sys.rref
+        pnt = self.rcg
         cosal, sinal = trig_angle(self.alpha)
         cosbt, sinbt = trig_angle(self.beta)
+        self._vfs = Vector(cosal*cosbt, -sinbt, sinal*cosbt)*self.speed
+        self._dvfsa = Vector(-sinal*cosbt, 0.0, cosal*cosbt)*self.speed
+        self._dvfsb = Vector(-cosal*sinbt, -cosbt, -sinal*sinbt)*self.speed
         # Aerodynamic Coordinate System
-        dirx = Vector(cosbt*cosal, -sinbt, cosbt*sinal)
-        diry = Vector(sinbt*cosal, cosbt, sinbt*sinal)
-        self._acs = Coordinate(pnt, dirx, diry)
+        # acs_dirx = Vector(cosal*cosbt, -sinbt, sinal*cosbt)
+        # acs_diry = Vector(cosal*sinbt, cosbt, sinal*sinbt)
+        acs_dirx = Vector(cosal, 0.0, sinal)
+        acs_diry = Vector(0.0, 1.0, 0.0)
+        self._acs = Coordinate(pnt, acs_dirx, acs_diry)
         # Stability Coordinate System
-        dirx = Vector(-cosal, 0.0, -sinal)
-        diry = Vector(0.0, 1.0, 0.0)
-        self._scs = Coordinate(pnt, dirx, diry)
-        # Derivatives of Aerodynamic Coordinate System wrt alpha
-        self._dacsa = {'x': Vector(-sinal*cosbt, 0.0, cosal*cosbt),
-                       'y': Vector(-sinal*sinbt, 0.0, cosal*sinbt),
+        scs_dirx = Vector(-cosal, 0.0, -sinal)
+        scs_diry = Vector(0.0, 1.0, 0.0)
+        self._scs = Coordinate(pnt, scs_dirx, scs_diry)
+        # Derivative of Aerodynamic Coordinate System wrt alpha
+        # self._dacsa = {'x': Vector(-sinal*cosbt, 0.0, cosal*cosbt),
+        #                'y': Vector(-sinal*sinbt, 0.0, cosal*sinbt),
+        #                'z': Vector(-cosal, 0.0, -sinal)}
+        self._dacsa = {'x': Vector(-sinal, 0.0, cosal),
+                       'y': Vector(0.0, 0.0, 0.0),
                        'z': Vector(-cosal, 0.0, -sinal)}
-        # Derivatives of Aerodynamic Coordinate System wrt beta
-        self._dacsb = {'x': Vector(-cosal*sinbt, -cosbt, -sinal*sinbt),
-                       'y': Vector(cosal*cosbt, -sinbt, sinal*cosbt),
-                       'z': Vector(0.0, 0.0, 0.0)}
-        # Derivatives of Stability Coordinate System wrt alpha
+        # Derivative of Aerodynamic Coordinate System wrt beta
+        # self._dacsb = {'x': Vector(-cosal*sinbt, -cosbt, -sinal*sinbt),
+        #                'y': Vector(cosal*cosbt, -sinbt, sinal*cosbt),
+        #                'z': Vector(0.0, 0.0, 0.0)}
+        self._dacsb = {'x': Vector.zeros(),
+                       'y': Vector.zeros(),
+                       'z': Vector.zeros()}
+        # Derivative of Stability Coordinate System wrt alpha
         self._dscsa = {'x': Vector(sinal, 0.0, -cosal),
                        'y': Vector(0.0, 0.0, 0.0),
                        'z': Vector(cosal, 0.0, sinal)}
+        # Derivative of Stability Coordinate System wrt beta
+        self._dscsb = {'x': Vector.zeros(),
+                       'y': Vector.zeros(),
+                       'z': Vector.zeros()}
 
     @property
     def acs(self) -> Coordinate:
@@ -167,10 +185,28 @@ class LatticeResult():
         return self._dscsa
 
     @property
+    def dscsb(self) -> dict[str, Vector]:
+        if self._dscsb is None:
+            self.calc_coordinate_systems()
+        return self._dscsb
+
+    @property
     def vfs(self) -> Vector:
         if self._vfs is None:
-            self._vfs = self.acs.dirx*self.speed
+            self.calc_coordinate_systems()
         return self._vfs
+
+    @property
+    def dvfsa(self) -> Vector:
+        if self._dvfsa is None:
+            self.calc_coordinate_systems()
+        return self._dvfsa
+
+    @property
+    def dvfsb(self) -> Vector:
+        if self._dvfsb is None:
+            self.calc_coordinate_systems()
+        return self._dvfsb
 
     @property
     def pqr(self) -> Vector:
@@ -1752,8 +1788,7 @@ class StabilityResult():
     @property
     def alpha(self) -> StabilityGammaResult:
         if self._alpha is None:
-            V = self.res.speed
-            dvfs = self.res.dacsa['x']*V
+            dvfs = self.res.dvfsa
             dofs = Vector(
                 self.res.dscsa['x'].dot(self.res.pqr),
                 self.res.dscsa['y'].dot(self.res.pqr),
@@ -1767,10 +1802,10 @@ class StabilityResult():
     @property
     def beta(self) -> StabilityGammaResult:
         if self._beta is None:
-            V = self.res.speed
-            dvfs = self.res.dacsb['x']*V
+            dvfs = self.res.dvfsb
             self._beta = StabilityGammaResult(self.res, dvfs = dvfs,
-                                              dacs = self.res.dacsb)
+                                              dacs = self.res.dacsb,
+                                              dscs = self.res.dscsb)
         return self._beta
 
     @property

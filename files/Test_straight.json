@@ -38,6 +38,15 @@
     ],
     "cases": [
         {
+            "name": "Test Alpha Beta",
+            "alpha": 3.0,
+            "beta": 3.0,
+            "outputs": [
+                "stability derivatives",
+                "stability derivatives body"
+            ]
+        },
+        {
             "name": "Test Alpha",
             "alpha": 3.0,
             "outputs": [

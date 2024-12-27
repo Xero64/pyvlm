@@ -161,10 +161,10 @@ class LatticeTrim(LatticeResult):
         Hcur = self.current_Hmat()
         Ddff = solve(Hcur, Cdff)
         if display:
-            print(f'Cdiff = \n{Cdff}\n')
+            print(f'Cdff = \n{Cdff}\n')
             print(f'Hcur = \n{Hcur}\n')
-            print(f'Ddiff = \n{Ddff}\n')
-            print(f'Hcur@Ddiff = \n{Hcur@Ddff}\n')
+            print(f'Ddff = \n{Ddff}\n')
+            print(f'Cdff - Hcur@Ddff = \n{Cdff - Hcur@Ddff}\n')
         return Ddff
 
     def trim(self, crit: float = 1e-6, imax: int = 100, display: bool = False) -> None:
@@ -174,6 +174,13 @@ class LatticeTrim(LatticeResult):
         nrmC = norm(Cdff)
         if display:
             print(f'normC = {nrmC}')
+        # if display:
+        #     outstr = f'{"iter":>4s}  {"d(alpha)":>11s}  {"d(beta)":>11s}'
+        #     outstr += f'  {"d(pbo2V)":>11s}  {"d(qco2V)":>11s}  {"d(rbo2V)":>11s}'
+        #     for control in self.ctrls:
+        #         control = f'd({control})'
+        #         outstr += f'  {control:>11s}'
+        #     print(outstr)
         count = 0
         while nrmC > crit:
             if display:
@@ -181,6 +188,11 @@ class LatticeTrim(LatticeResult):
                 start = perf_counter()
             Ddff = self.trim_iteration(display = display)
             Dcur = self.current_Dmat() + Ddff
+            # if display:
+            #     outstr = f'{count+1:4d}'
+            #     for i, variable in enumerate(self.targets):
+            #         outstr += f'  {Ddff[i]:11.3e}'
+            #     print(outstr)
             if display:
                 finish = perf_counter()
                 elapsed = finish - start
