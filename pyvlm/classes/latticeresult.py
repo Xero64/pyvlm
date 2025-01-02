@@ -1736,6 +1736,8 @@ class StabilityResult():
     _pdbo2V: StabilityGammaResult = None
     _qdco2V: StabilityGammaResult = None
     _rdbo2V: StabilityGammaResult = None
+    _xnp: float = None
+    _sprat: float = None
 
     def __init__(self, res: LatticeResult) -> None:
         self.res = res
@@ -1853,11 +1855,25 @@ class StabilityResult():
             self._rdbo2V = StabilityGammaResult(self.res, dofs = dofs)
         return self._rdbo2V
 
-    def neutral_point(self) -> float:
-        dCzdal = self.alpha.Cz
-        dCmdal = self.alpha.Cm
-        dxoc = dCmdal/dCzdal
-        return self.res.rcg.x - dxoc*self.res.sys.cref
+    @property
+    def xnp(self) -> float:
+        if self._xnp is None:
+            xcg = self.res.rcg.x
+            CLa = self.alpha.CL
+            CMa = self.alpha.Cm
+            c = self.res.sys.cref
+            self._xnp = xcg - c*CMa/CLa
+        return self._xnp
+
+    @property
+    def sprat(self) -> float:
+        if self._sprat is None:
+            Clb = self.beta.Cl
+            Cnb = self.beta.Cn
+            Cnr = self.rbo2V.Cn
+            Clr = self.rbo2V.Cl
+            self._sprat = Clb*Cnr/(Clr*Cnb)
+        return self._sprat
 
     def system_aerodynamic_matrix(self) -> 'NDArray':
         A = zeros((6, 6))
@@ -1923,6 +1939,8 @@ class StabilityResult():
         table.add_column('Clr', sfrm, data=[self.rbo2V.Cl])
         table.add_column('Cmr', sfrm, data=[self.rbo2V.Cm])
         table.add_column('Cnr', sfrm, data=[self.rbo2V.Cn])
+        report.add_heading(f'Neutral Point Xnp = {self.xnp:.6f}', 3)
+        report.add_heading(f'Clb.Cnr/(Clr.Cnb) = {self.sprat:.6f} (> 1 if spirally stable)', 3)
         return report
 
     @property
