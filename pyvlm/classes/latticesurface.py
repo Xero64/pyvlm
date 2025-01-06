@@ -1,8 +1,9 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from matplotlib.pyplot import figure
 from mpl_toolkits.mplot3d.axes3d import Axes3D
-from numpy import asarray, concatenate, ptp, sqrt, zeros
+from numexpr import evaluate
+from numpy import arccos, asarray, concatenate, pi, ptp, sqrt, zeros
 from pygeom.geom1d import CubicSpline1D, LinearSpline1D
 from pygeom.geom3d import Vector
 from pygeom.tools.spacing import (equal_spacing, full_cosine_spacing,
@@ -30,9 +31,10 @@ class LatticeSurface():
     pnls: list[list[LatticePanel]] = None
     area: float = None
     sgrp: list[list[int]] = None
-    funcs: list['SurfaceFunction'] = None
+    funcs: dict[str, 'SurfaceFunction'] = None
 
-    def __init__(self, name: str, scts: list, mirror: bool, funcs: list) -> None:
+    def __init__(self, name: str, scts: list, mirror: bool,
+                 funcs: dict[str, 'SurfaceFunction']) -> None:
         self.name = name
         self.scts = scts
         self.mirror = mirror
@@ -145,23 +147,22 @@ class LatticeSurface():
         for sht in self.shts:
             sht.set_strip_bpos()
         bmax = max(bpos)
-        for func in self.funcs:
-            func.set_spline(bmax)
-            var = func.var
+        for var, func in self.funcs.items():
             if var == 'twist':
                 var = '_ang'
+            func.bmax = bmax
             if self.mirror:
                 for i in range(hlfstrp):
                     strp = self.strps[numstrp-1-i]
                     mstrp = self.strps[i]
                     bpos = strp.bpos
-                    val = func.interpolate(bpos)
+                    val = func(bpos)
                     strp.__dict__[var] = val
                     mstrp.__dict__[var] = val
             else:
                 for strp in self.strps:
                     bpos = strp.bpos
-                    val = func.interpolate(bpos)
+                    val = func(bpos)
                     strp.__dict__[var] = val
         self.area = 0.0
         for sht in self.shts:
@@ -250,7 +251,8 @@ class LatticeSurface():
         return '<LatticeSurface {:s}>'.format(self.name)
 
 
-def latticesurface_from_dict(surfdata: dict, display: bool=False) -> LatticeSurface:
+def latticesurface_from_dict(surfdata: dict[str, Any],
+                             display: bool = False) -> LatticeSurface:
     name = surfdata['name']
     mirror = surfdata.get('mirror', False)
     if display: print(f'Loading Surface: {name:s}')
@@ -289,11 +291,10 @@ def latticesurface_from_dict(surfdata: dict, display: bool=False) -> LatticeSurf
         sct.chord = c[i]
         sct.twist = a[i]
     # Read in Function Data
-    funcs = []
-    if 'functions' in surfdata:
-        for funcdata in surfdata['functions']:
-            func = surffunc_from_json(funcdata)
-            funcs.append(func)
+    funcdatas: dict[str, Any] = surfdata.get('functions', {})
+    funcs = {}
+    for variable, funcdata in funcdatas.items():
+        funcs[variable] = surffunc_from_json(variable, funcdata)
     # Entire Surface Position
     xpos = surfdata.get('xpos', 0.0)
     ypos = surfdata.get('ypos', 0.0)
@@ -334,33 +335,61 @@ def linear_interpolate_none(x: list[float], y: list[float]) -> list[float]:
 
 
 class SurfaceFunction():
-    var: str = None
-    interp: str = None
-    values: 'NDArray' = None
-    spline: LinearSpline1D | CubicSpline1D = None
+    variable: str | None = None
+    functype: str | None = None
+    bmax: float | None = None
+    spline: LinearSpline1D | CubicSpline1D | None = None
+    expression: str | None = None
 
-    def __init__(self, var: str, spacing: str, interp: str,
-                 values: list[float]) -> None:
-        self.var = var
-        self.spacing = spacing
-        self.interp = interp
-        self.values = asarray(values)
+    def __init__(self, variable: str, functype: str) -> None:
+        self.variable = variable
+        self.functype = functype
 
-    def set_spline(self, bmax: float) -> None:
-        if self.spacing == 'equal':
-            num = len(self.values)
-            nspc = equal_spacing(num-1)
-        if self.interp == 'linear':
-            self.spline = LinearSpline1D(nspc, self.values)
-        elif self.interp == 'cubic':
-            self.spline = CubicSpline1D(nspc, self.values)
+    def set_spline(self, spacing: str, values: list[float],
+                   interp: str = 'linear') -> None:
+        values: 'NDArray' = asarray(values)
+        if spacing == 'equal':
+            num = values.size
+            nspc = equal_spacing(num - 1)
+        else:
+            raise ValueError('Spacing not implemented.')
+        if interp == 'linear':
+            self.spline = LinearSpline1D(nspc, values)
+        elif interp == 'cubic':
+            self.spline = CubicSpline1D(nspc, values)
+        else:
+            raise ValueError('Interpolation not implemented.')
 
-    def interpolate(self, value: float) -> float:
-        return self.spline.evaluate_points_at_t(value)
+    def set_expression(self, expression: str) -> None:
+        self.expression = expression
 
-def surffunc_from_json(funcdata: dict) -> SurfaceFunction:
-    variable = funcdata.get('variable')
-    spacing = funcdata.get('spacing', 'equal')
-    interp = funcdata.get('interp', 'linear')
-    values = funcdata.get('values')
-    return SurfaceFunction(variable, spacing, interp, values)
+    def __call__(self, value: float) -> float:
+        b = value
+        s = b/self.bmax
+        if self.functype == 'spline':
+            return self.spline.evaluate_points_at_t(s)
+        elif self.functype == 'expression':
+            th = arccos(s)
+            local_dict = {'b': b, 's': s, 'th': th}
+            global_dict = {'pi': pi}
+            return evaluate(self.expression, local_dict=local_dict,
+                            global_dict=global_dict)
+        else:
+            raise ValueError('Function type not implemented.')
+
+
+def surffunc_from_json(variable: str, funcdata: dict[str, Any]) -> SurfaceFunction:
+    functype = funcdata.get('functype')
+    srfcfunc = SurfaceFunction(variable, functype)
+    if functype == 'spline':
+        splinedata: dict[str, Any] = funcdata.get('spline')
+        spacing = splinedata.get('spacing', 'equal')
+        interp = splinedata.get('interp', 'linear')
+        values = splinedata.get('values')
+        srfcfunc.set_spline(spacing, values, interp)
+    elif functype == 'expression':
+        expression = funcdata.get('expression')
+        srfcfunc.set_expression(expression)
+    else:
+        raise ValueError('Function type not implemented.')
+    return srfcfunc
