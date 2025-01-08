@@ -3,6 +3,8 @@ from math import copysign, log, pi
 
 class FlatPlate():
 
+    name = 'Flat Plate'
+
     def __init__(self):
         pass
 
@@ -24,6 +26,7 @@ class NACA4():
     _mt = None
     _mc = None
     _pc = None
+    _name = None
 
     def __init__(self, code: str):
         self.code = code
@@ -45,6 +48,12 @@ class NACA4():
         if self._pc is None:
             self._pc = float(self.code[1])/10
         return self._pc
+
+    @property
+    def name(self):
+        if self._name is None:
+            self._name = f'NACA {self.code:s}'
+        return self._name
 
     def return_camber(self, xc: float):
         if xc < self.pc:
@@ -80,6 +89,7 @@ class NACA6Series():
     g = None
     cff = None
     oma = None
+    _name = None
 
     def __init__(self, code: str):
         if code[0] != '6':
@@ -100,6 +110,12 @@ class NACA6Series():
         h0 = (0.25 - 0.5*log(1 - a))*(a - 1)
         self.h = h0 + g
         self.cff = cl/(2*pi*(a+1))
+
+    @property
+    def name(self):
+        if self._name is None:
+            self._name = f'NACA {self.code:s}'
+        return self._name
 
     def return_camber(self, xc: float):
         if xc == 0.0:

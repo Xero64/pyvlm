@@ -103,7 +103,7 @@ class Airfoil():
         dydx = self.return_camber_slope(xc)
         return degrees(atan(dydx))
 
-def airfoil_from_dat(datfilepath: str):
+def airfoil_from_dat(datfilepath: str) -> Airfoil:
     x = []
     y = []
     with open(datfilepath, 'rt') as file:
@@ -116,4 +116,12 @@ def airfoil_from_dat(datfilepath: str):
                 if len(split) == 2:
                     x.append(float(split[0]))
                     y.append(float(split[1]))
+    return Airfoil(name, x, y)
+
+def airfoil_interpolation(airfoila: Airfoil, airfoilb: Airfoil, fac: float) -> Airfoil:
+    faca = 1.0 - fac
+    facb = fac
+    x = [xai*faca + xbi*facb for xai, xbi in zip(airfoila.x, airfoilb.x)]
+    y = [yai*faca + ybi*facb for yai, ybi in zip(airfoila.y, airfoilb.y)]
+    name = 'Interpolated from ' + airfoila.name + ' and ' + airfoilb.name
     return Airfoil(name, x, y)

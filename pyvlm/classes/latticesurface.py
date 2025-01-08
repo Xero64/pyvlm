@@ -9,6 +9,7 @@ from pygeom.geom3d import Vector
 from pygeom.tools.spacing import (equal_spacing, full_cosine_spacing,
                                   normalise_spacing)
 
+from ..tools.airfoil import airfoil_interpolation, Airfoil
 from .latticegrid import LatticeGrid
 from .latticepanel import LatticePanel
 from .latticesection import latticesection_from_json
@@ -251,6 +252,27 @@ class LatticeSurface():
         return '<LatticeSurface {:s}>'.format(self.name)
 
 
+def linear_interpolate_airfoil(x: list[float],
+                               af: list[Airfoil]) -> list[Airfoil]:
+    newaf = []
+    for i, afi in enumerate(af):
+        if afi is None or afi.name == 'Flat Plate':
+            for j in range(i, -1, -1):
+                if af[j] is not None and af[j].name != 'Flat Plate':
+                    a = j
+                    break
+            for j in range(i, len(af)):
+                if af[j] is not None and af[j].name != 'Flat Plate':
+                    b = j
+                    break
+            xa, xb = x[a], x[b]
+            afa, afb = af[a], af[b]
+            fac = (x[i] - xa)/(xb - xa)
+            afi = airfoil_interpolation(afa, afb, fac)
+        newaf.append(afi)
+    return newaf
+
+
 def latticesurface_from_dict(surfdata: dict[str, Any],
                              display: bool = False) -> LatticeSurface:
     name = surfdata['name']
@@ -262,34 +284,37 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
         sct = latticesection_from_json(sectdata)
         scts.append(sct)
     # Linear Interpolate Missing Variables
-    x, y, z, c, a = [], [], [], [], []
+    x, y, z, c, a, af = [], [], [], [], [], []
     for sct in scts:
         x.append(sct.pnt.x)
         y.append(sct.pnt.y)
         z.append(sct.pnt.z)
         c.append(sct.chord)
         a.append(sct.twist)
-    if None in y:
-        if None is z:
-            raise ValueError('Either y or z must be defined.')
-        else:
-            y = linear_interpolate_none(z, y)
-    else:
+        af.append(sct.camber)
+    if None in y and None in z:
+        raise ValueError('Need at least ypos or zpos specified in sections.')
+    elif None in y:
+        y = linear_interpolate_none(z, y)
+    elif None in z:
         z = linear_interpolate_none(y, z)
     lenscts = len(scts)
     b = [0.0]
     for i in range(lenscts-1):
-        bi = b[i] + sqrt((y[i+1]-y[i])**2+(z[i+1]-z[i])**2)
+        bi = b[i] + sqrt((y[i+1] - y[i])**2 + (z[i+1] - z[i])**2)
         b.append(bi)
     x = linear_interpolate_none(b, x)
     c = linear_interpolate_none(b, c)
     a = linear_interpolate_none(b, a)
+    af = linear_interpolate_airfoil(b, af)
     for i, sct in enumerate(scts):
         sct.pnt.x = x[i]
         sct.pnt.y = y[i]
         sct.pnt.z = z[i]
         sct.chord = c[i]
         sct.twist = a[i]
+        sct.camber = af[i]
+        sct.airfoil = af[i].name
     # Read in Function Data
     funcdatas: dict[str, Any] = surfdata.get('functions', {})
     funcs = {}
