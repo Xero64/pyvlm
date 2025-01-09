@@ -284,7 +284,7 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
         sct = latticesection_from_json(sectdata)
         scts.append(sct)
     # Linear Interpolate Missing Variables
-    x, y, z, c, a, af = [], [], [], [], [], []
+    x, y, z, c, a, af, xoc, zoc = [], [], [], [], [], [], [], []
     for sct in scts:
         x.append(sct.pnt.x)
         y.append(sct.pnt.y)
@@ -292,6 +292,8 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
         c.append(sct.chord)
         a.append(sct.twist)
         af.append(sct.camber)
+        xoc.append(sct.xoc)
+        zoc.append(sct.zoc)
     if None in y and None in z:
         raise ValueError('Need at least ypos or zpos specified in sections.')
     elif None in y:
@@ -307,6 +309,8 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
     c = linear_interpolate_none(b, c)
     a = linear_interpolate_none(b, a)
     af = linear_interpolate_airfoil(b, af)
+    xoc = linear_interpolate_none(b, xoc)
+    zoc = linear_interpolate_none(b, zoc)
     for i, sct in enumerate(scts):
         sct.pnt.x = x[i]
         sct.pnt.y = y[i]
@@ -315,6 +319,8 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
         sct.twist = a[i]
         sct.camber = af[i]
         sct.airfoil = af[i].name
+        sct.xoc = xoc[i]
+        sct.zoc = zoc[i]
     # Read in Function Data
     funcdatas: dict[str, Any] = surfdata.get('functions', {})
     funcs = {}
