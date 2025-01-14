@@ -30,6 +30,8 @@ class LatticeStrip():
     dzt: float = None
     dst: float = None
     bpos: float = None
+    bpos1: float = None
+    bpos2: float = None
     _crd: float = None
     _ang: float = None
     _cdo: float = None
@@ -47,6 +49,8 @@ class LatticeStrip():
 
     def update(self) -> None:
         self.bfrc = (self.bspc[1] - self.bspc[0])/(self.bspc[2] - self.bspc[0])
+        if self.bfrc < 0.0 or self.bfrc > 1.0:
+            raise ValueError('Invalid spanwise position for bspc: {}'.format(self.bspc))
         self.pnls = []
         self.leni = self.pnt2 - self.pnt1
         self.pnti = self.pnt1 + self.bfrc*self.leni

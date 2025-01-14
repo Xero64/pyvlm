@@ -193,6 +193,8 @@ class LatticeSheet():
         for i, strp in enumerate(self.strps):
             bspc = self.bspc[i]
             strp.bpos = bpos + self.width*bspc[1]
+            strp.bpos1 = bpos + self.width*bspc[0]
+            strp.bpos2 = bpos + self.width*bspc[2]
 
     def __repr__(self):
         return '<LatticeSheet>'

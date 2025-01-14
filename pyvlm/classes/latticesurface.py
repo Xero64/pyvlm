@@ -147,24 +147,40 @@ class LatticeSurface():
             sct.bpos = bpos[i]
         for sht in self.shts:
             sht.set_strip_bpos()
-        bmax = max(bpos)
+        bmax = max([sct.bpos for sct in self.scts])
         for var, func in self.funcs.items():
             if var == 'twist':
-                var = '_ang'
+                varm = '_ang'
+                var1 = 'ang1'
+                var2 = 'ang2'
             func.bmax = bmax
             if self.mirror:
                 for i in range(hlfstrp):
                     strp = self.strps[numstrp-1-i]
                     mstrp = self.strps[i]
-                    bpos = strp.bpos
-                    val = func(bpos)
-                    strp.__dict__[var] = val
-                    mstrp.__dict__[var] = val
+                    bposm = strp.bpos
+                    valm = func(bposm)
+                    strp.__dict__[varm] = valm
+                    mstrp.__dict__[varm] = valm
+                    bpos1 = strp.bpos1
+                    bpos2 = strp.bpos2
+                    val1 = func(bpos1)
+                    val2 = func(bpos2)
+                    strp.__dict__[var1] = val1
+                    strp.__dict__[var2] = val2
+                    mstrp.__dict__[var1] = val2
+                    mstrp.__dict__[var2] = val1
             else:
                 for strp in self.strps:
-                    bpos = strp.bpos
-                    val = func(bpos)
-                    strp.__dict__[var] = val
+                    bposm = strp.bpos
+                    valm = func(bposm)
+                    strp.__dict__[varm] = valm
+                    bpos1 = strp.bpos1
+                    bpos2 = strp.bpos2
+                    val1 = func(bpos1)
+                    val2 = func(bpos2)
+                    strp.__dict__[var1] = val1
+                    strp.__dict__[var2] = val2
         self.area = 0.0
         for sht in self.shts:
             if not sht.noload:
@@ -200,6 +216,16 @@ class LatticeSurface():
         x, y, z = self.point_xyz()
         ax.set_box_aspect((ptp(x), ptp(y), ptp(z)))
         ax.plot_surface(x, y, z, label=self.name)
+        return ax
+
+    def plot_twist(self, ax: Axes3D = None) -> Axes3D:
+        if ax is None:
+            fig = figure(figsize=(12, 8))
+            ax = fig.gca()
+            ax.grid(True)
+        bpos = [strp.bpos for strp in self.strps]
+        twist = [strp.twist for strp in self.strps]
+        ax.plot(bpos, twist, label=self.name)
         return ax
 
     @property
@@ -284,14 +310,15 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
         sct = latticesection_from_json(sectdata)
         scts.append(sct)
     # Linear Interpolate Missing Variables
-    x, y, z, c, a, af, xoc, zoc = [], [], [], [], [], [], [], []
+    x, y, z, c, a, af, cmb, xoc, zoc = [], [], [], [], [], [], [], [], []
     for sct in scts:
         x.append(sct.pnt.x)
         y.append(sct.pnt.y)
         z.append(sct.pnt.z)
         c.append(sct.chord)
         a.append(sct.twist)
-        af.append(sct.camber)
+        af.append(sct.airfoil)
+        cmb.append(sct.camber)
         xoc.append(sct.xoc)
         zoc.append(sct.zoc)
     if None in y and None in z:
@@ -308,7 +335,7 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
     x = linear_interpolate_none(b, x)
     c = linear_interpolate_none(b, c)
     a = linear_interpolate_none(b, a)
-    af = linear_interpolate_airfoil(b, af)
+    cmb = linear_interpolate_airfoil(b, cmb)
     xoc = linear_interpolate_none(b, xoc)
     zoc = linear_interpolate_none(b, zoc)
     for i, sct in enumerate(scts):
@@ -317,8 +344,8 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
         sct.pnt.z = z[i]
         sct.chord = c[i]
         sct.twist = a[i]
-        sct.camber = af[i]
-        sct.airfoil = af[i].name
+        sct.camber = cmb[i]
+        sct.airfoil = af[i]
         sct.xoc = xoc[i]
         sct.zoc = zoc[i]
     # Read in Function Data
