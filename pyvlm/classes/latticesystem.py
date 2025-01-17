@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from numpy import absolute, divide, multiply, pi, reciprocal, sqrt, zeros
 from py2md.classes import MDTable
@@ -424,12 +424,15 @@ def latticesystem_from_dict(sysdct: dict) -> LatticeSystem:
     from .latticesurface import latticesurface_from_dict
     from .latticetrim import latticetrim_from_dict
 
-    jsonfilepath = sysdct['source']
+    jsonfilepath = sysdct.get('source', '.')
 
     path = dirname(jsonfilepath)
 
-    for surfdata in sysdct['surfaces']:
-        for sectdata in surfdata['sections']:
+    surfsdata: list[dict[str, Any]] = sysdct.get('surfaces', [])
+
+    for surfdata in surfsdata:
+        sectsdata: list[dict[str, Any]] = surfdata.get('sections', [])
+        for sectdata in sectsdata:
             if 'airfoil' in sectdata:
                 airfoil = sectdata['airfoil']
                 if airfoil[-4:] == '.dat':
@@ -453,6 +456,7 @@ def latticesystem_from_dict(sysdct: dict) -> LatticeSystem:
     zref = sysdct['zref']
     rref = Vector(xref, yref, zref)
     lsys = LatticeSystem(name, sfcs, bref, cref, sref, rref)
+    lsys._cdo = sysdct.get('CDo', 0.0)
 
     masses = {}
     if 'masses' in sysdct:
