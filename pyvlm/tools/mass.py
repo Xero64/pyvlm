@@ -14,10 +14,10 @@ class Mass():
     Iyz = None
     Izz = None
 
-    def __init__(self, name: str, mass: float=0.0,
-                 xcm: float=0.0, ycm: float=0.0, zcm: float=0.0,
-                 Ixx: float=0.0, Ixy: float=0.0, Ixz: float=0.0,
-                 Iyy: float=0.0, Iyz: float=0.0, Izz: float=0.0):
+    def __init__(self, name: str, mass: float = 1.0,
+                 xcm: float = 0.0, ycm: float = 0.0, zcm: float = 0.0,
+                 Ixx: float = 1.0, Ixy: float = 0.0, Ixz: float = 0.0,
+                 Iyy: float = 1.0, Iyz: float = 0.0, Izz: float = 1.0) -> None:
         self.name = name
         self.mass = mass
         self.xcm = xcm
@@ -148,9 +148,10 @@ def masscol_from_data(masscoldata: dict, masses: dict):
             print(f'Could not find {m:s} in masses.')
     return MassCollection(name, massdict)
 
-def masses_from_data(massesdata: list):
+def masses_from_data(massesdata: dict) -> dict[str, Mass | MassCollection]:
     masses = {}
-    for mdata in massesdata:
+    for name, mdata in massesdata.items():
+        mdata['name'] = name
         if 'masses' in mdata:
             masscol = masscol_from_data(mdata, masses)
             masses[masscol.name] = masscol

@@ -3,11 +3,12 @@ from typing import TYPE_CHECKING, Any
 from numpy import absolute, divide, multiply, pi, reciprocal, sqrt, zeros
 from py2md.classes import MDTable
 from pygeom.geom3d import Vector
+from ..tools.mass import Mass
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from ..tools.mass import Mass, MassCollection
+    from ..tools.mass import MassCollection
     from .latticepanel import LatticePanel
     from .latticeresult import LatticeResult
     from .latticestrip import LatticeStrip
@@ -30,7 +31,8 @@ class LatticeSystem():
     ctrls: dict[str, tuple[int, int, int, int]] = None # System Controls
     nump: int = None # Number of Panels
     nums: int = None # Number of Strips
-    masses: dict[str, 'Mass | MassCollection'] = None # Store Mass Options
+    masses: dict[str, 'Mass | MassCollection'] = None # Store Mass Options\
+    mass: 'Mass | MassCollection | None' = None # Mass Object
     _ra: Vector = None # Horseshoe Vortex Vector A
     _rb: Vector = None # Horseshoe Vortex Vector B
     _rc: Vector = None # Panel Control Vector
@@ -460,7 +462,7 @@ def latticesystem_from_dict(sysdct: dict) -> LatticeSystem:
 
     masses = {}
     if 'masses' in sysdct:
-        if isinstance(sysdct['masses'], list):
+        if isinstance(sysdct['masses'], dict):
             masses = masses_from_data(sysdct['masses'])
         elif isinstance(sysdct['masses'], str):
             if sysdct['masses'][-5:] == '.json':
@@ -468,6 +470,15 @@ def latticesystem_from_dict(sysdct: dict) -> LatticeSystem:
                 massfilepath = join(path, massfilename)
             masses = masses_from_json(massfilepath)
     lsys.masses = masses
+    mass = sysdct.get('mass', None)
+    if isinstance(mass, float):
+        lsys.mass = Mass(lsys.name, mass = mass, xcm = lsys.rref.x,
+                    ycm = lsys.rref.y, zcm = lsys.rref.z)
+    elif isinstance(mass, str):
+        lsys.mass = masses[mass]
+    else:
+        lsys.mass = Mass(lsys.name, mass = 1.0, xcm = lsys.rref.x,
+                    ycm = lsys.rref.y, zcm = lsys.rref.z)
 
     if 'cases' in sysdct and sysdct:
         lsys.mesh()

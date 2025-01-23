@@ -4,6 +4,7 @@ from matplotlib.pyplot import figure
 from numpy import cos, pi, radians, sin, tan, zeros
 from py2md.classes import MDReport
 from pygeom.geom3d import Coordinate, Vector
+from ..tools.mass import Mass
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -26,6 +27,7 @@ class LatticeResult():
     rbo2V: float = None
     ctrls: dict[str, float] = None
     rcg: Vector = None
+    mass: Mass = None
     _acs: Coordinate = None
     _scs: Coordinate = None
     _dacsa: dict[str, Vector] = None
@@ -1057,6 +1059,20 @@ class LatticeResult():
             rcg = Vector(rcgdict['x'], rcgdict['y'], rcgdict['z'])
             result.set_cg(rcg)
         sys.results[name] = result
+
+        mass = resdict.get('mass', None)
+        if isinstance(mass, dict):
+            mass = Mass(**mass)
+        elif isinstance(mass, float):
+            mass = Mass(name = result.name, mass = mass)
+        elif mass is None:
+            if sys.mass is not None:
+                mass = sys.mass
+            else:
+                mass = Mass(result.name, mass = 1.0, xcm = result.rcg.x,
+                            ycm = result.rcg.y, zcm = result.rcg.z)
+        result.mass = mass
+
         return result
 
     def __str__(self) -> str:
