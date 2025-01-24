@@ -14,12 +14,15 @@ from .latticegrid import LatticeGrid
 from .latticepanel import LatticePanel
 from .latticesection import latticesection_from_json
 from .latticesheet import LatticeSheet
+from ..tools.camber import FlatPlate
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from .latticesection import LatticeSection
     from .latticestrip import LatticeStrip
+
+    AirfoilLike = Airfoil | FlatPlate
 
 
 class LatticeSurface():
@@ -279,22 +282,39 @@ class LatticeSurface():
 
 
 def linear_interpolate_airfoil(x: list[float],
-                               af: list[Airfoil]) -> list[Airfoil]:
+                               af: list['AirfoilLike | None']) -> list['AirfoilLike']:
     newaf = []
     for i, afi in enumerate(af):
         if afi is None:
+            a = None
             for j in range(i, -1, -1):
-                if af[j] is not None and af[j].name != 'Flat Plate':
+                if af[j] is not None:
                     a = j
                     break
+            b = None
             for j in range(i, len(af)):
-                if af[j] is not None and af[j].name != 'Flat Plate':
+                if af[j] is not None:
                     b = j
                     break
-            xa, xb = x[a], x[b]
-            afa, afb = af[a], af[b]
-            fac = (x[i] - xa)/(xb - xa)
-            afi = airfoil_interpolation(afa, afb, fac)
+            if a is None:
+                xa = x[0]
+                afa = FlatPlate()
+            else:
+                xa = x[a]
+                afa = af[a]
+            if b is None:
+                xb = x[-1]
+                afb = FlatPlate()
+            else:
+                xb = x[b]
+                afb = af[b]
+            if isinstance(afa, FlatPlate) and isinstance(afb, FlatPlate):
+                afi = FlatPlate()
+            elif isinstance(afa, Airfoil) and isinstance(afb, Airfoil):
+                fac = (x[i] - xa)/(xb - xa)
+                afi = airfoil_interpolation(afa, afb, fac)
+            else:
+                raise ValueError('Cannot interpolate airfoil.')
         newaf.append(afi)
     return newaf
 
@@ -318,7 +338,10 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
         c.append(sct.chord)
         a.append(sct.twist)
         af.append(sct.airfoil)
-        cmb.append(sct.camber)
+        if sct.airfoil is None:
+            cmb.append(None)
+        else:
+            cmb.append(sct.camber)
         xoc.append(sct.xoc)
         zoc.append(sct.zoc)
     if None in y and None in z:

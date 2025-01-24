@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from py2md.classes import MDReport
 from pygeom.geom3d import Vector
 
-from ..classes import LatticeTrim as Trim
+from ..classes import LatticeTrim
 from .mass import Mass, MassCollection
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ class LoopingTrim():
     gravacc: float = None
     speed: float = None
     density: float = None
-    mass: 'Mass | MassCollection' = None
+    mass: 'Mass | MassCollection | None' = None
     loadfac: float = None
     _weight: float = None
     _lift: float = None
@@ -82,8 +82,8 @@ class LoopingTrim():
             initctrls.setdefault(control, 0.0)
         self.initctrls = initctrls
 
-    def create_trim_result(self) -> Trim:
-        trim = Trim(self.name, self.sys)
+    def create_trim_result(self) -> LatticeTrim:
+        trim = LatticeTrim(self.name, self.sys)
         trim.set_density(rho=self.density)
         trim.set_state(speed=self.speed, qco2V=self.qco2V)
         trim.set_targets(CLt = self.CL, CYt = 0.0, Clt = 0.0, Cmt = 0.0, Cnt = 0.0)
@@ -91,6 +91,7 @@ class LoopingTrim():
         trim.set_cg(rcg)
         trim.set_initial_state(self.initstate)
         trim.set_initial_controls(self.initctrls)
+        trim.mass = self.mass
         return trim
 
     @property
@@ -177,7 +178,7 @@ class TurningTrim():
     gravacc: float = None
     speed: float = None
     density: float = None
-    mass: 'Mass | MassCollection' = None
+    mass: 'Mass | MassCollection | None' = None
     bankang: float = None
     _loadfac: float = None
     _weight: float = None
@@ -244,8 +245,8 @@ class TurningTrim():
             initctrls.setdefault(control, 0.0)
         self.initctrls = initctrls
 
-    def create_trim_result(self) -> Trim:
-        trim = Trim(self.name, self.sys)
+    def create_trim_result(self) -> LatticeTrim:
+        trim = LatticeTrim(self.name, self.sys)
         trim.set_density(rho=self.density)
         trim.set_state(speed = self.speed, qco2V = self.qco2V, rbo2V = self.rbo2V)
         trim.set_targets(CLt = self.CL, CYt = 0.0, Clt = 0.0, Cmt = 0.0, Cnt = 0.0)
@@ -253,6 +254,7 @@ class TurningTrim():
         trim.set_cg(rcg)
         trim.set_initial_state(self.initstate)
         trim.set_initial_controls(self.initctrls)
+        trim.mass = self.mass
         return trim
 
     @property
@@ -368,7 +370,7 @@ class LevelTrim():
     gravacc: float = None
     speed: float = None
     density: float = None
-    mass: 'Mass | MassCollection' = None
+    mass: 'Mass | MassCollection | None' = None
     _weight: float = None
     _lift: float = None
     _dynpres: float = None
@@ -423,8 +425,8 @@ class LevelTrim():
             initctrls.setdefault(control, 0.0)
         self.initctrls = initctrls
 
-    def create_trim_result(self) -> Trim:
-        trim = Trim(self.name, self.sys)
+    def create_trim_result(self) -> LatticeTrim:
+        trim = LatticeTrim(self.name, self.sys)
         trim.set_density(rho=self.density)
         trim.set_state(speed=self.speed)
         trim.set_targets(CLt = self.CL)
@@ -432,6 +434,7 @@ class LevelTrim():
         trim.set_cg(rcg)
         trim.set_initial_state(self.initstate)
         trim.set_initial_controls(self.initctrls)
+        trim.mass = self.mass
         return trim
 
     @property
@@ -500,6 +503,7 @@ class LoadTrim():
     n: float = None
     initstate: dict[str, float] = None
     initctrls: dict[str, float] = None
+    mass: 'Mass | MassCollection | None' = None
     _dynpres: float = None
     _CL: float = None
     _CY: float = None
@@ -547,14 +551,15 @@ class LoadTrim():
             initctrls.setdefault(control, 0.0)
         self.initctrls = initctrls
 
-    def create_trim_result(self) -> Trim:
-        trim = Trim(self.name, self.sys)
+    def create_trim_result(self) -> LatticeTrim:
+        trim = LatticeTrim(self.name, self.sys)
         trim.set_density(rho=self.density)
         trim.set_state(speed=self.speed)
         trim.set_targets(CLt = self.CL, CYt = self.CY,
                          Clt = self.Cl, Cmt = self.Cm, Cnt = self.Cn)
         trim.set_initial_state(self.initstate)
         trim.set_initial_controls(self.initctrls)
+        trim.mass = self.mass
         return trim
 
     @property

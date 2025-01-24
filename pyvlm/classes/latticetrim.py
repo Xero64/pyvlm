@@ -249,77 +249,73 @@ class LatticeTrim(LatticeResult):
                 return False
 
 
-def latticetrim_from_dict(system: 'LatticeSystem', resdata: dict[str, Any]) -> LatticeTrim:
+def latticetrim_from_dict(system: 'LatticeSystem', resdict: dict[str, Any]) -> LatticeTrim:
 
     from ..tools.trim import GRAVACC, LevelTrim, LoadTrim, LoopingTrim, TurningTrim
 
-    name = resdata['name']
+    name = resdict['name']
 
-    if resdata['trim'] == 'Load Trim':
+    if resdict['trim'] == 'Load Trim':
         trim = LoadTrim(name, system)
-        lift = resdata.get('L', None)
-        side = resdata.get('Y', None)
-        roll = resdata.get('l', None)
-        pitch = resdata.get('m', None)
-        yaw = resdata.get('n', None)
+        lift = resdict.get('L', None)
+        side = resdict.get('Y', None)
+        roll = resdict.get('l', None)
+        pitch = resdict.get('m', None)
+        yaw = resdict.get('n', None)
         trim.set_loads(lift, side, roll, pitch, yaw)
 
-    elif resdata['trim'] == 'Looping Trim':
+    elif resdict['trim'] == 'Looping Trim':
         trim = LoopingTrim(name, system)
-        load_factor = resdata.get('load factor', 1.0)
+        load_factor = resdict.get('load factor', 1.0)
         trim.set_load_factor(load_factor)
 
-    elif resdata['trim'] == 'Turning Trim':
+    elif resdict['trim'] == 'Turning Trim':
         trim = TurningTrim(name, system)
-        bang = resdata.get('bank angle', 0.0)
+        bang = resdict.get('bank angle', 0.0)
         trim.set_bankang(bang)
 
-    elif resdata['trim'] == 'Level Trim':
+    elif resdict['trim'] == 'Level Trim':
         trim = LevelTrim(name, system)
 
-    rho = resdata.get('density', 1.0)
+    rho = resdict.get('density', 1.0)
     trim.set_density(rho)
 
-    speed = resdata.get('speed', 1.0)
+    speed = resdict.get('speed', 1.0)
     trim.set_speed(speed)
 
-    gravacc = resdata.get('gravacc', GRAVACC)
+    gravacc = resdict.get('gravacc', GRAVACC)
     trim.set_gravitational_acceleration(gravacc)
 
     initstate = {}
-    initstate['alpha'] = resdata.get('alpha', 0.0)
-    initstate['beta'] = resdata.get('beta', 0.0)
-    initstate['pbo2V'] = resdata.get('pbo2V', 0.0)
-    initstate['qco2V'] = resdata.get('qco2V', 0.0)
-    initstate['rbo2V'] = resdata.get('rbo2V', 0.0)
+    initstate['alpha'] = resdict.get('alpha', 0.0)
+    initstate['beta'] = resdict.get('beta', 0.0)
+    initstate['pbo2V'] = resdict.get('pbo2V', 0.0)
+    initstate['qco2V'] = resdict.get('qco2V', 0.0)
+    initstate['rbo2V'] = resdict.get('rbo2V', 0.0)
     trim.set_initial_state(initstate)
 
     initctrls = {}
     for control in system.ctrls:
-        initctrls[control] = resdata.get(control, 0.0)
+        initctrls[control] = resdict.get(control, 0.0)
     trim.set_initial_controls(initctrls)
 
-    if isinstance(trim, (LoopingTrim, TurningTrim)):
-
-        mval = 1.0
-        xcm, ycm, zcm = system.rref.x, system.rref.y, system.rref.z
-        if 'mass' in resdata:
-            if isinstance(resdata['mass'], str):
-                mass = system.masses[resdata['mass']]
-            elif isinstance(resdata['mass'], float):
-                if 'rcg' in resdata:
-                    rcgdata = resdata['rcg']
-                    xcm, ycm, zcm = rcgdata['x'], rcgdata['y'], rcgdata['z']
-                mval = resdata['mass']
-                mass = Mass(name + ' Mass', mval, xcm, ycm, zcm)
+    mass = resdict.get('mass', None)
+    if isinstance(mass, dict):
+        mass = Mass(**mass)
+    elif isinstance(mass, float):
+        mass = Mass(name = trim.name, mass = mass, xcm = system.rref.x,
+                    ycm = system.rref.y, zcm = system.rref.z)
+    elif mass is None:
+        if system.mass is not None:
+            mass = system.mass
         else:
-            mass = Mass(name + ' Mass', mval, xcm, ycm, zcm)
-
-        trim.set_mass(mass)
+            mass = Mass(trim.name, mass = 1.0, xcm = system.rref.x,
+                        ycm = system.rref.y, zcm = system.rref.z)
+    trim.set_mass(mass)
 
     trimres = trim.create_trim_result()
 
-    mach = resdata.get('mach', 0.0)
+    mach = resdict.get('mach', 0.0)
     trimres.set_state(mach = mach)
 
     system.results[name] = trimres
