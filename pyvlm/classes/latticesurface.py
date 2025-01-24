@@ -282,7 +282,7 @@ def linear_interpolate_airfoil(x: list[float],
                                af: list[Airfoil]) -> list[Airfoil]:
     newaf = []
     for i, afi in enumerate(af):
-        if afi is None or afi.name == 'Flat Plate':
+        if afi is None:
             for j in range(i, -1, -1):
                 if af[j] is not None and af[j].name != 'Flat Plate':
                     a = j

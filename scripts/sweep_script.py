@@ -61,6 +61,6 @@ axw = lres_org.plot_trefftz_wash_distribution(ax=axw)
 for case in lsys.results:
     lres = lsys.results[case]
     print(f'Case: {case:s}')
-    print(f'Neutral Point: {lres.stres.neutral_point():.3f}')
+    print(f'Neutral Point: {lres.stres.xnp:.3f}')
 
 display_markdown(lres.stability_derivatives)

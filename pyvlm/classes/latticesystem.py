@@ -366,7 +366,10 @@ class LatticeSystem():
         lsys = latticesystem_from_json(self.source)
         for attr in self.__dict__:
             if attr[0] == '_':
-                lsys.__dict__[attr] = self.__dict__[attr].copy()
+                if hasattr(self.__dict__[attr], 'copy'):
+                    lsys.__dict__[attr] = self.__dict__[attr].copy()
+                else:
+                    lsys.__dict__[attr] = self.__dict__[attr]
         return lsys
 
     def velocity_matrix(self, rc: Vector) -> Vector:

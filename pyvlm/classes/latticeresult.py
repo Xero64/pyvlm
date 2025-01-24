@@ -1888,7 +1888,12 @@ class StabilityResult():
             Cnb = self.beta.Cn
             Cnr = self.rbo2V.Cn
             Clr = self.rbo2V.Cl
-            self._sprat = Clb*Cnr/(Clr*Cnb)
+            if Clb == 0.0 and Clr == 0.0:
+                self._sprat = float('nan')
+            elif Cnb == 0.0 and Cnr == 0.0:
+                self._sprat = float('nan')
+            else:
+                self._sprat = Clb*Cnr/(Clr*Cnb)
         return self._sprat
 
     def system_aerodynamic_matrix(self) -> 'NDArray':

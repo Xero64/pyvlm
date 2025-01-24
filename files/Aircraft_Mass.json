@@ -1,44 +1,38 @@
-[
-    {
-        "name": "Nominal CG",
+{
+    "Nominal CG": {
         "mass": 20.0,
         "xcm": 1.175,
         "ycm": 0.0,
         "zcm": 0.0
     },
-    {
-        "name": "Forward CG",
+    "Forward CG": {
         "mass": 20.0,
         "xcm": 1.165,
         "ycm": 0.0,
         "zcm": 0.0
     },
-    {
-        "name": "Afterward CG",
+    "Afterward CG": {
         "mass": 20.0,
         "xcm": 1.185,
         "ycm": 0.0,
         "zcm": 0.0
     },
-    {
-        "name": "Extra Mass",
+    "Extra Mass": {
         "mass": 1.0,
         "xcm": 1.175,
         "ycm": 0.0,
         "zcm": 0.0
     },
-    {
-        "name": "Forward CG + Extra",
+    "Forward CG + Extra": {
         "masses": [
             "Forward CG",
             "Extra Mass"
         ]
     },
-    {
-        "name": "Afterward CG + Extra",
+    "Afterward CG + Extra": {
         "masses": [
             "Afterward CG",
             "Extra Mass"
         ]
     }
-]
+}
