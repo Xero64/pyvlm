@@ -249,42 +249,43 @@ class LatticeTrim(LatticeResult):
                 return False
 
 
-def latticetrim_from_dict(system: 'LatticeSystem', resdict: dict[str, Any]) -> LatticeTrim:
+def latticetrim_from_dict(system: 'LatticeSystem', resdict: dict[str, Any],
+                          trim: bool = True) -> LatticeTrim:
 
     from ..tools.trim import GRAVACC, LevelTrim, LoadTrim, LoopingTrim, TurningTrim
 
     name = resdict['name']
 
     if resdict['trim'] == 'Load Trim':
-        trim = LoadTrim(name, system)
+        trim_condition = LoadTrim(name, system)
         lift = resdict.get('L', None)
         side = resdict.get('Y', None)
         roll = resdict.get('l', None)
         pitch = resdict.get('m', None)
         yaw = resdict.get('n', None)
-        trim.set_loads(lift, side, roll, pitch, yaw)
+        trim_condition.set_loads(lift, side, roll, pitch, yaw)
 
     elif resdict['trim'] == 'Looping Trim':
-        trim = LoopingTrim(name, system)
+        trim_condition = LoopingTrim(name, system)
         load_factor = resdict.get('load factor', 1.0)
-        trim.set_load_factor(load_factor)
+        trim_condition.set_load_factor(load_factor)
 
     elif resdict['trim'] == 'Turning Trim':
-        trim = TurningTrim(name, system)
+        trim_condition = TurningTrim(name, system)
         bang = resdict.get('bank angle', 0.0)
-        trim.set_bankang(bang)
+        trim_condition.set_bankang(bang)
 
     elif resdict['trim'] == 'Level Trim':
-        trim = LevelTrim(name, system)
+        trim_condition = LevelTrim(name, system)
 
     rho = resdict.get('density', 1.0)
-    trim.set_density(rho)
+    trim_condition.set_density(rho)
 
     speed = resdict.get('speed', 1.0)
-    trim.set_speed(speed)
+    trim_condition.set_speed(speed)
 
     gravacc = resdict.get('gravacc', GRAVACC)
-    trim.set_gravitational_acceleration(gravacc)
+    trim_condition.set_gravitational_acceleration(gravacc)
 
     initstate = {}
     initstate['alpha'] = resdict.get('alpha', 0.0)
@@ -292,34 +293,35 @@ def latticetrim_from_dict(system: 'LatticeSystem', resdict: dict[str, Any]) -> L
     initstate['pbo2V'] = resdict.get('pbo2V', 0.0)
     initstate['qco2V'] = resdict.get('qco2V', 0.0)
     initstate['rbo2V'] = resdict.get('rbo2V', 0.0)
-    trim.set_initial_state(initstate)
+    trim_condition.set_initial_state(initstate)
 
     initctrls = {}
     for control in system.ctrls:
         initctrls[control] = resdict.get(control, 0.0)
-    trim.set_initial_controls(initctrls)
+    trim_condition.set_initial_controls(initctrls)
 
     mass = resdict.get('mass', None)
     if isinstance(mass, dict):
         mass = Mass(**mass)
     elif isinstance(mass, float):
-        mass = Mass(name = trim.name, mass = mass, xcm = system.rref.x,
+        mass = Mass(name = trim_condition.name, mass = mass, xcm = system.rref.x,
                     ycm = system.rref.y, zcm = system.rref.z)
     elif mass is None:
         if system.mass is not None:
             mass = system.mass
         else:
-            mass = Mass(trim.name, mass = 1.0, xcm = system.rref.x,
+            mass = Mass(trim_condition.name, mass = 1.0, xcm = system.rref.x,
                         ycm = system.rref.y, zcm = system.rref.z)
-    trim.set_mass(mass)
+    trim_condition.set_mass(mass)
 
-    trimres = trim.create_trim_result()
+    trim_result = trim_condition.create_trim_result()
 
     mach = resdict.get('mach', 0.0)
-    trimres.set_state(mach = mach)
+    trim_result.set_state(mach = mach)
 
-    system.results[name] = trimres
+    system.results[name] = trim_result
 
-    trimres.trim()
+    if trim:
+        trim_result.trim()
 
-    return trimres
+    return trim_result

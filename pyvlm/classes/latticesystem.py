@@ -405,7 +405,8 @@ class LatticeSystem():
         return self.__str__()
 
 
-def latticesystem_from_json(jsonfilepath: str, mesh: bool=True) -> LatticeSystem:
+def latticesystem_from_json(jsonfilepath: str, mesh: bool = True,
+                            trim: bool = True) -> LatticeSystem:
     from json import load
 
     with open(jsonfilepath, 'rt') as jsonfile:
@@ -413,14 +414,14 @@ def latticesystem_from_json(jsonfilepath: str, mesh: bool=True) -> LatticeSystem
 
     sysdct['source'] = jsonfilepath
 
-    sys = latticesystem_from_dict(sysdct)
-
-    if mesh and sys.pnls is None:
-        sys.mesh()
+    sys = latticesystem_from_dict(sysdct, mesh=mesh, trim=trim)
 
     return sys
 
-def latticesystem_from_dict(sysdct: dict) -> LatticeSystem:
+
+def latticesystem_from_dict(sysdct: dict, mesh: bool = True,
+                            trim: bool = True) -> LatticeSystem:
+
     from os.path import dirname, exists, join
 
     from pyvlm.tools import masses_from_data, masses_from_json
@@ -488,11 +489,14 @@ def latticesystem_from_dict(sysdct: dict) -> LatticeSystem:
         for i in range(len(sysdct['cases'])):
             resdata = sysdct['cases'][i]
             if 'trim' in resdata:
-                latticetrim_from_dict(lsys, resdata)
+                latticetrim_from_dict(lsys, resdata, trim=trim)
             else:
                 latticeresult_from_dict(lsys, resdata)
 
     lsys.source = jsonfilepath
+
+    if mesh and lsys.pnls is None:
+        lsys.mesh()
 
     return lsys
 
