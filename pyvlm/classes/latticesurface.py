@@ -12,7 +12,7 @@ from pygeom.tools.spacing import (equal_spacing, full_cosine_spacing,
 from ..tools.airfoil import airfoil_interpolation, Airfoil
 from .latticegrid import LatticeGrid
 from .latticepanel import LatticePanel
-from .latticesection import latticesection_from_json
+from .latticesection import latticesection_from_dict
 from .latticesheet import LatticeSheet
 from ..tools.camber import FlatPlate
 
@@ -324,13 +324,27 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
     name = surfdata['name']
     mirror = surfdata.get('mirror', False)
     if display: print(f'Loading Surface: {name:s}')
+    # Read in Defaults
+    defaults: dict[str, Any] = surfdata.get('defaults', {})
+    # Read in Functions
+    funcdatas: dict[str, Any] = surfdata.get('functions', {})
+    funcs = {}
+    for variable, funcdata in funcdatas.items():
+        funcs[variable] = surffunc_from_json(variable, funcdata)
+    # Set defaults for functions to zero
+    for var in funcs:
+        if var not in defaults:
+            defaults[var] = 0.0
     # Read Section Variables
     scts: list['LatticeSection'] = []
     for sectdata in surfdata['sections']:
-        sct = latticesection_from_json(sectdata)
+        sct = latticesection_from_dict(sectdata, defaults=defaults)
         scts.append(sct)
     # Linear Interpolate Missing Variables
-    x, y, z, c, a, af, cmb, xoc, zoc = [], [], [], [], [], [], [], [], []
+    x, y, z = [], [], []
+    c, a, af = [], [], []
+    cmb, xoc, zoc = [], [], []
+    b = []
     for sct in scts:
         x.append(sct.pnt.x)
         y.append(sct.pnt.y)
@@ -342,25 +356,61 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
             cmb.append(None)
         else:
             cmb.append(sct.camber)
+        b.append(sct.bpos)
         xoc.append(sct.xoc)
         zoc.append(sct.zoc)
-    if None in y and None in z:
-        raise ValueError('Need at least ypos or zpos specified in sections.')
-    elif None in y:
-        y = linear_interpolate_none(z, y)
-    elif None in z:
-        z = linear_interpolate_none(y, z)
-    lenscts = len(scts)
-    b = [0.0]
-    for i in range(lenscts-1):
-        bi = b[i] + sqrt((y[i+1] - y[i])**2 + (z[i+1] - z[i])**2)
-        b.append(bi)
+    # Check for None values in the first and last sections
+    if y[0] is None or z[0] is None:
+        raise ValueError('Need at least ypos or zpos specified in the first section.')
+    if y[-1] is None or z[-1] is None:
+        raise ValueError('Need at least ypos or zpos specified in the last section.')
+    # Check for None values in the middle sections
+    checky = True
+    checkz = True
+    for yi, zi, bi in zip(y, z, b):
+        if yi is None and bi is None:
+            checky = False
+        if zi is None and bi is None:
+            checkz = False
+    # Interpolate None values in y and z
+    if checky:
+        linear_interpolate_none(y, z)
+    elif checkz:
+        linear_interpolate_none(z, y)
+    else:
+        raise ValueError('Need at least ypos or zpos or bpos specified in sections.')
+    # Determine b values from known y and z values
+    bcur = 0.0
+    ycur = y[0]
+    zcur = z[0]
+    for i in range(len(b)):
+        if b[i] is None:
+            ydel = y[i] - ycur
+            zdel = z[i] - zcur
+            bdel = (ydel**2 + zdel**2)**0.5
+            b[i] = bcur + bdel
+            bcur = b[i]
+            ycur = y[i]
+            zcur = z[i]
+    # Interpolate None values in x, y, z, c, a, cmb, xoc, zoc
     x = linear_interpolate_none(b, x)
+    y = linear_interpolate_none(b, y)
+    z = linear_interpolate_none(b, z)
     c = linear_interpolate_none(b, c)
     a = linear_interpolate_none(b, a)
     cmb = linear_interpolate_airfoil(b, cmb)
     xoc = linear_interpolate_none(b, xoc)
     zoc = linear_interpolate_none(b, zoc)
+    display = False
+    if display:
+        print(f'{x = }')
+        print(f'{y = }')
+        print(f'{z = }')
+        print(f'{c = }')
+        print(f'{a = }')
+        print(f'{cmb = }')
+        print(f'{xoc = }')
+        print(f'{zoc = }')
     for i, sct in enumerate(scts):
         sct.pnt.x = x[i]
         sct.pnt.y = y[i]
@@ -371,11 +421,6 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
         sct.airfoil = af[i]
         sct.xoc = xoc[i]
         sct.zoc = zoc[i]
-    # Read in Function Data
-    funcdatas: dict[str, Any] = surfdata.get('functions', {})
-    funcs = {}
-    for variable, funcdata in funcdatas.items():
-        funcs[variable] = surffunc_from_json(variable, funcdata)
     # Entire Surface Position
     xpos = surfdata.get('xpos', 0.0)
     ypos = surfdata.get('ypos', 0.0)
@@ -399,8 +444,10 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
     return surf
 
 def linear_interpolate_none(x: list[float], y: list[float]) -> list[float]:
-    for i, yi in enumerate(y):
-        if yi is None:
+    for i, (xi, yi) in enumerate(zip(x, y)):
+        if yi is None and xi is None:
+            continue
+        elif yi is None:
             for j in range(i, -1, -1):
                 if y[j] is not None:
                     a = j
@@ -411,7 +458,7 @@ def linear_interpolate_none(x: list[float], y: list[float]) -> list[float]:
                     break
             xa, xb = x[a], x[b]
             ya, yb = y[a], y[b]
-            y[i] = (yb-ya)/(xb-xa)*(x[i]-xa)+ya
+            y[i] = (yb - ya)/(xb - xa)*(x[i] - xa)+ya
     return y
 
 

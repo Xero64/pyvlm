@@ -437,6 +437,16 @@ def latticesystem_from_dict(sysdct: dict, mesh: bool = True,
     surfsdata: list[dict[str, Any]] = sysdct.get('surfaces', [])
 
     for surfdata in surfsdata:
+        if 'defaults' in surfdata:
+            if 'airfoil' in surfdata['defaults']:
+                airfoil = surfdata['defaults']['airfoil']
+                if airfoil[-4:] == '.dat':
+                    airfoil = join(path, airfoil)
+                    if not exists(airfoil):
+                        print(f'Airfoil {airfoil} does not exist.')
+                        del surfdata['defaults']['airfoil']
+                    else:
+                        surfdata['defaults']['airfoil'] = airfoil
         sectsdata: list[dict[str, Any]] = surfdata.get('sections', [])
         for sectdata in sectsdata:
             if 'airfoil' in sectdata:

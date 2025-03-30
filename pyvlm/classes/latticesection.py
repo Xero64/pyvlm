@@ -107,37 +107,22 @@ class LatticeSection():
     def __repr__(self):
         return '<LatticeSection>'
 
-def latticesection_from_json(sectdata: dict[str, Any]) -> LatticeSection:
-    if 'xpos' in sectdata:
-        xpos = sectdata['xpos']
-    else:
-        raise ValueError('xpos not found in section data.')
-    if 'ypos' in sectdata:
-        ypos = sectdata['ypos']
-    else:
-        raise ValueError('ypos not found in section data.')
-    if 'zpos' in sectdata:
-        zpos = sectdata['zpos']
-    else:
-        raise ValueError('zpos not found in section data.')
+def latticesection_from_dict(sectdata: dict[str, Any],
+                             defaults: dict[str, Any]) -> LatticeSection:
+    """Create a LatticeSection object from a dictionary."""
+    xpos = sectdata.get('xpos', None)
+    ypos = sectdata.get('ypos', None)
+    zpos = sectdata.get('zpos', None)
     point = Vector(xpos, ypos, zpos)
-    if 'chord' in sectdata:
-        chord = sectdata['chord']
-    else:
-        raise ValueError('chord not found in section data.')
-    if 'twist' in sectdata:
-        twist = sectdata['twist']
-    else:
-        twist = 0.0
+    chord = sectdata.get('chord', defaults.get('chord', None))
+    twist = sectdata.get('twist', defaults.get('twist', None))
     sct = LatticeSection(point, chord, twist)
-    sct.xoc = sectdata.get('xoc', 0.0)
-    sct.zoc = sectdata.get('zoc', 0.0)
-    if 'cdo' in sectdata:
-        sct.set_cdo(sectdata['cdo'])
-    if 'noload' in sectdata:
-        sct.set_noload(sectdata['noload'])
-    if 'airfoil' in sectdata:
-        sct.set_airfoil(sectdata['airfoil'])
+    sct.bpos = sectdata.get('bpos', None)
+    sct.xoc = sectdata.get('xoc', defaults.get('xoc', None))
+    sct.zoc = sectdata.get('zoc', defaults.get('zoc', None))
+    sct.set_cdo(sectdata.get('cdo', defaults.get('cdo', 0.0)))
+    sct.set_noload(sectdata.get('noload', defaults.get('noload', False)))
+    sct.set_airfoil(sectdata.get('airfoil', defaults.get('airfoil', None)))
     if 'bnum' in sectdata and 'bspc' in sectdata:
         bnum = sectdata['bnum']
         bspc = sectdata['bspc']
