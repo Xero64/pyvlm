@@ -397,10 +397,14 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
     y = linear_interpolate_none(b, y)
     z = linear_interpolate_none(b, z)
     c = linear_interpolate_none(b, c)
+    c = fill_none(c, 1.0)
     a = linear_interpolate_none(b, a)
+    a = fill_none(a, 0.0)
     cmb = linear_interpolate_airfoil(b, cmb)
     xoc = linear_interpolate_none(b, xoc)
+    xoc = fill_none(xoc, 0.25)
     zoc = linear_interpolate_none(b, zoc)
+    zoc = fill_none(zoc, 0.0)
     display = False
     if display:
         print(f'{x = }')
@@ -448,18 +452,29 @@ def linear_interpolate_none(x: list[float], y: list[float]) -> list[float]:
         if yi is None and xi is None:
             continue
         elif yi is None:
+            a = None
             for j in range(i, -1, -1):
                 if y[j] is not None:
                     a = j
                     break
+            b = None
             for j in range(i, len(y)):
                 if y[j] is not None:
                     b = j
                     break
-            xa, xb = x[a], x[b]
-            ya, yb = y[a], y[b]
-            y[i] = (yb - ya)/(xb - xa)*(x[i] - xa)+ya
+            if a is None or b is None:
+                y[i] = None
+            else:
+                xa, xb = x[a], x[b]
+                ya, yb = y[a], y[b]
+                y[i] = (yb - ya)/(xb - xa)*(x[i] - xa)+ya
     return y
+
+def fill_none(x: list[float], xval: float) -> list[float]:
+    for i, xi in enumerate(x):
+        if xi is None:
+            x[i] = xval
+    return x
 
 
 class SurfaceFunction():

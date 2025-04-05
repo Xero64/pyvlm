@@ -61,8 +61,11 @@ class LatticeSection():
         bsp = semi_cosine_spacing(2*bnum)
         self.bspc = [tuple(bsp[i*2:i*2+3]) for i in range(bnum)]
 
-    def set_airfoil(self, airfoil: str) -> None:
-        if airfoil[-4:].lower() == '.dat':
+    def set_airfoil(self, airfoil: str | None) -> None:
+        if airfoil is None:
+            self.camber = FlatPlate()
+            self.airfoil = None
+        elif airfoil[-4:].lower() == '.dat':
             self.camber = airfoil_from_dat(airfoil)
             self.airfoil = airfoil
         elif airfoil[0:4].lower() == 'naca':
