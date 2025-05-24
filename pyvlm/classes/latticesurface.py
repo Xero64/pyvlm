@@ -9,12 +9,12 @@ from pygeom.geom3d import Vector
 from pygeom.tools.spacing import (equal_spacing, full_cosine_spacing,
                                   normalise_spacing)
 
-from ..tools.airfoil import airfoil_interpolation, Airfoil
+from ..tools.airfoil import Airfoil, airfoil_interpolation
+from ..tools.camber import FlatPlate
 from .latticegrid import LatticeGrid
 from .latticepanel import LatticePanel
 from .latticesection import latticesection_from_dict
 from .latticesheet import LatticeSheet
-from ..tools.camber import FlatPlate
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -232,19 +232,19 @@ class LatticeSurface():
         return ax
 
     @property
-    def strpb(self) -> list['LatticeStrip']:
+    def strpb(self) -> list[float]:
         return [strp.bpos for strp in self.strps]
 
     @property
-    def strpy(self) -> list['LatticeStrip']:
+    def strpy(self) -> list[float]:
         return [strp.pnti.y for strp in self.strps]
 
     @property
-    def strpz(self) -> list['LatticeStrip']:
+    def strpz(self) -> list[float]:
         return [strp.pnti.z for strp in self.strps]
 
     @property
-    def strpi(self) -> list['LatticeStrip']:
+    def strpi(self) -> list[float]:
         return [strp.lsid for strp in self.strps]
 
     @property
@@ -336,29 +336,29 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
         if var not in defaults:
             defaults[var] = 0.0
     # Read Section Variables
-    scts: list['LatticeSection'] = []
+    sects: list['LatticeSection'] = []
     for sectdata in surfdata['sections']:
-        sct = latticesection_from_dict(sectdata, defaults=defaults)
-        scts.append(sct)
+        sect = latticesection_from_dict(sectdata, defaults=defaults)
+        sects.append(sect)
     # Linear Interpolate Missing Variables
     x, y, z = [], [], []
     c, a, af = [], [], []
     cmb, xoc, zoc = [], [], []
     b = []
-    for sct in scts:
-        x.append(sct.pnt.x)
-        y.append(sct.pnt.y)
-        z.append(sct.pnt.z)
-        c.append(sct.chord)
-        a.append(sct.twist)
-        af.append(sct.airfoil)
-        if sct.airfoil is None:
+    for sect in sects:
+        x.append(sect.pnt.x)
+        y.append(sect.pnt.y)
+        z.append(sect.pnt.z)
+        c.append(sect.chord)
+        a.append(sect.twist)
+        af.append(sect.airfoil)
+        if sect.airfoil is None:
             cmb.append(None)
         else:
-            cmb.append(sct.camber)
-        b.append(sct.bpos)
-        xoc.append(sct.xoc)
-        zoc.append(sct.zoc)
+            cmb.append(sect.camber)
+        b.append(sect.bpos)
+        xoc.append(sect.xoc)
+        zoc.append(sect.zoc)
     # Check for None values in the first and last sections
     if y[0] is None or z[0] is None:
         raise ValueError('Need at least ypos or zpos specified in the first section.')
@@ -415,27 +415,27 @@ def latticesurface_from_dict(surfdata: dict[str, Any],
         print(f'{cmb = }')
         print(f'{xoc = }')
         print(f'{zoc = }')
-    for i, sct in enumerate(scts):
-        sct.pnt.x = x[i]
-        sct.pnt.y = y[i]
-        sct.pnt.z = z[i]
-        sct.chord = c[i]
-        sct.twist = a[i]
-        sct.camber = cmb[i]
-        sct.airfoil = af[i]
-        sct.xoc = xoc[i]
-        sct.zoc = zoc[i]
+    for i, sect in enumerate(sects):
+        sect.pnt.x = x[i]
+        sect.pnt.y = y[i]
+        sect.pnt.z = z[i]
+        sect.chord = c[i]
+        sect.twist = a[i]
+        sect.xoc = xoc[i]
+        sect.zoc = zoc[i]
+        sect.airfoil = af[i]
+        sect.camber = cmb[i]
     # Entire Surface Position
     xpos = surfdata.get('xpos', 0.0)
     ypos = surfdata.get('ypos', 0.0)
     zpos = surfdata.get('zpos', 0.0)
     twist = surfdata.get('twist', 0.0)
     ruled = surfdata.get('ruled', False)
-    for sct in scts:
-        sct.offset_position(xpos, ypos, zpos)
-        sct.offset_twist(twist)
-        sct.ruled = ruled
-    surf = LatticeSurface(name, scts, mirror, funcs)
+    for sect in sects:
+        sect.offset_position(xpos, ypos, zpos)
+        sect.offset_twist(twist)
+        sect.ruled = ruled
+    surf = LatticeSurface(name, sects, mirror, funcs)
     if 'cnum' in surfdata:
         cnum = surfdata['cnum']
         cspc = 'cosine'

@@ -1,4 +1,5 @@
-from numpy.matlib import zeros
+from numpy import zeros
+from py2md.classes import MDTable
 
 
 class Mass():
@@ -30,14 +31,14 @@ class Mass():
         self.Iyz = Iyz
         self.Izz = Izz
 
-    def mass_matrix(self):
+    def mass_array(self):
         M = zeros((3, 3))
         M[0, 0] = self.mass
         M[1, 1] = self.mass
         M[2, 2] = self.mass
         return M
 
-    def moment_of_inertia_matrix(self):
+    def moment_of_inertia_array(self):
         I = zeros((3, 3))
         I[0, 0] = self.Ixx
         I[1, 1] = self.Iyy
@@ -168,8 +169,7 @@ def masses_from_json(jsonfilepath: str):
 
     return masses_from_data(massesdata)
 
-def mass_table(masses):
-    from py2md.classes import MDTable
+def mass_table(masses: dict[str, MassCollection] | list[MassCollection]) -> 'MDTable':
     masslst = []
     if isinstance(masses, dict):
         masslst = [masses[m] for m in masses]

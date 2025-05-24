@@ -363,14 +363,14 @@ class LatticeSystem():
         return table
 
     def copy_from_source(self) -> 'LatticeSystem':
-        lsys = latticesystem_from_json(self.source)
+        sys = latticesystem_from_json(self.source)
         for attr in self.__dict__:
             if attr[0] == '_':
                 if hasattr(self.__dict__[attr], 'copy'):
-                    lsys.__dict__[attr] = self.__dict__[attr].copy()
+                    sys.__dict__[attr] = self.__dict__[attr].copy()
                 else:
-                    lsys.__dict__[attr] = self.__dict__[attr]
-        return lsys
+                    sys.__dict__[attr] = self.__dict__[attr]
+        return sys
 
     def velocity_matrix(self, rc: Vector) -> Vector:
         veli, vela, velb = velocity_matrix(self.ra, self.rb, rc)
@@ -404,7 +404,6 @@ class LatticeSystem():
     def _repr_markdown_(self) -> str:
         return self.__str__()
 
-
 def latticesystem_from_json(jsonfilepath: str, mesh: bool = True,
                             trim: bool = True) -> LatticeSystem:
     from json import load
@@ -417,7 +416,6 @@ def latticesystem_from_json(jsonfilepath: str, mesh: bool = True,
     sys = latticesystem_from_dict(sysdct, mesh=mesh, trim=trim)
 
     return sys
-
 
 def latticesystem_from_dict(sysdct: dict, mesh: bool = True,
                             trim: bool = True) -> LatticeSystem:
@@ -460,10 +458,10 @@ def latticesystem_from_dict(sysdct: dict, mesh: bool = True,
                         sectdata['airfoil'] = airfoil
 
     name = sysdct['name']
-    sfcs = []
+    srfcs = []
     for surfdata in sysdct['surfaces']:
-        sfc = latticesurface_from_dict(surfdata)
-        sfcs.append(sfc)
+        srfc = latticesurface_from_dict(surfdata)
+        srfcs.append(srfc)
     bref = sysdct['bref']
     cref = sysdct['cref']
     sref = sysdct['sref']
@@ -471,8 +469,8 @@ def latticesystem_from_dict(sysdct: dict, mesh: bool = True,
     yref = sysdct['yref']
     zref = sysdct['zref']
     rref = Vector(xref, yref, zref)
-    lsys = LatticeSystem(name, sfcs, bref, cref, sref, rref)
-    lsys._cdo = sysdct.get('CDo', 0.0)
+    sys = LatticeSystem(name, srfcs, bref, cref, sref, rref)
+    sys._cdo = sysdct.get('CDo', 0.0)
 
     masses = {}
     if 'masses' in sysdct:
@@ -483,32 +481,32 @@ def latticesystem_from_dict(sysdct: dict, mesh: bool = True,
                 massfilename = sysdct['masses']
                 massfilepath = join(path, massfilename)
             masses = masses_from_json(massfilepath)
-    lsys.masses = masses
+    sys.masses = masses
     mass = sysdct.get('mass', None)
     if isinstance(mass, float):
-        lsys.mass = Mass(lsys.name, mass = mass, xcm = lsys.rref.x,
-                    ycm = lsys.rref.y, zcm = lsys.rref.z)
+        sys.mass = Mass(sys.name, mass = mass, xcm = sys.rref.x,
+                    ycm = sys.rref.y, zcm = sys.rref.z)
     elif isinstance(mass, str):
-        lsys.mass = masses[mass]
+        sys.mass = masses[mass]
     else:
-        lsys.mass = Mass(lsys.name, mass = 1.0, xcm = lsys.rref.x,
-                    ycm = lsys.rref.y, zcm = lsys.rref.z)
+        sys.mass = Mass(sys.name, mass = 1.0, xcm = sys.rref.x,
+                    ycm = sys.rref.y, zcm = sys.rref.z)
 
     if 'cases' in sysdct and sysdct:
-        lsys.mesh()
+        sys.mesh()
         for i in range(len(sysdct['cases'])):
             resdata = sysdct['cases'][i]
             if 'trim' in resdata:
-                latticetrim_from_dict(lsys, resdata, trim=trim)
+                latticetrim_from_dict(sys, resdata, trim=trim)
             else:
-                latticeresult_from_dict(lsys, resdata)
+                latticeresult_from_dict(sys, resdata)
 
-    lsys.source = jsonfilepath
+    sys.source = jsonfilepath
 
-    if mesh and lsys.pnls is None:
-        lsys.mesh()
+    if mesh and sys.pnls is None:
+        sys.mesh()
 
-    return lsys
+    return sys
 
 def velocity_matrix(ra: Vector, rb: Vector, rc: Vector,
                     betm: float=1.0, tol: float=1e-12) -> Vector:

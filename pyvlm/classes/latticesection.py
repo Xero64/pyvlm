@@ -90,16 +90,16 @@ class LatticeSection():
         pnt = Vector(self.pnt.x, -self.pnt.y, self.pnt.z)
         chord = self.chord
         twist = self.twist
-        sct = LatticeSection(pnt, chord, twist)
-        sct.camber = self.camber
-        sct.airfoil = self.airfoil
-        sct.bspc = self.bspc
-        sct.ctrls = self.ctrls
-        sct.cdo = self.cdo
-        sct.mirror = True
-        sct.xoc = self.xoc
-        sct.zoc = self.zoc
-        return sct
+        sect = LatticeSection(pnt, chord, twist)
+        sect.camber = self.camber
+        sect.airfoil = self.airfoil
+        sect.bspc = self.bspc
+        sect.ctrls = self.ctrls
+        sect.cdo = self.cdo
+        sect.mirror = True
+        sect.xoc = self.xoc
+        sect.zoc = self.zoc
+        return sect
 
     def return_point(self, percrd: float) -> Vector:
         return self.pnt + self.chord*percrd*IHAT
@@ -120,24 +120,27 @@ def latticesection_from_dict(sectdata: dict[str, Any],
     point = Vector(xpos, ypos, zpos)
     chord = sectdata.get('chord', defaults.get('chord', None))
     twist = sectdata.get('twist', defaults.get('twist', None))
-    sct = LatticeSection(point, chord, twist)
-    sct.bpos = sectdata.get('bpos', None)
-    sct.xoc = sectdata.get('xoc', defaults.get('xoc', None))
-    sct.zoc = sectdata.get('zoc', defaults.get('zoc', None))
-    sct.set_cdo(sectdata.get('cdo', defaults.get('cdo', 0.0)))
-    sct.set_noload(sectdata.get('noload', defaults.get('noload', False)))
-    sct.set_airfoil(sectdata.get('airfoil', defaults.get('airfoil', None)))
+    airfoil = sectdata.get('airfoil', defaults.get('airfoil', None))
+    cdo = sectdata.get('cdo', defaults.get('cdo', 0.0))
+    noload = sectdata.get('noload', defaults.get('noload', False))
+    sect = LatticeSection(point, chord, twist)
+    sect.bpos = sectdata.get('bpos', None)
+    sect.xoc = sectdata.get('xoc', defaults.get('xoc', None))
+    sect.zoc = sectdata.get('zoc', defaults.get('zoc', None))
+    sect.set_cdo(cdo)
+    sect.set_noload(noload)
+    sect.set_airfoil(airfoil)
     if 'bnum' in sectdata and 'bspc' in sectdata:
         bnum = sectdata['bnum']
         bspc = sectdata['bspc']
         if bspc == 'equal':
-            sct.set_span_equal_spacing(bnum)
+            sect.set_span_equal_spacing(bnum)
         elif bspc in ('full-cosine', 'cosine'):
-            sct.set_span_cosine_spacing(bnum)
+            sect.set_span_cosine_spacing(bnum)
         elif bspc == 'semi-cosine':
-            sct.set_span_semi_cosine_spacing(bnum)
+            sect.set_span_semi_cosine_spacing(bnum)
     if 'controls' in sectdata:
         for name in sectdata['controls']:
             ctrl = latticecontrol_from_json(name, sectdata['controls'][name])
-            sct.add_control(ctrl)
-    return sct
+            sect.add_control(ctrl)
+    return sect
