@@ -108,7 +108,8 @@ class LatticeSection():
         # return self.camber.cubic_interp(xc)
 
     def __repr__(self):
-        return '<LatticeSection>'
+        return '<pyvlm.LatticeSection at {}>'.format(self.pnt)
+
 
 def latticesection_from_dict(sectdata: dict[str, Any],
                              defaults: dict[str, Any]) -> LatticeSection:

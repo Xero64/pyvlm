@@ -90,7 +90,8 @@ class LatticeResult():
 
     def set_state(self, mach: float | None = None, speed: float | None = None,
                   alpha: float | None = None, beta: float | None = None,
-                  pbo2V: float | None = None, qco2V: float | None = None, rbo2V: float | None = None) -> None:
+                  pbo2V: float | None = None, qco2V: float | None = None,
+                  rbo2V: float | None = None) -> None:
         if mach is not None:
             self.mach = mach
         if speed is not None:
@@ -1858,14 +1859,14 @@ class StabilityResult():
         return self._pdbo2V
 
     @property
-    def qdco2V(self) -> GammaResult:
+    def qdco2V(self) -> StabilityGammaResult:
         if self._qdco2V is None:
             dofs = Vector(0.0, 2*self.res.speed/self.res.sys.cref, 0.0)
             self._qdco2V = StabilityGammaResult(self.res, dofs = dofs)
         return self._qdco2V
 
     @property
-    def rdbo2V(self) -> GammaResult:
+    def rdbo2V(self) -> StabilityGammaResult:
         if self._rdbo2V is None:
             dofs = Vector(0.0, 0.0, 2*self.res.speed/self.res.sys.bref)
             self._rdbo2V = StabilityGammaResult(self.res, dofs = dofs)
@@ -2020,7 +2021,8 @@ class StabilityResult():
     def _repr_markdown_(self) -> str:
         return self.__str__()
 
-def fix_zero(value: float, tol: float=1e-8):
+
+def fix_zero(value: float, tol: float=1e-8) -> float:
     if abs(value) < tol:
         value = 0.0
     return value

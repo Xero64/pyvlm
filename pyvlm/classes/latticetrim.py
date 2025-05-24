@@ -9,6 +9,7 @@ from .latticeresult import LatticeResult
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+
     from .latticesystem import LatticeSystem
 
 ANGTOL = 30.0
@@ -159,10 +160,11 @@ class LatticeTrim(LatticeResult):
     def trim_iteration(self, display: bool = False) -> 'NDArray':
         Cdff = self.delta_C()
         Hcur = self.current_Hmat()
-        Ddff = solve(Hcur, Cdff)
         if display:
             print(f'Cdff = \n{Cdff}\n')
             print(f'Hcur = \n{Hcur}\n')
+        Ddff = solve(Hcur, Cdff)
+        if display:
             print(f'Ddff = \n{Ddff}\n')
             print(f'Cdff - Hcur@Ddff = \n{Cdff - Hcur@Ddff}\n')
         return Ddff
@@ -252,7 +254,8 @@ class LatticeTrim(LatticeResult):
 def latticetrim_from_dict(system: 'LatticeSystem', resdict: dict[str, Any],
                           trim: bool = True) -> LatticeTrim:
 
-    from ..tools.trim import GRAVACC, LevelTrim, LoadTrim, LoopingTrim, TurningTrim
+    from ..tools.trim import (GRAVACC, LevelTrim, LoadTrim, LoopingTrim,
+                              TurningTrim)
 
     name = resdict['name']
 

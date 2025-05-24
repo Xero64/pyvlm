@@ -37,7 +37,7 @@ class LatticeSurface():
     sgrp: list[list[int]] = None
     funcs: dict[str, 'SurfaceFunction'] = None
 
-    def __init__(self, name: str, scts: list, mirror: bool,
+    def __init__(self, name: str, scts: list['LatticeSection'], mirror: bool,
                  funcs: dict[str, 'SurfaceFunction']) -> None:
         self.name = name
         self.scts = scts

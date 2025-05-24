@@ -31,7 +31,7 @@ class LatticeSystem():
     ctrls: dict[str, tuple[int, int, int, int]] = None # System Controls
     nump: int = None # Number of Panels
     nums: int = None # Number of Strips
-    masses: dict[str, 'Mass | MassCollection'] = None # Store Mass Options\
+    masses: dict[str, 'Mass | MassCollection'] = None # Store Mass Options
     mass: 'Mass | MassCollection | None' = None # Mass Object
     _ra: Vector = None # Horseshoe Vortex Vector A
     _rb: Vector = None # Horseshoe Vortex Vector B

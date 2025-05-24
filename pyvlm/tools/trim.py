@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from py2md.classes import MDReport
 from pygeom.geom3d import Vector
 
-from ..classes import LatticeTrim
+from ..classes import LatticeTrim as Trim
 from .mass import Mass, MassCollection
 
 if TYPE_CHECKING:
@@ -82,8 +82,8 @@ class LoopingTrim():
             initctrls.setdefault(control, 0.0)
         self.initctrls = initctrls
 
-    def create_trim_result(self) -> LatticeTrim:
-        trim = LatticeTrim(self.name, self.sys)
+    def create_trim_result(self) -> Trim:
+        trim = Trim(self.name, self.sys)
         trim.set_density(rho=self.density)
         trim.set_state(speed=self.speed, qco2V=self.qco2V)
         trim.set_targets(CLt = self.CL, CYt = 0.0, Clt = 0.0, Cmt = 0.0, Cnt = 0.0)
@@ -245,8 +245,8 @@ class TurningTrim():
             initctrls.setdefault(control, 0.0)
         self.initctrls = initctrls
 
-    def create_trim_result(self) -> LatticeTrim:
-        trim = LatticeTrim(self.name, self.sys)
+    def create_trim_result(self) -> Trim:
+        trim = Trim(self.name, self.sys)
         trim.set_density(rho=self.density)
         trim.set_state(speed = self.speed, qco2V = self.qco2V, rbo2V = self.rbo2V)
         trim.set_targets(CLt = self.CL, CYt = 0.0, Clt = 0.0, Cmt = 0.0, Cnt = 0.0)
@@ -425,8 +425,8 @@ class LevelTrim():
             initctrls.setdefault(control, 0.0)
         self.initctrls = initctrls
 
-    def create_trim_result(self) -> LatticeTrim:
-        trim = LatticeTrim(self.name, self.sys)
+    def create_trim_result(self) -> Trim:
+        trim = Trim(self.name, self.sys)
         trim.set_density(rho=self.density)
         trim.set_state(speed=self.speed)
         trim.set_targets(CLt = self.CL)
@@ -551,8 +551,8 @@ class LoadTrim():
             initctrls.setdefault(control, 0.0)
         self.initctrls = initctrls
 
-    def create_trim_result(self) -> LatticeTrim:
-        trim = LatticeTrim(self.name, self.sys)
+    def create_trim_result(self) -> Trim:
+        trim = Trim(self.name, self.sys)
         trim.set_density(rho=self.density)
         trim.set_state(speed=self.speed)
         trim.set_targets(CLt = self.CL, CYt = self.CY,
