@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 from matplotlib.pyplot import figure
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 from numexpr import evaluate
-from numpy import arccos, asarray, concatenate, pi, ptp, sqrt, zeros
+from numpy import arccos, asarray, concatenate, pi, ptp, round, zeros
 from pygeom.geom1d import CubicSpline1D, LinearSpline1D
 from pygeom.geom3d import Vector
 from pygeom.tools.spacing import (equal_spacing, full_cosine_spacing,
@@ -512,6 +512,7 @@ class SurfaceFunction():
         if self.functype == 'spline':
             return self.spline.evaluate_points_at_t(s)
         elif self.functype == 'expression':
+            s = round(s, 12)
             th = arccos(s)
             local_dict = {'b': b, 's': s, 'th': th}
             global_dict = {'pi': pi}
