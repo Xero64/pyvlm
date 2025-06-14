@@ -1,16 +1,15 @@
 #%%
 # Import Dependencies
 from IPython.display import display
-
-from pyvlm import LatticeOptimum, LatticeResult, latticesystem_from_json
+from pyvlm import LatticeOptimum, LatticeResult, LatticeSystem
 
 #%%
 # Low AR Wing
 jsonfilepath = '../files/Test.json'
-lsys = latticesystem_from_json(jsonfilepath)
+lsys = LatticeSystem.from_json(jsonfilepath)
 display(lsys)
 
-lsys_opt = latticesystem_from_json(jsonfilepath)
+lsys_opt = LatticeSystem.from_json(jsonfilepath)
 
 lres_org = LatticeResult('Initial', lsys)
 lres_org.set_state(alpha=3.0)

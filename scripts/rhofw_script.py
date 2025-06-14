@@ -1,13 +1,12 @@
 #%%
 # Import Dependencies
 from IPython.display import display_markdown
-
-from pyvlm import latticesystem_from_json
+from pyvlm import LatticeSystem
 
 #%%
 # Create Lattice System
 jsonfilepath = '../files/Test_rhofw.json'
-lsys = latticesystem_from_json(jsonfilepath)
+lsys = LatticeSystem.from_json(jsonfilepath)
 display_markdown(lsys)
 
 #%%

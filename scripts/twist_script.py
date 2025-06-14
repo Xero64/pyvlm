@@ -1,13 +1,12 @@
 #%%
 # Load Dependencies
 from IPython.display import display_markdown
-
-from pyvlm import LatticeResult, latticesystem_from_json
+from pyvlm import LatticeResult, LatticeSystem
 
 #%%
 # Create Lattice System
 jsonfilepath = '../files/Test_twist.json'
-lsys = latticesystem_from_json(jsonfilepath)
+lsys = LatticeSystem.from_json(jsonfilepath)
 display_markdown(lsys)
 
 #%%

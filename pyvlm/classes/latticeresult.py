@@ -2027,10 +2027,6 @@ def fix_zero(value: float, tol: float=1e-8) -> float:
         value = 0.0
     return value
 
-def latticeresult_from_dict(lsys: 'System', resdata: dict[str, Any]) -> LatticeResult:
-    result = LatticeResult.from_dict(lsys, resdata)
-    return result
-
 def trig_angle(angle: float) -> float:
     '''Calculates cos(angle) and sin(angle) with angle in degrees.'''
     angrad = radians(angle)

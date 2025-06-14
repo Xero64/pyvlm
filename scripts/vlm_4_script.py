@@ -4,8 +4,7 @@ from IPython.display import display
 from matplotlib.pyplot import figure
 from numpy import arctan2, asarray, degrees, pi, radians
 from pygeom.geom1d import LinearSpline1D
-
-from pyvlm import LatticeOptimum, LatticeResult, latticesystem_from_json
+from pyvlm import LatticeOptimum, LatticeResult, LatticeSystem
 from pyvlm.tools import bell_lift_force_distribution
 
 #%%
@@ -32,9 +31,9 @@ print(f'q = {q:.2f} Pa')
 #%%
 # Low AR Wing System
 jsonfilepath = '../files/Test_rhofw.json'
-lsys = latticesystem_from_json(jsonfilepath)
-lsys_opt = latticesystem_from_json(jsonfilepath)
-lsys_bll = latticesystem_from_json(jsonfilepath)
+lsys = LatticeSystem.from_json(jsonfilepath)
+lsys_opt = LatticeSystem.from_json(jsonfilepath)
+lsys_bll = LatticeSystem.from_json(jsonfilepath)
 display(lsys)
 
 #%%

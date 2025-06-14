@@ -13,13 +13,12 @@ from ..tools.airfoil import Airfoil, airfoil_interpolation
 from ..tools.camber import FlatPlate
 from .latticegrid import LatticeGrid
 from .latticepanel import LatticePanel
-from .latticesection import latticesection_from_dict
+from .latticesection import LatticeSection
 from .latticesheet import LatticeSheet
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from .latticesection import LatticeSection
     from .latticestrip import LatticeStrip
 
     AirfoilLike = Airfoil | FlatPlate
@@ -277,6 +276,136 @@ class LatticeSurface():
         rpt[j, 0] = pnl.pntb
         return rpt
 
+    @classmethod
+    def from_dict(cls, surfdata: dict[str, Any],
+                  display: bool = False) -> 'LatticeSurface':
+
+        name = surfdata['name']
+        mirror = surfdata.get('mirror', False)
+        if display: print(f'Loading Surface: {name:s}')
+        # Read in Defaults
+        defaults: dict[str, Any] = surfdata.get('defaults', {})
+        # Read in Functions
+        funcdatas: dict[str, Any] = surfdata.get('functions', {})
+        funcs = {}
+        for variable, funcdata in funcdatas.items():
+            funcs[variable] = SurfaceFunction.from_dict(variable, funcdata)
+        # Set defaults for functions to zero
+        for var in funcs:
+            if var not in defaults:
+                defaults[var] = 0.0
+        # Read Section Variables
+        sects: list['LatticeSection'] = []
+        for sectdata in surfdata['sections']:
+            sect = LatticeSection.from_dict(sectdata, defaults=defaults)
+            sects.append(sect)
+        # Linear Interpolate Missing Variables
+        x, y, z = [], [], []
+        c, a, af = [], [], []
+        cmb, xoc, zoc = [], [], []
+        b = []
+        for sect in sects:
+            x.append(sect.pnt.x)
+            y.append(sect.pnt.y)
+            z.append(sect.pnt.z)
+            c.append(sect.chord)
+            a.append(sect.twist)
+            af.append(sect.airfoil)
+            if sect.airfoil is None:
+                cmb.append(None)
+            else:
+                cmb.append(sect.camber)
+            b.append(sect.bpos)
+            xoc.append(sect.xoc)
+            zoc.append(sect.zoc)
+        # Check for None values in the first and last sections
+        if y[0] is None or z[0] is None:
+            raise ValueError('Need at least ypos or zpos specified in the first section.')
+        if y[-1] is None or z[-1] is None:
+            raise ValueError('Need at least ypos or zpos specified in the last section.')
+        # Check for None values in the middle sections
+        checky = True
+        checkz = True
+        for yi, zi, bi in zip(y, z, b):
+            if yi is None and bi is None:
+                checky = False
+            if zi is None and bi is None:
+                checkz = False
+        # Interpolate None values in y and z
+        if checky:
+            linear_interpolate_none(y, z)
+        elif checkz:
+            linear_interpolate_none(z, y)
+        else:
+            raise ValueError('Need at least ypos or zpos or bpos specified in sections.')
+        # Determine b values from known y and z values
+        bcur = 0.0
+        ycur = y[0]
+        zcur = z[0]
+        for i in range(len(b)):
+            if b[i] is None:
+                ydel = y[i] - ycur
+                zdel = z[i] - zcur
+                bdel = (ydel**2 + zdel**2)**0.5
+                b[i] = bcur + bdel
+                bcur = b[i]
+                ycur = y[i]
+                zcur = z[i]
+        # Interpolate None values in x, y, z, c, a, cmb, xoc, zoc
+        x = linear_interpolate_none(b, x)
+        y = linear_interpolate_none(b, y)
+        z = linear_interpolate_none(b, z)
+        c = linear_interpolate_none(b, c)
+        c = fill_none(c, 1.0)
+        a = linear_interpolate_none(b, a)
+        a = fill_none(a, 0.0)
+        cmb = linear_interpolate_airfoil(b, cmb)
+        xoc = linear_interpolate_none(b, xoc)
+        xoc = fill_none(xoc, 0.25)
+        zoc = linear_interpolate_none(b, zoc)
+        zoc = fill_none(zoc, 0.0)
+        display = False
+        if display:
+            print(f'{x = }')
+            print(f'{y = }')
+            print(f'{z = }')
+            print(f'{c = }')
+            print(f'{a = }')
+            print(f'{cmb = }')
+            print(f'{xoc = }')
+            print(f'{zoc = }')
+        for i, sect in enumerate(sects):
+            sect.pnt.x = x[i]
+            sect.pnt.y = y[i]
+            sect.pnt.z = z[i]
+            sect.chord = c[i]
+            sect.twist = a[i]
+            sect.xoc = xoc[i]
+            sect.zoc = zoc[i]
+            sect.airfoil = af[i]
+            sect.camber = cmb[i]
+        # Entire Surface Position
+        xpos = surfdata.get('xpos', 0.0)
+        ypos = surfdata.get('ypos', 0.0)
+        zpos = surfdata.get('zpos', 0.0)
+        twist = surfdata.get('twist', 0.0)
+        ruled = surfdata.get('ruled', False)
+        for sect in sects:
+            sect.offset_position(xpos, ypos, zpos)
+            sect.offset_twist(twist)
+            sect.ruled = ruled
+        surf = LatticeSurface(name, sects, mirror, funcs)
+        if 'cnum' in surfdata:
+            cnum = surfdata['cnum']
+            cspc = 'cosine'
+            if 'cspc' in surfdata:
+                cspc = surfdata['cspc'].lower()
+            if cspc == 'equal':
+                surf.set_chord_equal_distribution(cnum)
+            elif cspc in ('cosine', 'full-cosine'):
+                surf.set_chord_cosine_distribution(cnum)
+        return surf
+
     def __repr__(self) -> str:
         return '<LatticeSurface {:s}>'.format(self.name)
 
@@ -317,135 +446,6 @@ def linear_interpolate_airfoil(x: list[float],
                 raise ValueError('Cannot interpolate airfoil.')
         newaf.append(afi)
     return newaf
-
-
-def latticesurface_from_dict(surfdata: dict[str, Any],
-                             display: bool = False) -> LatticeSurface:
-    name = surfdata['name']
-    mirror = surfdata.get('mirror', False)
-    if display: print(f'Loading Surface: {name:s}')
-    # Read in Defaults
-    defaults: dict[str, Any] = surfdata.get('defaults', {})
-    # Read in Functions
-    funcdatas: dict[str, Any] = surfdata.get('functions', {})
-    funcs = {}
-    for variable, funcdata in funcdatas.items():
-        funcs[variable] = surffunc_from_json(variable, funcdata)
-    # Set defaults for functions to zero
-    for var in funcs:
-        if var not in defaults:
-            defaults[var] = 0.0
-    # Read Section Variables
-    sects: list['LatticeSection'] = []
-    for sectdata in surfdata['sections']:
-        sect = latticesection_from_dict(sectdata, defaults=defaults)
-        sects.append(sect)
-    # Linear Interpolate Missing Variables
-    x, y, z = [], [], []
-    c, a, af = [], [], []
-    cmb, xoc, zoc = [], [], []
-    b = []
-    for sect in sects:
-        x.append(sect.pnt.x)
-        y.append(sect.pnt.y)
-        z.append(sect.pnt.z)
-        c.append(sect.chord)
-        a.append(sect.twist)
-        af.append(sect.airfoil)
-        if sect.airfoil is None:
-            cmb.append(None)
-        else:
-            cmb.append(sect.camber)
-        b.append(sect.bpos)
-        xoc.append(sect.xoc)
-        zoc.append(sect.zoc)
-    # Check for None values in the first and last sections
-    if y[0] is None or z[0] is None:
-        raise ValueError('Need at least ypos or zpos specified in the first section.')
-    if y[-1] is None or z[-1] is None:
-        raise ValueError('Need at least ypos or zpos specified in the last section.')
-    # Check for None values in the middle sections
-    checky = True
-    checkz = True
-    for yi, zi, bi in zip(y, z, b):
-        if yi is None and bi is None:
-            checky = False
-        if zi is None and bi is None:
-            checkz = False
-    # Interpolate None values in y and z
-    if checky:
-        linear_interpolate_none(y, z)
-    elif checkz:
-        linear_interpolate_none(z, y)
-    else:
-        raise ValueError('Need at least ypos or zpos or bpos specified in sections.')
-    # Determine b values from known y and z values
-    bcur = 0.0
-    ycur = y[0]
-    zcur = z[0]
-    for i in range(len(b)):
-        if b[i] is None:
-            ydel = y[i] - ycur
-            zdel = z[i] - zcur
-            bdel = (ydel**2 + zdel**2)**0.5
-            b[i] = bcur + bdel
-            bcur = b[i]
-            ycur = y[i]
-            zcur = z[i]
-    # Interpolate None values in x, y, z, c, a, cmb, xoc, zoc
-    x = linear_interpolate_none(b, x)
-    y = linear_interpolate_none(b, y)
-    z = linear_interpolate_none(b, z)
-    c = linear_interpolate_none(b, c)
-    c = fill_none(c, 1.0)
-    a = linear_interpolate_none(b, a)
-    a = fill_none(a, 0.0)
-    cmb = linear_interpolate_airfoil(b, cmb)
-    xoc = linear_interpolate_none(b, xoc)
-    xoc = fill_none(xoc, 0.25)
-    zoc = linear_interpolate_none(b, zoc)
-    zoc = fill_none(zoc, 0.0)
-    display = False
-    if display:
-        print(f'{x = }')
-        print(f'{y = }')
-        print(f'{z = }')
-        print(f'{c = }')
-        print(f'{a = }')
-        print(f'{cmb = }')
-        print(f'{xoc = }')
-        print(f'{zoc = }')
-    for i, sect in enumerate(sects):
-        sect.pnt.x = x[i]
-        sect.pnt.y = y[i]
-        sect.pnt.z = z[i]
-        sect.chord = c[i]
-        sect.twist = a[i]
-        sect.xoc = xoc[i]
-        sect.zoc = zoc[i]
-        sect.airfoil = af[i]
-        sect.camber = cmb[i]
-    # Entire Surface Position
-    xpos = surfdata.get('xpos', 0.0)
-    ypos = surfdata.get('ypos', 0.0)
-    zpos = surfdata.get('zpos', 0.0)
-    twist = surfdata.get('twist', 0.0)
-    ruled = surfdata.get('ruled', False)
-    for sect in sects:
-        sect.offset_position(xpos, ypos, zpos)
-        sect.offset_twist(twist)
-        sect.ruled = ruled
-    surf = LatticeSurface(name, sects, mirror, funcs)
-    if 'cnum' in surfdata:
-        cnum = surfdata['cnum']
-        cspc = 'cosine'
-        if 'cspc' in surfdata:
-            cspc = surfdata['cspc'].lower()
-        if cspc == 'equal':
-            surf.set_chord_equal_distribution(cnum)
-        elif cspc in ('cosine', 'full-cosine'):
-            surf.set_chord_cosine_distribution(cnum)
-    return surf
 
 def linear_interpolate_none(x: list[float], y: list[float]) -> list[float]:
     for i, (xi, yi) in enumerate(zip(x, y)):
@@ -521,19 +521,19 @@ class SurfaceFunction():
         else:
             raise ValueError('Function type not implemented.')
 
-
-def surffunc_from_json(variable: str, funcdata: dict[str, Any]) -> SurfaceFunction:
-    functype = funcdata.get('functype')
-    srfcfunc = SurfaceFunction(variable, functype)
-    if functype == 'spline':
-        splinedata: dict[str, Any] = funcdata.get('spline')
-        spacing = splinedata.get('spacing', 'equal')
-        interp = splinedata.get('interp', 'linear')
-        values = splinedata.get('values')
-        srfcfunc.set_spline(spacing, values, interp)
-    elif functype == 'expression':
-        expression = funcdata.get('expression')
-        srfcfunc.set_expression(expression)
-    else:
-        raise ValueError('Function type not implemented.')
-    return srfcfunc
+    @classmethod
+    def from_dict(cls, variable: str, funcdata: dict[str, Any]) -> 'SurfaceFunction':
+        functype = funcdata.get('functype')
+        srfcfunc = cls(variable, functype)
+        if functype == 'spline':
+            splinedata: dict[str, Any] = funcdata.get('spline')
+            spacing = splinedata.get('spacing', 'equal')
+            interp = splinedata.get('interp', 'linear')
+            values = splinedata.get('values')
+            srfcfunc.set_spline(spacing, values, interp)
+        elif functype == 'expression':
+            expression = funcdata.get('expression')
+            srfcfunc.set_expression(expression)
+        else:
+            raise ValueError('Function type not implemented.')
+        return srfcfunc

@@ -1,14 +1,13 @@
 #%%
 # Load Dependencies
 from IPython.display import display
-
-from pyvlm import LatticeOptimum, latticesystem_from_json
+from pyvlm import LatticeOptimum, LatticeSystem
 from pyvlm.tools import elliptical_lift_force_distribution
 
 #%%
 # Create Lattice System
 jsonfilepath = '../files/Straight_Wing_Cosine_b100_c1.json'
-lsys = latticesystem_from_json(jsonfilepath)
+lsys = LatticeSystem.from_json(jsonfilepath)
 display(lsys)
 
 #%%

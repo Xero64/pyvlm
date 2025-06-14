@@ -1,14 +1,13 @@
 #%%
 # Import Dependencies
 from IPython.display import display_markdown
-
-from pyvlm import LatticeOptimum, latticesystem_from_json
+from pyvlm import LatticeOptimum, LatticeSystem
 from pyvlm.tools import Elliptical
 
 #%%
 # Low AR Wing
 jsonfilepath = '../files/Straight_Wing_Cosine_100.json'
-lsys = latticesystem_from_json(jsonfilepath)
+lsys = LatticeSystem.from_json(jsonfilepath)
 display_markdown(lsys)
 
 #%%

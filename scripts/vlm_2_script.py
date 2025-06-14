@@ -8,19 +8,18 @@ as that for the low aspect ratio wing resulting in the R.T. Jones distribution.
 #%%
 # Import Dependencies
 from IPython.display import display
-
-from pyvlm import LatticeOptimum, latticesystem_from_json
+from pyvlm import LatticeOptimum, LatticeSystem
 
 #%%
 # Low AR Wing
 jsonfilepath1 = '../files/Sweep_Low_AR_100.json'
-lsys1 = latticesystem_from_json(jsonfilepath1)
+lsys1 = LatticeSystem.from_json(jsonfilepath1)
 display(lsys1)
 
 #%%
 # High AR Wing
 jsonfilepath2 = '../files/Sweep_High_AR_100.json'
-lsys2 = latticesystem_from_json(jsonfilepath2)
+lsys2 = LatticeSystem.from_json(jsonfilepath2)
 display(lsys2)
 
 #%%

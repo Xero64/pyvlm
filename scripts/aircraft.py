@@ -1,8 +1,7 @@
 #%%
 # Import Dependencies
 from IPython.display import display_markdown
-
-from pyvlm import latticesystem_from_json
+from pyvlm import LatticeSystem
 from pyvlm.classes import LatticeTrim
 from pyvlm.outputs.msh import latticeresult_to_msh
 from pyvlm.outputs.prf import latticeresult_to_prf
@@ -10,7 +9,7 @@ from pyvlm.outputs.prf import latticeresult_to_prf
 #%%
 # Import Geometry
 jsonfilepath = '../files/Aircraft.json'
-lsys = latticesystem_from_json(jsonfilepath)
+lsys = LatticeSystem.from_json(jsonfilepath)
 
 #%%
 # Display System

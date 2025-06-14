@@ -5,20 +5,20 @@ from numpy import degrees, radians, zeros
 from numpy.linalg import norm, solve
 
 from ..tools.mass import Mass
-from .latticeresult import LatticeResult
+from .latticeresult import LatticeResult as Result
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from .latticesystem import LatticeSystem
+    from .latticesystem import LatticeSystem as System
 
 ANGTOL = 30.0
 
 
-class LatticeTrim(LatticeResult):
+class LatticeTrim(Result):
     targets: dict[str, tuple[str, float]] = None
 
-    def __init__(self, name: str, sys: 'LatticeSystem') -> None:
+    def __init__(self, name: str, sys: 'System') -> None:
         super().__init__(name, sys)
         self.targets = {
             'alpha': ('alpha', 0.0),
@@ -250,81 +250,81 @@ class LatticeTrim(LatticeResult):
                 print(f'Convergence failed for {self.name}.')
                 return False
 
+    @classmethod
+    def from_dict(cls, system: 'System', resdict: dict[str, Any],
+                  trim: bool = True) -> 'LatticeTrim':
 
-def latticetrim_from_dict(system: 'LatticeSystem', resdict: dict[str, Any],
-                          trim: bool = True) -> LatticeTrim:
+        from ..tools.trim import (GRAVACC, LevelTrim, LoadTrim, LoopingTrim,
+                                TurningTrim)
 
-    from ..tools.trim import (GRAVACC, LevelTrim, LoadTrim, LoopingTrim,
-                              TurningTrim)
+        name = resdict['name']
 
-    name = resdict['name']
+        if resdict['trim'] == 'Load Trim':
+            trim_condition = LoadTrim(name, system)
+            lift = resdict.get('L', None)
+            side = resdict.get('Y', None)
+            roll = resdict.get('l', None)
+            pitch = resdict.get('m', None)
+            yaw = resdict.get('n', None)
+            trim_condition.set_loads(lift, side, roll, pitch, yaw)
 
-    if resdict['trim'] == 'Load Trim':
-        trim_condition = LoadTrim(name, system)
-        lift = resdict.get('L', None)
-        side = resdict.get('Y', None)
-        roll = resdict.get('l', None)
-        pitch = resdict.get('m', None)
-        yaw = resdict.get('n', None)
-        trim_condition.set_loads(lift, side, roll, pitch, yaw)
+        elif resdict['trim'] == 'Looping Trim':
+            trim_condition = LoopingTrim(name, system)
+            load_factor = resdict.get('load factor', 1.0)
+            trim_condition.set_load_factor(load_factor)
 
-    elif resdict['trim'] == 'Looping Trim':
-        trim_condition = LoopingTrim(name, system)
-        load_factor = resdict.get('load factor', 1.0)
-        trim_condition.set_load_factor(load_factor)
+        elif resdict['trim'] == 'Turning Trim':
+            trim_condition = TurningTrim(name, system)
+            bang = resdict.get('bank angle', 0.0)
+            trim_condition.set_bankang(bang)
 
-    elif resdict['trim'] == 'Turning Trim':
-        trim_condition = TurningTrim(name, system)
-        bang = resdict.get('bank angle', 0.0)
-        trim_condition.set_bankang(bang)
+        elif resdict['trim'] == 'Level Trim':
+            trim_condition = LevelTrim(name, system)
 
-    elif resdict['trim'] == 'Level Trim':
-        trim_condition = LevelTrim(name, system)
+        rho = resdict.get('density', 1.0)
+        trim_condition.set_density(rho)
 
-    rho = resdict.get('density', 1.0)
-    trim_condition.set_density(rho)
+        speed = resdict.get('speed', 1.0)
+        trim_condition.set_speed(speed)
 
-    speed = resdict.get('speed', 1.0)
-    trim_condition.set_speed(speed)
+        gravacc = resdict.get('gravacc', GRAVACC)
+        trim_condition.set_gravitational_acceleration(gravacc)
 
-    gravacc = resdict.get('gravacc', GRAVACC)
-    trim_condition.set_gravitational_acceleration(gravacc)
+        initstate = {}
+        initstate['alpha'] = resdict.get('alpha', 0.0)
+        initstate['beta'] = resdict.get('beta', 0.0)
+        initstate['pbo2V'] = resdict.get('pbo2V', 0.0)
+        initstate['qco2V'] = resdict.get('qco2V', 0.0)
+        initstate['rbo2V'] = resdict.get('rbo2V', 0.0)
+        trim_condition.set_initial_state(initstate)
 
-    initstate = {}
-    initstate['alpha'] = resdict.get('alpha', 0.0)
-    initstate['beta'] = resdict.get('beta', 0.0)
-    initstate['pbo2V'] = resdict.get('pbo2V', 0.0)
-    initstate['qco2V'] = resdict.get('qco2V', 0.0)
-    initstate['rbo2V'] = resdict.get('rbo2V', 0.0)
-    trim_condition.set_initial_state(initstate)
+        initctrls = {}
+        for control in system.ctrls:
+            initctrls[control] = resdict.get(control, 0.0)
+        trim_condition.set_initial_controls(initctrls)
 
-    initctrls = {}
-    for control in system.ctrls:
-        initctrls[control] = resdict.get(control, 0.0)
-    trim_condition.set_initial_controls(initctrls)
-
-    mass = resdict.get('mass', None)
-    if isinstance(mass, dict):
-        mass = Mass(**mass)
-    elif isinstance(mass, float):
-        mass = Mass(name = trim_condition.name, mass = mass, xcm = system.rref.x,
-                    ycm = system.rref.y, zcm = system.rref.z)
-    elif mass is None:
-        if system.mass is not None:
-            mass = system.mass
-        else:
-            mass = Mass(trim_condition.name, mass = 1.0, xcm = system.rref.x,
+        mass = resdict.get('mass', None)
+        if isinstance(mass, dict):
+            mass = Mass(**mass)
+        elif isinstance(mass, float):
+            mass = Mass(name = trim_condition.name, mass = mass, xcm = system.rref.x,
                         ycm = system.rref.y, zcm = system.rref.z)
-    trim_condition.set_mass(mass)
+        elif mass is None:
+            if system.mass is not None:
+                mass = system.mass
+            else:
+                mass = Mass(trim_condition.name, mass = 1.0, xcm = system.rref.x,
+                            ycm = system.rref.y, zcm = system.rref.z)
+        trim_condition.set_mass(mass)
 
-    trim_result = trim_condition.create_trim_result()
+        trim_result = trim_condition.create_trim_result()
 
-    mach = resdict.get('mach', 0.0)
-    trim_result.set_state(mach = mach)
+        mach = resdict.get('mach', 0.0)
+        trim_result.set_state(mach = mach)
 
-    system.results[name] = trim_result
+        system.results[name] = trim_result
 
-    if trim:
-        trim_result.trim()
+        if trim:
+            trim_result.trim()
 
-    return trim_result
+        return trim_result

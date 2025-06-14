@@ -1,7 +1,6 @@
 #%%
 # Import Dependencies
 from pygeom.tools.spacing import full_cosine_spacing
-
 from pyvlm.tools.airfoil import airfoil_from_dat
 from pyvlm.tools.camber import NACA4
 

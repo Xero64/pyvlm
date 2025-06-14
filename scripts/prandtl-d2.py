@@ -1,13 +1,12 @@
 #%%
 # Import Dependencies
 from IPython.display import display_markdown
-
-from pyvlm import LatticeResult, latticesystem_from_json
+from pyvlm import LatticeResult, LatticeSystem
 
 #%%
 # Create Lattice System
 jsonfilepath = '../files/Prandtl-D2.json'
-lsys = latticesystem_from_json(jsonfilepath)
+lsys = LatticeSystem.from_json(jsonfilepath)
 display_markdown(lsys)
 
 #%%

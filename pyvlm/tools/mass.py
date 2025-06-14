@@ -64,6 +64,30 @@ class Mass():
         frmstr += '}'
         return frmstr.format(self.name, self.mass)
 
+    @classmethod
+    def from_dict(cls, massdata: dict) -> 'Mass':
+        """Create a Mass object from a dictionary."""
+        name = massdata['name']
+        m = massdata['mass']
+        xcm = massdata['xcm']
+        ycm = massdata['ycm']
+        zcm = massdata['zcm']
+        mass = cls(name, m, xcm, ycm, zcm)
+        if 'Ixx' in massdata:
+            mass.Ixx = massdata['Ixx']
+        if 'Ixy' in massdata:
+            mass.Ixx = massdata['Ixy']
+        if 'Ixz' in massdata:
+            mass.Ixx = massdata['Ixz']
+        if 'Iyy' in massdata:
+            mass.Ixx = massdata['Iyy']
+        if 'Iyz' in massdata:
+            mass.Ixx = massdata['Iyz']
+        if 'Izz' in massdata:
+            mass.Ixx = massdata['Izz']
+        return mass
+
+
 class MassCollection(Mass):
     masses = None
 
@@ -117,47 +141,29 @@ class MassCollection(Mass):
         frmstr += '}'
         return frmstr.format(self.name, self.mass)
 
-def mass_from_data(massdata: dict):
-    name = massdata['name']
-    m = massdata['mass']
-    xcm = massdata['xcm']
-    ycm = massdata['ycm']
-    zcm = massdata['zcm']
-    mass = Mass(name, m, xcm, ycm, zcm)
-    if 'Ixx' in massdata:
-        mass.Ixx = massdata['Ixx']
-    if 'Ixy' in massdata:
-        mass.Ixx = massdata['Ixy']
-    if 'Ixz' in massdata:
-        mass.Ixx = massdata['Ixz']
-    if 'Iyy' in massdata:
-        mass.Ixx = massdata['Iyy']
-    if 'Iyz' in massdata:
-        mass.Ixx = massdata['Iyz']
-    if 'Izz' in massdata:
-        mass.Ixx = massdata['Izz']
-    return mass
+    @classmethod
+    def from_dict(cls, masscoldata: dict, masses: dict) -> 'MassCollection':
+        """Create a MassCollection object from a dictionary."""
+        name = masscoldata['name']
+        masslist = masscoldata['masses']
+        massdict = {}
+        for m in masslist:
+            if m in masses:
+                massdict[m] = masses[m]
+            else:
+                print(f'Could not find {m:s} in masses.')
+        return cls(name, massdict)
 
-def masscol_from_data(masscoldata: dict, masses: dict):
-    name = masscoldata['name']
-    masslist = masscoldata['masses']
-    massdict = {}
-    for m in masslist:
-        if m in masses:
-            massdict[m] = masses[m]
-        else:
-            print(f'Could not find {m:s} in masses.')
-    return MassCollection(name, massdict)
 
 def masses_from_data(massesdata: dict) -> dict[str, Mass | MassCollection]:
     masses = {}
     for name, mdata in massesdata.items():
         mdata['name'] = name
         if 'masses' in mdata:
-            masscol = masscol_from_data(mdata, masses)
+            masscol = MassCollection.from_dict(mdata, masses)
             masses[masscol.name] = masscol
         else:
-            mass = mass_from_data(mdata)
+            mass = Mass.from_dict(mdata)
             masses[mass.name] = mass
     return masses
 

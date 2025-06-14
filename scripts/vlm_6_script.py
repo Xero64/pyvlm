@@ -4,15 +4,14 @@ from IPython.display import display
 from matplotlib.pyplot import figure
 from numpy import asarray, asin, atan2, degrees, pi, radians
 from pygeom.geom1d import LinearSpline1D
-
-from pyvlm import LatticeOptimum, LatticeResult, latticesystem_from_json
+from pyvlm import LatticeOptimum, LatticeResult, LatticeSystem
 from pyvlm.tools import Bell, Mass, bell_lift_force_distribution
 from pyvlm.tools.trim import LevelTrim
 
 #%%
 # Create Lattice System
 jsonfilepath = '../files/Test_rhofw.json'
-lsys = latticesystem_from_json(jsonfilepath)
+lsys = LatticeSystem.from_json(jsonfilepath)
 display(lsys)
 
 #%%

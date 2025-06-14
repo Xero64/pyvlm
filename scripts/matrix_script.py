@@ -5,14 +5,13 @@ from time import perf_counter
 
 from numpy import fill_diagonal
 from numpy.linalg import norm
-
-from pyvlm import LatticeSystem, latticesystem_from_json
+from pyvlm import LatticeSystem
 from pyvlm.classes.latticesystem import velocity_matrix
 
 #%%
 # Create Lattice System
 jsonfilepath = '../files/Test_matrix.json'
-lsys = latticesystem_from_json(jsonfilepath, mesh=False)
+lsys = LatticeSystem.from_json(jsonfilepath, mesh=False)
 print(lsys)
 
 #%%

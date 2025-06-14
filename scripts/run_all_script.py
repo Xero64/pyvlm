@@ -2,7 +2,7 @@
 # Import Dependencies
 from os import curdir
 from os.path import join
-from subprocess import run
+
 from pyvlm.__main__ import main
 
 #%%

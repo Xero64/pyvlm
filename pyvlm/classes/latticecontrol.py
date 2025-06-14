@@ -46,24 +46,15 @@ class LatticeControl():
     def add_panel(self, pnl: 'LatticePanel') -> None:
         self.pnls.append(pnl)
 
-def latticecontrol_from_json(name: str, controldata: dict[str, Any]) -> LatticeControl:
-    xhinge = controldata['xhinge']
-    posgain = controldata.get('posgain', 1.0)
-    neggain = controldata.get('neggain', 1.0)
-    ctrl = LatticeControl(name, posgain, neggain, xhinge)
-    hvec = Vector(0.0, 0.0, 0.0)
-    if 'hvec' in controldata:
-        hvec = vector_from_json(controldata['hvec'])
-    ctrl.set_hinge_vector(hvec)
-    ctrl.reverse = controldata.get('reverse', False)
-    return ctrl
-
-def vector_from_json(vectordata: dict[str, float]) -> Vector:
-    x, y, z = None, None, None
-    if 'x' in vectordata:
-        x = vectordata['x']
-    if 'y' in vectordata:
-        y = vectordata['y']
-    if 'z' in vectordata:
-        z = vectordata['z']
-    return Vector(x, y, z)
+    @classmethod
+    def from_dict(cls, name: str, controldata: dict[str, Any]) -> 'LatticeControl':
+        xhinge = controldata['xhinge']
+        posgain = controldata.get('posgain', 1.0)
+        neggain = controldata.get('neggain', 1.0)
+        ctrl = cls(name, posgain, neggain, xhinge)
+        hvec = Vector(0.0, 0.0, 0.0)
+        if 'hvec' in controldata:
+            hvec = Vector.from_dict(controldata['hvec'])
+        ctrl.set_hinge_vector(hvec)
+        ctrl.reverse = controldata.get('reverse', False)
+        return ctrl

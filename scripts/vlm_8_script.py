@@ -1,13 +1,12 @@
 #%%
 # Load Dependencies
 from IPython.display import display
-
-from pyvlm import LatticeResult, latticesystem_from_json
+from pyvlm import LatticeResult, LatticeSystem
 
 #%%
 # Create Lattice System
 jsonfilepath = '../files/Straight_Wing_Cosine_100.json'
-lsys = latticesystem_from_json(jsonfilepath)
+lsys = LatticeSystem.from_json(jsonfilepath)
 display(lsys)
 
 #%%

@@ -1,13 +1,12 @@
 #%%
 # Load Dependencies
 from IPython.display import display
-
-from pyvlm import LatticeResult, latticesystem_from_json
+from pyvlm import LatticeResult, LatticeSystem
 
 #%%
 # Create Lattice System
 jsonfilepath = '../files/Straight_Wing_Control.json'
-lsys = latticesystem_from_json(jsonfilepath)
+lsys = LatticeSystem.from_json(jsonfilepath)
 display(lsys)
 
 #%%
@@ -20,7 +19,6 @@ display(lsys.panel_geometry)
 
 #%%
 # Original Case
-
 lres_org = LatticeResult('Baseline', lsys)
 lres_org.set_state(alpha=3.0)#, pbo2V=0.002)
 display(lres_org)

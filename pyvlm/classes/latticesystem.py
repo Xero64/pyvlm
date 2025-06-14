@@ -363,7 +363,7 @@ class LatticeSystem():
         return table
 
     def copy_from_source(self) -> 'LatticeSystem':
-        sys = latticesystem_from_json(self.source)
+        sys = self.__class__.from_json(self.source)
         for attr in self.__dict__:
             if attr[0] == '_':
                 if hasattr(self.__dict__[attr], 'copy'):
@@ -404,109 +404,114 @@ class LatticeSystem():
     def _repr_markdown_(self) -> str:
         return self.__str__()
 
-def latticesystem_from_json(jsonfilepath: str, mesh: bool = True,
-                            trim: bool = True) -> LatticeSystem:
-    from json import load
+    @classmethod
+    def from_json(cls, jsonfilepath: str, mesh: bool = True,
+                  trim: bool = True) -> 'LatticeSystem':
+        """Create a LatticeSystem from a JSON file."""
 
-    with open(jsonfilepath, 'rt') as jsonfile:
-        sysdct = load(jsonfile)
+        from json import load
 
-    sysdct['source'] = jsonfilepath
+        with open(jsonfilepath, 'rt') as jsonfile:
+            sysdct = load(jsonfile)
 
-    sys = latticesystem_from_dict(sysdct, mesh=mesh, trim=trim)
+        sysdct['source'] = jsonfilepath
 
-    return sys
+        sys = cls.from_dict(sysdct, mesh=mesh, trim=trim)
 
-def latticesystem_from_dict(sysdct: dict, mesh: bool = True,
-                            trim: bool = True) -> LatticeSystem:
+        return sys
 
-    from os.path import dirname, exists, join
+    @classmethod
+    def from_dict(cls, sysdct: dict, mesh: bool = True,
+                  trim: bool = True) -> 'LatticeSystem':
+        """Create a LatticeSystem from a dictionary."""
 
-    from pyvlm.tools import masses_from_data, masses_from_json
+        from os.path import dirname, exists, join
 
-    from .latticeresult import latticeresult_from_dict
-    from .latticesurface import latticesurface_from_dict
-    from .latticetrim import latticetrim_from_dict
+        from pyvlm.tools import masses_from_data, masses_from_json
 
-    jsonfilepath = sysdct.get('source', '.')
+        from .latticeresult import LatticeResult
+        from .latticesurface import LatticeSurface
+        from .latticetrim import LatticeTrim
 
-    path = dirname(jsonfilepath)
+        jsonfilepath = sysdct.get('source', '.')
 
-    surfsdata: list[dict[str, Any]] = sysdct.get('surfaces', [])
+        path = dirname(jsonfilepath)
 
-    for surfdata in surfsdata:
-        if 'defaults' in surfdata:
-            if 'airfoil' in surfdata['defaults']:
-                airfoil = surfdata['defaults']['airfoil']
-                if airfoil[-4:] == '.dat':
-                    airfoil = join(path, airfoil)
-                    if not exists(airfoil):
-                        print(f'Airfoil {airfoil} does not exist.')
-                        del surfdata['defaults']['airfoil']
-                    else:
-                        surfdata['defaults']['airfoil'] = airfoil
-        sectsdata: list[dict[str, Any]] = surfdata.get('sections', [])
-        for sectdata in sectsdata:
-            if 'airfoil' in sectdata:
-                airfoil = sectdata['airfoil']
-                if airfoil[-4:] == '.dat':
-                    airfoil = join(path, airfoil)
-                    if not exists(airfoil):
-                        print(f'Airfoil {airfoil} does not exist.')
-                        del sectdata['airfoil']
-                    else:
-                        sectdata['airfoil'] = airfoil
+        surfsdata: list[dict[str, Any]] = sysdct.get('surfaces', [])
 
-    name = sysdct['name']
-    srfcs = []
-    for surfdata in sysdct['surfaces']:
-        srfc = latticesurface_from_dict(surfdata)
-        srfcs.append(srfc)
-    bref = sysdct['bref']
-    cref = sysdct['cref']
-    sref = sysdct['sref']
-    xref = sysdct['xref']
-    yref = sysdct['yref']
-    zref = sysdct['zref']
-    rref = Vector(xref, yref, zref)
-    sys = LatticeSystem(name, srfcs, bref, cref, sref, rref)
-    sys._cdo = sysdct.get('CDo', 0.0)
+        for surfdata in surfsdata:
+            if 'defaults' in surfdata:
+                if 'airfoil' in surfdata['defaults']:
+                    airfoil = surfdata['defaults']['airfoil']
+                    if airfoil[-4:] == '.dat':
+                        airfoil = join(path, airfoil)
+                        if not exists(airfoil):
+                            print(f'Airfoil {airfoil} does not exist.')
+                            del surfdata['defaults']['airfoil']
+                        else:
+                            surfdata['defaults']['airfoil'] = airfoil
+            sectsdata: list[dict[str, Any]] = surfdata.get('sections', [])
+            for sectdata in sectsdata:
+                if 'airfoil' in sectdata:
+                    airfoil = sectdata['airfoil']
+                    if airfoil[-4:] == '.dat':
+                        airfoil = join(path, airfoil)
+                        if not exists(airfoil):
+                            print(f'Airfoil {airfoil} does not exist.')
+                            del sectdata['airfoil']
+                        else:
+                            sectdata['airfoil'] = airfoil
 
-    masses = {}
-    if 'masses' in sysdct:
-        if isinstance(sysdct['masses'], dict):
-            masses = masses_from_data(sysdct['masses'])
-        elif isinstance(sysdct['masses'], str):
-            if sysdct['masses'][-5:] == '.json':
-                massfilename = sysdct['masses']
-                massfilepath = join(path, massfilename)
-            masses = masses_from_json(massfilepath)
-    sys.masses = masses
-    mass = sysdct.get('mass', None)
-    if isinstance(mass, float):
-        sys.mass = Mass(sys.name, mass = mass, xcm = sys.rref.x,
-                    ycm = sys.rref.y, zcm = sys.rref.z)
-    elif isinstance(mass, str):
-        sys.mass = masses[mass]
-    else:
-        sys.mass = Mass(sys.name, mass = 1.0, xcm = sys.rref.x,
-                    ycm = sys.rref.y, zcm = sys.rref.z)
+        name = sysdct['name']
+        srfcs = []
+        for surfdata in sysdct['surfaces']:
+            srfc = LatticeSurface.from_dict(surfdata)
+            srfcs.append(srfc)
+        bref = sysdct['bref']
+        cref = sysdct['cref']
+        sref = sysdct['sref']
+        xref = sysdct['xref']
+        yref = sysdct['yref']
+        zref = sysdct['zref']
+        rref = Vector(xref, yref, zref)
+        sys = LatticeSystem(name, srfcs, bref, cref, sref, rref)
+        sys._cdo = sysdct.get('CDo', 0.0)
 
-    if 'cases' in sysdct and sysdct:
-        sys.mesh()
-        for i in range(len(sysdct['cases'])):
-            resdata = sysdct['cases'][i]
-            if 'trim' in resdata:
-                latticetrim_from_dict(sys, resdata, trim=trim)
-            else:
-                latticeresult_from_dict(sys, resdata)
+        masses = {}
+        if 'masses' in sysdct:
+            if isinstance(sysdct['masses'], dict):
+                masses = masses_from_data(sysdct['masses'])
+            elif isinstance(sysdct['masses'], str):
+                if sysdct['masses'][-5:] == '.json':
+                    massfilename = sysdct['masses']
+                    massfilepath = join(path, massfilename)
+                masses = masses_from_json(massfilepath)
+        sys.masses = masses
+        mass = sysdct.get('mass', None)
+        if isinstance(mass, float):
+            sys.mass = Mass(sys.name, mass = mass, xcm = sys.rref.x,
+                        ycm = sys.rref.y, zcm = sys.rref.z)
+        elif isinstance(mass, str):
+            sys.mass = masses[mass]
+        else:
+            sys.mass = Mass(sys.name, mass = 1.0, xcm = sys.rref.x,
+                        ycm = sys.rref.y, zcm = sys.rref.z)
 
-    sys.source = jsonfilepath
+        if 'cases' in sysdct and sysdct:
+            sys.mesh()
+            for i in range(len(sysdct['cases'])):
+                resdata = sysdct['cases'][i]
+                if 'trim' in resdata:
+                    LatticeTrim.from_dict(sys, resdata, trim=trim)
+                else:
+                    LatticeResult.from_dict(sys, resdata)
 
-    if mesh and sys.pnls is None:
-        sys.mesh()
+        sys.source = jsonfilepath
 
-    return sys
+        if mesh and sys.pnls is None:
+            sys.mesh()
+
+        return sys
 
 def velocity_matrix(ra: Vector, rb: Vector, rc: Vector,
                     betm: float=1.0, tol: float=1e-12) -> Vector:

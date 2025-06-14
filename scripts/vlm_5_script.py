@@ -2,8 +2,7 @@
 # Import Dependencies
 from IPython.display import display
 from matplotlib.pyplot import subplots
-
-from pyvlm import LatticeOptimum, latticesystem_from_json
+from pyvlm import LatticeOptimum, LatticeSystem
 from pyvlm.tools import (bell_lift_force_distribution,
                          elliptical_lift_force_distribution)
 
@@ -16,13 +15,13 @@ V = 12.9173511047957 # m/s
 #%%
 # Low AR Wing
 jsonfilepath1 = '../files/Test_rhofw_elliptical.json'
-lsys1 = latticesystem_from_json(jsonfilepath1)
+lsys1 = LatticeSystem.from_json(jsonfilepath1)
 display(lsys1)
 
 #%%
 # High AR Wing
 jsonfilepath2 = '../files/Test_rhofw_bell.json'
-lsys2 = latticesystem_from_json(jsonfilepath2)
+lsys2 = LatticeSystem.from_json(jsonfilepath2)
 display(lsys2)
 
 #%%

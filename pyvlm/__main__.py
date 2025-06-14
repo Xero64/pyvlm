@@ -1,7 +1,7 @@
 from json import load
 from sys import argv
 
-from .classes import latticesystem_from_dict
+from .classes import LatticeSystem
 from .outputs import latticesystem_to_md, outputs_from_json
 
 
@@ -18,7 +18,7 @@ def main(jsonfilepath: str = '', mdfilepath: str = ''):
 
     sysdct['source'] = jsonfilepath
 
-    sys = latticesystem_from_dict(sysdct)
+    sys = LatticeSystem.from_dict(sysdct)
 
     if mdfilepath == '':
         if len(argv) == 3:

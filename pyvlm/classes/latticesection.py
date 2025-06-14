@@ -6,7 +6,7 @@ from pygeom.tools.spacing import (equal_spacing, full_cosine_spacing,
 
 from ..tools.airfoil import airfoil_from_dat
 from ..tools.camber import NACA4, FlatPlate, NACA6Series
-from .latticecontrol import LatticeControl, latticecontrol_from_json
+from .latticecontrol import LatticeControl
 
 if TYPE_CHECKING:
     from ..tools.airfoil import Airfoil
@@ -107,40 +107,40 @@ class LatticeSection():
     # def get_camber(self, xc: float):
         # return self.camber.cubic_interp(xc)
 
+    @classmethod
+    def from_dict(cls, sectdata: dict[str, Any],
+                  defaults: dict[str, Any]) -> 'LatticeSection':
+        """Create a LatticeSection object from a dictionary."""
+        xpos = sectdata.get('xpos', None)
+        ypos = sectdata.get('ypos', None)
+        zpos = sectdata.get('zpos', None)
+        point = Vector(xpos, ypos, zpos)
+        chord = sectdata.get('chord', defaults.get('chord', None))
+        twist = sectdata.get('twist', defaults.get('twist', None))
+        airfoil = sectdata.get('airfoil', defaults.get('airfoil', None))
+        cdo = sectdata.get('cdo', defaults.get('cdo', 0.0))
+        noload = sectdata.get('noload', defaults.get('noload', False))
+        sect = LatticeSection(point, chord, twist)
+        sect.bpos = sectdata.get('bpos', None)
+        sect.xoc = sectdata.get('xoc', defaults.get('xoc', None))
+        sect.zoc = sectdata.get('zoc', defaults.get('zoc', None))
+        sect.set_cdo(cdo)
+        sect.set_noload(noload)
+        sect.set_airfoil(airfoil)
+        if 'bnum' in sectdata and 'bspc' in sectdata:
+            bnum = sectdata['bnum']
+            bspc = sectdata['bspc']
+            if bspc == 'equal':
+                sect.set_span_equal_spacing(bnum)
+            elif bspc in ('full-cosine', 'cosine'):
+                sect.set_span_cosine_spacing(bnum)
+            elif bspc == 'semi-cosine':
+                sect.set_span_semi_cosine_spacing(bnum)
+        if 'controls' in sectdata:
+            for name in sectdata['controls']:
+                ctrl = LatticeControl.from_dict(name, sectdata['controls'][name])
+                sect.add_control(ctrl)
+        return sect
+
     def __repr__(self):
         return '<pyvlm.LatticeSection at {}>'.format(self.pnt)
-
-
-def latticesection_from_dict(sectdata: dict[str, Any],
-                             defaults: dict[str, Any]) -> LatticeSection:
-    """Create a LatticeSection object from a dictionary."""
-    xpos = sectdata.get('xpos', None)
-    ypos = sectdata.get('ypos', None)
-    zpos = sectdata.get('zpos', None)
-    point = Vector(xpos, ypos, zpos)
-    chord = sectdata.get('chord', defaults.get('chord', None))
-    twist = sectdata.get('twist', defaults.get('twist', None))
-    airfoil = sectdata.get('airfoil', defaults.get('airfoil', None))
-    cdo = sectdata.get('cdo', defaults.get('cdo', 0.0))
-    noload = sectdata.get('noload', defaults.get('noload', False))
-    sect = LatticeSection(point, chord, twist)
-    sect.bpos = sectdata.get('bpos', None)
-    sect.xoc = sectdata.get('xoc', defaults.get('xoc', None))
-    sect.zoc = sectdata.get('zoc', defaults.get('zoc', None))
-    sect.set_cdo(cdo)
-    sect.set_noload(noload)
-    sect.set_airfoil(airfoil)
-    if 'bnum' in sectdata and 'bspc' in sectdata:
-        bnum = sectdata['bnum']
-        bspc = sectdata['bspc']
-        if bspc == 'equal':
-            sect.set_span_equal_spacing(bnum)
-        elif bspc in ('full-cosine', 'cosine'):
-            sect.set_span_cosine_spacing(bnum)
-        elif bspc == 'semi-cosine':
-            sect.set_span_semi_cosine_spacing(bnum)
-    if 'controls' in sectdata:
-        for name in sectdata['controls']:
-            ctrl = latticecontrol_from_json(name, sectdata['controls'][name])
-            sect.add_control(ctrl)
-    return sect
