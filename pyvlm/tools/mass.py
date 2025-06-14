@@ -89,9 +89,9 @@ class Mass():
 
 
 class MassCollection(Mass):
-    masses = None
+    masses: dict[str, Mass] = None
 
-    def __init__(self, name: str, masses: dict):
+    def __init__(self, name: str, masses: dict[str, Mass]) -> None:
         super(MassCollection, self).__init__(name)
         self.masses = masses
         self.update()
