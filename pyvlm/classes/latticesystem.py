@@ -380,33 +380,10 @@ class LatticeSystem():
         veli, vela, velb = velocity_matrix(self.ra, self.rb, rc)
         return (veli + vela - velb)/FOURPI
 
-    def __repr__(self) -> str:
-        return '<LatticeSystem: {:s}>'.format(self.name)
-
-    def __str__(self) -> str:
-        outstr = '# Lattice System '+self.name+'\n'
-        table = MDTable()
-        table.add_column('Name', 's', data=[self.name])
-        table.add_column('Sref', 'g', data=[self.sref])
-        table.add_column('cref', 'g', data=[self.cref])
-        table.add_column('bref', 'g', data=[self.bref])
-        table.add_column('xref', '.3f', data=[self.rref.x])
-        table.add_column('yref', '.3f', data=[self.rref.y])
-        table.add_column('zref', '.3f', data=[self.rref.z])
-        outstr += table._repr_markdown_()
-        table = MDTable()
-        if self.strps is not None:
-            table.add_column('# Strips', 'd', data=[len(self.strps)])
-        if self.pnls is not None:
-            table.add_column('# Panels', 'd', data=[len(self.pnls)])
-        if self.ctrls is not None:
-            table.add_column('# Controls', 'd', data=[len(self.ctrls)])
-        if len(table.columns) > 0:
-            outstr += table._repr_markdown_()
-        return outstr
-
-    def _repr_markdown_(self) -> str:
-        return self.__str__()
+    def trim(self) -> None:
+        for result in self.results.values():
+            if isinstance(result, LatticeTrim):
+                result.trim()
 
     @classmethod
     def from_json(cls, jsonfilepath: str, mesh: bool = True,
@@ -419,6 +396,11 @@ class LatticeSystem():
         sysdct['source'] = jsonfilepath
 
         sys = cls.from_dict(sysdct, mesh=mesh, trim=trim)
+
+        sys.load_initial_state(sys.source)
+
+        if trim:
+            sys.trim()
 
         return sys
 
@@ -468,7 +450,7 @@ class LatticeSystem():
         yref = sysdct['yref']
         zref = sysdct['zref']
         rref = Vector(xref, yref, zref)
-        sys = LatticeSystem(name, srfcs, bref, cref, sref, rref)
+        sys = cls(name, srfcs, bref, cref, sref, rref)
         sys._cdo = sysdct.get('CDo', 0.0)
 
         masses = {}
@@ -493,12 +475,7 @@ class LatticeSystem():
 
         if 'cases' in sysdct and sysdct:
             sys.mesh()
-            for i in range(len(sysdct['cases'])):
-                resdata = sysdct['cases'][i]
-                if 'trim' in resdata:
-                    LatticeTrim.from_dict(sys, resdata, trim=trim)
-                else:
-                    LatticeResult.from_dict(sys, resdata)
+            sys.results_from_dict(sysdct['cases'], trim = False)
 
         sys.source = jsonfilepath
 
@@ -507,7 +484,20 @@ class LatticeSystem():
 
         sys.load_initial_state(sys.source)
 
+        if trim:
+            sys.trim()
+
         return sys
+
+    def results_from_dict(self, cases: dict[str, Any],
+                          trim: bool = True) -> 'LatticeResult':
+
+        for i in range(len(cases)):
+            resdata = cases[i]
+            if 'trim' in resdata:
+                LatticeTrim.from_dict(self, resdata, trim=False)
+            else:
+                LatticeResult.from_dict(self, resdata)
 
     def save_initial_state(self, infilepath: str,
                            outfilepath: str | None = None,
@@ -561,6 +551,35 @@ class LatticeSystem():
                 for control in self.ctrls:
                     value = result.ctrls[control]
                     result.ctrls[control] = resdata.get(control, value)
+
+    def __repr__(self) -> str:
+        return '<LatticeSystem: {:s}>'.format(self.name)
+
+    def __str__(self) -> str:
+        outstr = '# Lattice System '+self.name+'\n'
+        table = MDTable()
+        table.add_column('Name', 's', data=[self.name])
+        table.add_column('Sref', 'g', data=[self.sref])
+        table.add_column('cref', 'g', data=[self.cref])
+        table.add_column('bref', 'g', data=[self.bref])
+        table.add_column('xref', '.3f', data=[self.rref.x])
+        table.add_column('yref', '.3f', data=[self.rref.y])
+        table.add_column('zref', '.3f', data=[self.rref.z])
+        outstr += table._repr_markdown_()
+        table = MDTable()
+        if self.strps is not None:
+            table.add_column('# Strips', 'd', data=[len(self.strps)])
+        if self.pnls is not None:
+            table.add_column('# Panels', 'd', data=[len(self.pnls)])
+        if self.ctrls is not None:
+            table.add_column('# Controls', 'd', data=[len(self.ctrls)])
+        if len(table.columns) > 0:
+            outstr += table._repr_markdown_()
+        return outstr
+
+    def _repr_markdown_(self) -> str:
+        return self.__str__()
+
 
 def velocity_matrix(ra: Vector, rb: Vector, rc: Vector,
                     betm: float=1.0, tol: float=1e-12) -> Vector:
