@@ -54,24 +54,24 @@
             ]
         },
         {
-            "name": "Test pbo2V",
-            "pbo2V": 0.01,
+            "name": "Test pbo2v",
+            "pbo2v": 0.01,
             "outputs": [
                 "stability derivatives",
                 "stability derivatives body"
             ]
         },
         {
-            "name": "Test qco2V",
-            "qco2V": 0.01,
+            "name": "Test qco2v",
+            "qco2v": 0.01,
             "outputs": [
                 "stability derivatives",
                 "stability derivatives body"
             ]
         },
         {
-            "name": "Test rbo2V",
-            "rbo2V": 0.01,
+            "name": "Test rbo2v",
+            "rbo2v": 0.01,
             "outputs": [
                 "stability derivatives",
                 "stability derivatives body"
@@ -96,8 +96,8 @@
             ]
         },
         {
-            "name": "Test pbo2V Mach",
-            "pbo2V": 0.01,
+            "name": "Test pbo2v Mach",
+            "pbo2v": 0.01,
             "mach": 0.4,
             "outputs": [
                 "stability derivatives",
@@ -105,8 +105,8 @@
             ]
         },
         {
-            "name": "Test qco2V Mach",
-            "qco2V": 0.01,
+            "name": "Test qco2v Mach",
+            "qco2v": 0.01,
             "mach": 0.4,
             "outputs": [
                 "stability derivatives",
@@ -114,8 +114,8 @@
             ]
         },
         {
-            "name": "Test rbo2V Mach",
-            "rbo2V": 0.01,
+            "name": "Test rbo2v Mach",
+            "rbo2v": 0.01,
             "mach": 0.4,
             "outputs": [
                 "stability derivatives",

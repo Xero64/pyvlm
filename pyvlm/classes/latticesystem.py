@@ -1,19 +1,23 @@
+from json import dump, load
+from os.path import dirname, exists, join
 from typing import TYPE_CHECKING, Any
 
 from numpy import absolute, divide, multiply, pi, reciprocal, sqrt, zeros
 from py2md.classes import MDTable
 from pygeom.geom3d import Vector
+from pyvlm.tools import masses_from_data, masses_from_json
+
 from ..tools.mass import Mass
+from .latticeresult import LatticeResult
+from .latticesurface import LatticeSurface
+from .latticetrim import LatticeTrim
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from ..tools.mass import MassCollection
     from .latticepanel import LatticePanel
-    from .latticeresult import LatticeResult
     from .latticestrip import LatticeStrip
-    from .latticesurface import LatticeSurface
-    from .latticetrim import LatticeTrim
 
 FOURPI = 4*pi
 
@@ -409,8 +413,6 @@ class LatticeSystem():
                   trim: bool = True) -> 'LatticeSystem':
         """Create a LatticeSystem from a JSON file."""
 
-        from json import load
-
         with open(jsonfilepath, 'rt') as jsonfile:
             sysdct = load(jsonfile)
 
@@ -424,14 +426,6 @@ class LatticeSystem():
     def from_dict(cls, sysdct: dict, mesh: bool = True,
                   trim: bool = True) -> 'LatticeSystem':
         """Create a LatticeSystem from a dictionary."""
-
-        from os.path import dirname, exists, join
-
-        from pyvlm.tools import masses_from_data, masses_from_json
-
-        from .latticeresult import LatticeResult
-        from .latticesurface import LatticeSurface
-        from .latticetrim import LatticeTrim
 
         jsonfilepath = sysdct.get('source', '.')
 
@@ -511,7 +505,62 @@ class LatticeSystem():
         if mesh and sys.pnls is None:
             sys.mesh()
 
+        sys.load_initial_state(sys.source)
+
         return sys
+
+    def save_initial_state(self, infilepath: str,
+                           outfilepath: str | None = None,
+                           tolerance: float = 1e-10) -> None:
+
+        if not exists(infilepath):
+            raise FileNotFoundError(f"Input file {infilepath} does not exist.")
+
+        with open(infilepath, 'r') as jsonfile:
+            data = load(jsonfile)
+
+        data['state'] = {}
+        for resname, result in self.results.items():
+            data['state'][resname] = {}
+            if abs(result.alpha) > tolerance:
+                data['state'][resname]['alpha'] = result.alpha
+            if abs(result.beta) > tolerance:
+                data['state'][resname]['beta'] = result.beta
+            if abs(result.pbo2v) > tolerance:
+                data['state'][resname]['pbo2v'] = result.pbo2v
+            if abs(result.qco2v) > tolerance:
+                data['state'][resname]['qco2v'] = result.qco2v
+            if abs(result.rbo2v) > tolerance:
+                data['state'][resname]['rbo2v'] = result.rbo2v
+            for control in self.ctrls:
+                if abs(result.ctrls[control]) > tolerance:
+                    data['state'][resname][control] = result.ctrls[control]
+
+        if outfilepath is None:
+            outfilepath = infilepath
+
+        with open(outfilepath, 'w') as jsonfile:
+            dump(data, jsonfile, indent=4)
+
+    def load_initial_state(self, infilepath: str) -> None:
+
+        if exists(infilepath):
+
+            with open(infilepath, 'r') as jsonfile:
+                data: dict[str, Any] = load(jsonfile)
+
+            state: dict[str, Any] = data.get('state', {})
+
+            for result in self.results.values():
+                resdata: dict[str, Any] = state.get(result.name, {})
+                result.alpha = resdata.get('alpha', result.alpha)
+                result.beta = resdata.get('beta', result.beta)
+                result.pbo2v = resdata.get('pbo2v', result.pbo2v)
+                result.qco2v = resdata.get('qco2v', result.qco2v)
+                result.rbo2v = resdata.get('rbo2v', result.rbo2v)
+                for control in self.ctrls:
+                    value = result.ctrls[control]
+                    result.ctrls[control] = resdata.get(control, value)
 
 def velocity_matrix(ra: Vector, rb: Vector, rc: Vector,
                     betm: float=1.0, tol: float=1e-12) -> Vector:

@@ -27,7 +27,7 @@ class LoopingTrim():
     _rad: float = None
     _CL: float = None
     _prate: float = None
-    _qco2V: float = None
+    _qco2v: float = None
     initstate: dict[str, float] = None
     initctrls: dict[str, float] = None
 
@@ -72,9 +72,9 @@ class LoopingTrim():
     def set_initial_state(self, initstate: dict[str, float]) -> None:
         initstate.setdefault('alpha', 0.0)
         initstate.setdefault('beta', 0.0)
-        initstate.setdefault('pbo2V', 0.0)
-        initstate.setdefault('qco2V', 0.0)
-        initstate.setdefault('rbo2V', 0.0)
+        initstate.setdefault('pbo2v', 0.0)
+        initstate.setdefault('qco2v', 0.0)
+        initstate.setdefault('rbo2v', 0.0)
         self.initstate = initstate
 
     def set_initial_controls(self, initctrls: dict[str, float]) -> None:
@@ -85,7 +85,7 @@ class LoopingTrim():
     def create_trim_result(self) -> Trim:
         trim = Trim(self.name, self.sys)
         trim.set_density(rho=self.density)
-        trim.set_state(speed=self.speed, qco2V=self.qco2V)
+        trim.set_state(speed=self.speed, qco2v=self.qco2v)
         trim.set_targets(CLt = self.CL, CYt = 0.0, Clt = 0.0, Cmt = 0.0, Cnt = 0.0)
         rcg = Vector(self.mass.xcm, self.mass.ycm, self.mass.zcm)
         trim.set_cg(rcg)
@@ -140,10 +140,10 @@ class LoopingTrim():
         return self._prate
 
     @property
-    def qco2V(self) -> float:
-        if self._qco2V is None:
-            self._qco2V = self.prate*self.sys.cref/2/self.speed
-        return self._qco2V
+    def qco2v(self) -> float:
+        if self._qco2v is None:
+            self._qco2v = self.prate*self.sys.cref/2/self.speed
+        return self._qco2v
 
     def to_mdobj(self) -> MDReport:
         report = MDReport()
@@ -189,8 +189,8 @@ class TurningTrim():
     _CL: float = None
     _prate: float = None
     _rrate: float = None
-    _qco2V: float = None
-    _rbo2V: float = None
+    _qco2v: float = None
+    _rbo2v: float = None
     initstate: dict[str, float] = None
     initctrls: dict[str, float] = None
 
@@ -235,9 +235,9 @@ class TurningTrim():
     def set_initial_state(self, initstate: dict[str, float]) -> None:
         initstate.setdefault('alpha', 0.0)
         initstate.setdefault('beta', 0.0)
-        initstate.setdefault('pbo2V', 0.0)
-        initstate.setdefault('qco2V', 0.0)
-        initstate.setdefault('rbo2V', 0.0)
+        initstate.setdefault('pbo2v', 0.0)
+        initstate.setdefault('qco2v', 0.0)
+        initstate.setdefault('rbo2v', 0.0)
         self.initstate = initstate
 
     def set_initial_controls(self, initctrls: dict[str, float]) -> None:
@@ -248,7 +248,7 @@ class TurningTrim():
     def create_trim_result(self) -> Trim:
         trim = Trim(self.name, self.sys)
         trim.set_density(rho=self.density)
-        trim.set_state(speed = self.speed, qco2V = self.qco2V, rbo2V = self.rbo2V)
+        trim.set_state(speed = self.speed, qco2v = self.qco2v, rbo2v = self.rbo2v)
         trim.set_targets(CLt = self.CL, CYt = 0.0, Clt = 0.0, Cmt = 0.0, Cnt = 0.0)
         rcg = Vector(self.mass.xcm, self.mass.ycm, self.mass.zcm)
         trim.set_cg(rcg)
@@ -324,16 +324,16 @@ class TurningTrim():
         return self._rrate
 
     @property
-    def qco2V(self) -> float:
-        if self._qco2V is None:
-            self._qco2V = self.prate*self.sys.cref/2/self.speed
-        return self._qco2V
+    def qco2v(self) -> float:
+        if self._qco2v is None:
+            self._qco2v = self.prate*self.sys.cref/2/self.speed
+        return self._qco2v
 
     @property
-    def rbo2V(self) -> float:
-        if self._rbo2V is None:
-            self._rbo2V = self.rrate*self.sys.bref/2/self.speed
-        return self._rbo2V
+    def rbo2v(self) -> float:
+        if self._rbo2v is None:
+            self._rbo2v = self.rrate*self.sys.bref/2/self.speed
+        return self._rbo2v
 
     def to_mdobj(self) -> MDReport:
         report = MDReport()
@@ -415,9 +415,9 @@ class LevelTrim():
     def set_initial_state(self, initstate: dict[str, float]) -> None:
         initstate.setdefault('alpha', 0.0)
         initstate.setdefault('beta', 0.0)
-        initstate.setdefault('pbo2V', 0.0)
-        initstate.setdefault('qco2V', 0.0)
-        initstate.setdefault('rbo2V', 0.0)
+        initstate.setdefault('pbo2v', 0.0)
+        initstate.setdefault('qco2v', 0.0)
+        initstate.setdefault('rbo2v', 0.0)
         self.initstate = initstate
 
     def set_initial_controls(self, initctrls: dict[str, float]) -> None:
@@ -541,9 +541,9 @@ class LoadTrim():
     def set_initial_state(self, initstate: dict[str, float]) -> None:
         initstate.setdefault('alpha', 0.0)
         initstate.setdefault('beta', 0.0)
-        initstate.setdefault('pbo2V', 0.0)
-        initstate.setdefault('qco2V', 0.0)
-        initstate.setdefault('rbo2V', 0.0)
+        initstate.setdefault('pbo2v', 0.0)
+        initstate.setdefault('qco2v', 0.0)
+        initstate.setdefault('rbo2v', 0.0)
         self.initstate = initstate
 
     def set_initial_controls(self, initctrls: dict[str, float]) -> None:

@@ -27,12 +27,12 @@ display_markdown(lres.stability_derivatives)
 # Roll Case Result
 alpha = 0.0
 speed = 13.0
-pbo2V = 0.01
+pbo2v = 0.01
 rho = 1.145
 
 lres = LatticeResult('Roll Case', lsys)
 lres.set_density(rho=rho)
-lres.set_state(alpha=alpha, speed=speed, pbo2V=pbo2V)
+lres.set_state(alpha=alpha, speed=speed, pbo2v=pbo2v)
 
 display_markdown(lres)
 display_markdown(lres.surface_loads)

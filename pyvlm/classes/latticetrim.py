@@ -23,29 +23,29 @@ class LatticeTrim(Result):
         self.targets = {
             'alpha': ('alpha', 0.0),
             'beta': ('beta', 0.0),
-            'pbo2V': ('pbo2V', 0.0),
-            'qco2V': ('qco2V', 0.0),
-            'rbo2V': ('rbo2V', 0.0),
+            'pbo2v': ('pbo2v', 0.0),
+            'qco2v': ('qco2v', 0.0),
+            'rbo2v': ('rbo2v', 0.0),
         }
         for control in self.ctrls:
             self.targets[control] = (control, 0.0)
 
     def set_state(self, mach: float | None = None, speed: float | None = None,
                   alpha: float | None = None, beta: float | None = None,
-                  pbo2V: float | None = None, qco2V: float | None = None,
-                  rbo2V: float | None = None) -> None:
+                  pbo2v: float | None = None, qco2v: float | None = None,
+                  rbo2v: float | None = None) -> None:
         super().set_state(mach=mach, speed=speed, alpha=alpha, beta=beta,
-                          pbo2V=pbo2V, qco2V=qco2V, rbo2V=rbo2V)
+                          pbo2v=pbo2v, qco2v=qco2v, rbo2v=rbo2v)
         if self.targets['alpha'][0] == 'alpha':
             self.targets['alpha'] = ('alpha', self.alpha)
         if self.targets['beta'][0] == 'beta':
             self.targets['beta'] = ('beta', self.beta)
-        if self.targets['pbo2V'][0] == 'pbo2V':
-            self.targets['pbo2V'] = ('pbo2V', self.pbo2V)
-        if self.targets['qco2V'][0] == 'qco2V':
-            self.targets['qco2V'] = ('qco2V', self.qco2V)
-        if self.targets['rbo2V'][0] == 'rbo2V':
-            self.targets['rbo2V'] = ('rbo2V', self.rbo2V)
+        if self.targets['pbo2v'][0] == 'pbo2v':
+            self.targets['pbo2v'] = ('pbo2v', self.pbo2v)
+        if self.targets['qco2v'][0] == 'qco2v':
+            self.targets['qco2v'] = ('qco2v', self.qco2v)
+        if self.targets['rbo2v'][0] == 'rbo2v':
+            self.targets['rbo2v'] = ('rbo2v', self.rbo2v)
 
     def set_controls(self, **kwargs: dict[str, float]) -> None:
         super().set_controls(**kwargs)
@@ -78,15 +78,15 @@ class LatticeTrim(Result):
         if 'beta' in self.targets:
             if self.targets['beta'][0] == 'beta':
                 initstate['beta'] = self.targets['beta'][1]
-        if 'pbo2V' in self.targets:
-            if self.targets['pbo2V'][0] == 'pbo2V':
-                initstate['pbo2V'] = self.targets['pbo2V'][1]
-        if 'qco2V' in self.targets:
-            if self.targets['qco2V'][0] == 'qco2V':
-                initstate['qco2V'] = self.targets['qco2V'][1]
-        if 'rbo2V' in self.targets:
-            if self.targets['rbo2V'][0] == 'rbo2V':
-                initstate['rbo2V'] = self.targets['rbo2V'][1]
+        if 'pbo2v' in self.targets:
+            if self.targets['pbo2v'][0] == 'pbo2v':
+                initstate['pbo2v'] = self.targets['pbo2v'][1]
+        if 'qco2v' in self.targets:
+            if self.targets['qco2v'][0] == 'qco2v':
+                initstate['qco2v'] = self.targets['qco2v'][1]
+        if 'rbo2v' in self.targets:
+            if self.targets['rbo2v'][0] == 'rbo2v':
+                initstate['rbo2v'] = self.targets['rbo2v'][1]
         self.initstate = initstate
         super().set_state(**self.initstate)
 
@@ -125,12 +125,12 @@ class LatticeTrim(Result):
                 Dcur[i] = radians(self.alpha)
             elif variable == 'beta':
                 Dcur[i] = radians(self.beta)
-            elif variable == 'pbo2V':
-                Dcur[i] = self.pbo2V
-            elif variable == 'qco2V':
-                Dcur[i] = self.qco2V
-            elif variable == 'rbo2V':
-                Dcur[i] = self.rbo2V
+            elif variable == 'pbo2v':
+                Dcur[i] = self.pbo2v
+            elif variable == 'qco2v':
+                Dcur[i] = self.qco2v
+            elif variable == 'rbo2v':
+                Dcur[i] = self.rbo2v
             elif variable in self.ctrls:
                 Dcur[i] = radians(self.ctrls[variable])
         return Dcur
@@ -178,7 +178,7 @@ class LatticeTrim(Result):
             print(f'normC = {nrmC}')
         # if display:
         #     outstr = f'{"iter":>4s}  {"d(alpha)":>11s}  {"d(beta)":>11s}'
-        #     outstr += f'  {"d(pbo2V)":>11s}  {"d(qco2V)":>11s}  {"d(rbo2V)":>11s}'
+        #     outstr += f'  {"d(pbo2v)":>11s}  {"d(qco2v)":>11s}  {"d(rbo2v)":>11s}'
         #     for control in self.ctrls:
         #         control = f'd({control})'
         #         outstr += f'  {control:>11s}'
@@ -206,12 +206,12 @@ class LatticeTrim(Result):
                     state['alpha'] = degrees(Dcur[i])
                 elif variable == 'beta':
                     state['beta'] = degrees(Dcur[i])
-                elif variable == 'pbo2V':
-                    state['pbo2V'] = Dcur[i]
-                elif variable == 'qco2V':
-                    state['qco2V'] = Dcur[i]
-                elif variable == 'rbo2V':
-                    state['rbo2V'] = Dcur[i]
+                elif variable == 'pbo2v':
+                    state['pbo2v'] = Dcur[i]
+                elif variable == 'qco2v':
+                    state['qco2v'] = Dcur[i]
+                elif variable == 'rbo2v':
+                    state['rbo2v'] = Dcur[i]
                 elif variable in self.ctrls:
                     ctrls[variable] = degrees(Dcur[i])
 
@@ -239,9 +239,9 @@ class LatticeTrim(Result):
             if display:
                 print(f'alpha = {state['alpha']:.6f} deg')
                 print(f'beta = {state['beta']:.6f} deg')
-                print(f'pbo2V = {state['pbo2V']:.6f}')
-                print(f'qco2V = {state['qco2V']:.6f}')
-                print(f'rbo2V = {state['rbo2V']:.6f}')
+                print(f'pbo2v = {state['pbo2v']:.6f}')
+                print(f'qco2v = {state['qco2v']:.6f}')
+                print(f'rbo2v = {state['rbo2v']:.6f}')
                 for control in ctrls:
                     print(f'{control} = {ctrls[control]:.6f} deg')
                 print(f'normC = {nrmC}')
@@ -293,9 +293,9 @@ class LatticeTrim(Result):
         initstate = {}
         initstate['alpha'] = resdict.get('alpha', 0.0)
         initstate['beta'] = resdict.get('beta', 0.0)
-        initstate['pbo2V'] = resdict.get('pbo2V', 0.0)
-        initstate['qco2V'] = resdict.get('qco2V', 0.0)
-        initstate['rbo2V'] = resdict.get('rbo2V', 0.0)
+        initstate['pbo2v'] = resdict.get('pbo2v', 0.0)
+        initstate['qco2v'] = resdict.get('qco2v', 0.0)
+        initstate['rbo2v'] = resdict.get('rbo2v', 0.0)
         trim_condition.set_initial_state(initstate)
 
         initctrls = {}

@@ -20,7 +20,7 @@ display(lsys.panel_geometry)
 #%%
 # Original Case
 lres_org = LatticeResult('Baseline', lsys)
-lres_org.set_state(alpha=3.0)#, pbo2V=0.002)
+lres_org.set_state(alpha=3.0)#, pbo2v=0.002)
 display(lres_org)
 
 # lres_org.print_total_loads()
