@@ -2,10 +2,15 @@ from json import dump, load
 from os.path import dirname, exists, join
 from typing import TYPE_CHECKING, Any
 
-from numpy import absolute, divide, multiply, pi, reciprocal, sqrt, zeros
+from numpy import sqrt, zeros
 from py2md.classes import MDTable
 from pygeom.geom3d import Vector
 from pyvlm.tools import masses_from_data, masses_from_json
+
+try:
+    from pyvlm.tools.cupy import cupy_cwdv as cwdv
+except ImportError:
+    from pyvlm.tools.numpy import numpy_cwdv as cwdv
 
 from ..tools.mass import Mass
 from .latticeresult import LatticeResult
@@ -18,8 +23,6 @@ if TYPE_CHECKING:
     from ..tools.mass import MassCollection
     from .latticepanel import LatticePanel
     from .latticestrip import LatticeStrip
-
-FOURPI = 4*pi
 
 
 class LatticeSystem():
@@ -136,8 +139,10 @@ class LatticeSystem():
             self._avc = {}
         if mach not in self._avc:
             beta = sqrt(1.0 - mach**2)
-            veli, vela, velb = velocity_matrix(self.ra, self.rb, self.rc, beta)
-            self._avc[mach] = (veli + vela - velb)/FOURPI
+            ra = self.ra.reshape((1, -1))
+            rb = self.rb.reshape((1, -1))
+            rc = self.rc.reshape((-1, 1))
+            self._avc[mach] = cwdv(rc, ra, rb, tol=1e-12, betm=beta)
         return self._avc[mach]
 
     def aic(self, mach: float = 0.0) -> 'NDArray':
@@ -191,8 +196,10 @@ class LatticeSystem():
             self._avg = {}
         if mach not in self._avg:
             beta = (1.0 - mach**2)**0.5
-            veli, vela, velb = velocity_matrix(self.ra, self.rb, self.rg, beta)
-            self._avg[mach] = (veli + vela - velb)/FOURPI
+            ra = self.ra.reshape((1, -1))
+            rb = self.rb.reshape((1, -1))
+            rg = self.rg.reshape((-1, 1))
+            self._avg[mach] = cwdv(rg, ra, rb, tol=1e-12, betm=beta)
         return self._avg[mach]
 
     def afg(self, mach: float = 0.0) -> Vector:
@@ -377,8 +384,10 @@ class LatticeSystem():
         return sys
 
     def velocity_matrix(self, rc: Vector) -> Vector:
-        veli, vela, velb = velocity_matrix(self.ra, self.rb, rc)
-        return (veli + vela - velb)/FOURPI
+        ra = self.ra.reshape((1, -1))
+        rb = self.rb.reshape((1, -1))
+        rc = rc.reshape((-1, 1))
+        return cwdv(rc, ra, rb, tol=1e-12)
 
     def trim(self) -> None:
         for result in self.results.values():
@@ -579,73 +588,3 @@ class LatticeSystem():
 
     def _repr_markdown_(self) -> str:
         return self.__str__()
-
-
-def velocity_matrix(ra: Vector, rb: Vector, rc: Vector,
-                    betm: float=1.0, tol: float=1e-12) -> Vector:
-
-    if ra.size != rb.size:
-        raise ValueError('ra and rb sizes do not match.')
-
-    numi = rc.size
-    numj = ra.size
-
-    ra = ra.reshape((1, -1)).repeat(numi, axis=0)
-    rb = rb.reshape((1, -1)).repeat(numi, axis=0)
-    rc = rc.reshape((-1, 1)).repeat(numj, axis=1)
-
-    a = rc - ra
-    b = rc - rb
-
-    a.x = a.x/betm
-    b.x = b.x/betm
-
-    am = a.return_magnitude()
-    bm = b.return_magnitude()
-
-    # Velocity from Bound Vortex
-    adb = a.dot(b)
-    abm = multiply(am, bm)
-
-    # from numpy import argwhere
-
-    # dmi_min = dmi.min()
-
-    # ind_min = argwhere(dmi == dmi_min)
-
-    # print(f'dmi_min = {dmi_min}')
-    # print(f'ind_min = {ind_min}')
-
-    axb = a.cross(b)
-    dmi = multiply(abm, abm + adb)
-    chki = absolute(dmi) > tol
-    faci = zeros(dmi.shape)
-    divide(am + bm, dmi, where=chki, out=faci)
-    veli = axb*faci
-    # veli.x[chki] = 0.0
-    # veli.y[chki] = 0.0
-    # veli.z[chki] = 0.0
-
-    # Velocity from Trailing Vortex A
-    axx = Vector(zeros(a.shape), a.z, -a.y)
-    dma = multiply(am, am - a.x)
-    chka = absolute(dma) > tol
-    faca = zeros(dma.shape)
-    reciprocal(dma, where=chka, out=faca)
-    vela = axx*faca
-    # vela.x[chka] = 0.0
-    # vela.y[chka] = 0.0
-    # vela.z[chka] = 0.0
-
-    # Velocity from Trailing Vortex B
-    bxx = Vector(zeros(b.shape), b.z, -b.y)
-    dmb = multiply(bm, bm - b.x)
-    chkb = absolute(dmb) > tol
-    facb = zeros(dmb.shape)
-    reciprocal(dmb, where=chkb, out=facb)
-    velb = bxx*facb
-    # velb.x[chkb] = 0.0
-    # velb.y[chkb] = 0.0
-    # velb.z[chkb] = 0.0
-
-    return veli, vela, velb
