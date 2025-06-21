@@ -13,7 +13,7 @@ try:
         '''float64 vx, float64 vy, float64 vz''',
         '''
 
-        const double fourpi = 4.0 * acos(-1.0);
+        const double fourpi = 12.566370614359172463991854;
 
         double rax = (px - ax) / betm;
         double ray = py - ay;
@@ -99,7 +99,7 @@ try:
         if time:
             start2 = perf_counter()
         vx, vy, vz = cupy_cwdv_kernel(px, py, pz, ax, ay, az, bx, by, bz,
-                                    tol, betm)
+                                      tol, betm)
         if time:
             finish2 = perf_counter()
             elapsed2 = finish2 - start2
