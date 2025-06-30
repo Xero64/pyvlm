@@ -2,51 +2,47 @@ from numpy import divide, pi, reciprocal, zeros
 from pygeom.geom3d import Vector
 
 FOURPI = 4.0*pi
-TWOPI = 2.0*pi
 
 
-def numpy_cwdv(pnts: Vector, veca: Vector, vecb: Vector,
+def numpy_cwdv(pnts: Vector, veca: Vector, vecb: Vector, *,
                tol: float = 1e-12, betm: float = 1.0) -> Vector:
 
-    rela = pnts - veca
-    relb = pnts - vecb
+    a = pnts - veca
+    b = pnts - vecb
 
-    rela.x = rela.x/betm
-    rela.y = rela.y
-    rela.z = rela.z
-    relb.x = relb.x/betm
-    relb.y = relb.y
-    relb.z = relb.z
+    a.x = a.x/betm
+    a.y = a.y
+    a.z = a.z
+    b.x = b.x/betm
+    b.y = b.y
+    b.z = b.z
 
-    runa, maga = rela.to_unit(True)
-    runb, magb = relb.to_unit(True)
+    ah, am = a.to_unit(True)
+    bh, bm = b.to_unit(True)
 
-    reca = zeros(maga.shape)
-    reciprocal(maga, out=reca, where=maga > tol)
+    ar = zeros(am.shape)
+    reciprocal(am, out=ar, where=am > tol)
 
-    recb = zeros(magb.shape)
-    reciprocal(magb, out=recb, where=magb > tol)
+    br = zeros(bm.shape)
+    reciprocal(bm, out=br, where=bm > tol)
 
-    axb = runa.cross(runb)
-    bxc = Vector(0.0, -runb.z, runb.y)
-    cxa = Vector(0.0, runa.z, -runa.y)
+    axb = ah.cross(bh)
+    bxc = Vector(0.0, -bh.z, bh.y)
+    cxa = Vector(0.0, ah.z, -ah.y)
 
-    abd = 1.0 + runa.dot(runb)
-    bcd = 1.0 - runb.x
-    cad = 1.0 - runa.x
+    abd = 1.0 + ah.dot(bh)
+    bcd = 1.0 - bh.x
+    cad = 1.0 - ah.x
 
-    facab = zeros(maga.shape)
-    divide(reca + recb, abd, where=abd > tol, out=facab)
-    velab = axb*facab
+    facab = zeros(am.shape)
+    divide(ar + br, abd, where=abd > tol, out=facab)
 
-    facbc = zeros(maga.shape)
-    divide(recb, bcd, where=bcd > tol, out=facbc)
-    velbc = bxc*facbc
+    facbc = zeros(am.shape)
+    divide(br, bcd, where=bcd > tol, out=facbc)
 
-    facca = zeros(maga.shape)
-    divide(reca, cad, where=cad > tol, out=facca)
-    velca = cxa*facca
+    facca = zeros(am.shape)
+    divide(ar, cad, where=cad > tol, out=facca)
 
-    vel = (velab + velbc + velca)/FOURPI
+    vel = (axb*facab + bxc*facbc + cxa*facca)/FOURPI
 
     return vel

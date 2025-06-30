@@ -1,5 +1,3 @@
-from time import perf_counter
-
 from pygeom.geom3d import Vector
 
 try:
@@ -7,9 +5,9 @@ try:
 
     cupy_cwdv_kernel = ElementwiseKernel(
         '''float64 px, float64 py, float64 pz,
-        float64 ax, float64 ay, float64 az,
-        float64 bx, float64 by, float64 bz,
-        float64 tol, float64 betm''',
+           float64 ax, float64 ay, float64 az,
+           float64 bx, float64 by, float64 bz,
+           float64 tol, float64 betm''',
         '''float64 vx, float64 vy, float64 vz''',
         '''
 
@@ -57,7 +55,8 @@ try:
         double cxay = haz;
         double cxaz = -hay;
 
-        double abden = 1.0 + hax * hbx + hay * hby + haz * hbz;
+        double adb = hax * hbx + hay * hby + haz * hbz;
+        double abden = 1.0 + adb;
         double abfac = 0.0;
         if (abden > tol) {
             abfac = (rar + rbr) / abden;
@@ -82,45 +81,26 @@ try:
         ''', 'cupy_cwdv')
 
 
-    def cupy_cwdv(pnts: Vector, grda: Vector, grdb: Vector,
-                *, tol: float = 1e-12, time: bool = False,
-                betm: float = 1.0) -> Vector:
+    def cupy_cwdv(pnts: Vector, veca: Vector, vecb: Vector, *,
+                  tol: float = 1e-12, betm: float = 1.0) -> Vector:
 
-        if time:
-            start1 = perf_counter()
         px, py, pz = asarray(pnts.x), asarray(pnts.y), asarray(pnts.z)
-        ax, ay, az = asarray(grda.x), asarray(grda.y), asarray(grda.z)
-        bx, by, bz = asarray(grdb.x), asarray(grdb.y), asarray(grdb.z)
-        if time:
-            finish1 = perf_counter()
-            elapsed1 = finish1 - start1
-            print(f'Cupy in time elapsed is {elapsed1:.6f} seconds.')
+        ax, ay, az = asarray(veca.x), asarray(veca.y), asarray(veca.z)
+        bx, by, bz = asarray(vecb.x), asarray(vecb.y), asarray(vecb.z)
 
-        if time:
-            start2 = perf_counter()
-        vx, vy, vz = cupy_cwdv_kernel(px, py, pz, ax, ay, az, bx, by, bz,
-                                      tol, betm)
-        if time:
-            finish2 = perf_counter()
-            elapsed2 = finish2 - start2
-            print(f'Cupy execution time elapsed is {elapsed2:.6f} seconds.')
+        vx, vy, vz = cupy_cwdv_kernel(px, py, pz, ax, ay, az,
+                                      bx, by, bz, tol, betm)
 
-        if time:
-            start3 = perf_counter()
         vel = Vector(vx.get(), vy.get(), vz.get())
-        if time:
-            finish3 = perf_counter()
-            elapsed3 = finish3 - start3
-            print(f'Cupy out time elapsed is {elapsed3:.6f} seconds.')
 
         return vel
 
     # Example usage of the cupy_cwdv function
     pnts = Vector.zeros((1, ))
-    grda = Vector(-1.2, 1.0, 0.0)
-    grdb = Vector(-0.8, -1.0, 0.0)
+    veca = Vector(-1.2, 1.0, 0.0)
+    vecb = Vector(-0.8, -1.0, 0.0)
 
-    _ = cupy_cwdv(pnts, grda, grdb)
+    _ = cupy_cwdv(pnts, veca, vecb)
 
 except ImportError:
     pass
