@@ -7,11 +7,6 @@ from py2md.classes import MDTable
 from pygeom.geom3d import Vector
 from pyvlm.tools import masses_from_data, masses_from_json
 
-try:
-    from pyvlm.tools.cupy import cupy_cwdv as cwdv
-except ImportError:
-    from pyvlm.tools.numpy import numpy_cwdv as cwdv
-
 from ..tools.mass import Mass
 from .latticeresult import LatticeResult
 from .latticesurface import LatticeSurface
@@ -23,6 +18,13 @@ if TYPE_CHECKING:
     from ..tools.mass import MassCollection
     from .latticepanel import LatticePanel
     from .latticestrip import LatticeStrip
+
+USE_CUPY = False
+
+if USE_CUPY:
+    from pyvlm.tools.cupy import cupy_cwdv as cwdv
+else:
+    from pyvlm.tools.numpy import numpy_cwdv as cwdv
 
 
 class LatticeSystem():
