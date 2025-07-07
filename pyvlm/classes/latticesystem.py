@@ -19,13 +19,6 @@ if TYPE_CHECKING:
     from .latticepanel import LatticePanel
     from .latticestrip import LatticeStrip
 
-USE_CUPY = False
-
-if USE_CUPY:
-    from pyvlm.tools.cupy import cupy_cwdv as cwdv
-else:
-    from pyvlm.tools.numpy import numpy_cwdv as cwdv
-
 
 class LatticeSystem():
     source: str = None # System Source
@@ -144,6 +137,14 @@ class LatticeSystem():
             ra = self.ra.reshape((1, -1))
             rb = self.rb.reshape((1, -1))
             rc = self.rc.reshape((-1, 1))
+
+            from .. import USE_CUPY
+
+            if USE_CUPY:
+                from pyvlm.tools.cupy import cupy_cwdv as cwdv
+            else:
+                from pyvlm.tools.numpy import numpy_cwdv as cwdv
+
             self._avc[mach] = cwdv(rc, ra, rb, tol=1e-12, betm=beta)
         return self._avc[mach]
 
@@ -201,6 +202,15 @@ class LatticeSystem():
             ra = self.ra.reshape((1, -1))
             rb = self.rb.reshape((1, -1))
             rg = self.rg.reshape((-1, 1))
+
+            from .. import USE_CUPY
+
+            if USE_CUPY:
+                from pyvlm.tools.cupy import cupy_cwdv as cwdv
+            else:
+                from pyvlm.tools.numpy import numpy_cwdv as cwdv
+
+
             self._avg[mach] = cwdv(rg, ra, rb, tol=1e-12, betm=beta)
         return self._avg[mach]
 
@@ -389,6 +399,14 @@ class LatticeSystem():
         ra = self.ra.reshape((1, -1))
         rb = self.rb.reshape((1, -1))
         rc = rc.reshape((-1, 1))
+
+        from .. import USE_CUPY
+
+        if USE_CUPY:
+            from pyvlm.tools.cupy import cupy_cwdv as cwdv
+        else:
+            from pyvlm.tools.numpy import numpy_cwdv as cwdv
+
         return cwdv(rc, ra, rb, tol=1e-12)
 
     def trim(self) -> None:
