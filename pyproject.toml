@@ -1,0 +1,24 @@
+[project]
+name = "pyvlm"
+version = "0.0.12"
+authors = [
+  { name="Xero64", email="xero64@gmail.com" },
+]
+description = "Vortex Lattice Method in Python"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+dependencies = [
+]
+
+[project.urls]
+Homepage = "https://github.com/Xero64/pyvlm"
+Issues = "https://github.com/Xero64/pyvlm/issues"
+
+[project.scripts]
+pyvlm = "pyvlm.__main__:main"
