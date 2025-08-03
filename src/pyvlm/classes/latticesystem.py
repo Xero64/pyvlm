@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 from numpy import sqrt, zeros
 from py2md.classes import MDTable
 from pygeom.geom3d import Vector
-from pyvlm.tools import masses_from_data, masses_from_json
+from ..tools import masses_from_data, masses_from_json
 
 from ..tools.mass import Mass
 from .latticeresult import LatticeResult
@@ -141,9 +141,9 @@ class LatticeSystem():
             from .. import USE_CUPY
 
             if USE_CUPY:
-                from pyvlm.tools.cupy import cupy_cwdv as cwdv
+                from ..tools.cupy import cupy_cwdv as cwdv
             else:
-                from pyvlm.tools.numpy import numpy_cwdv as cwdv
+                from ..tools.numpy import numpy_cwdv as cwdv
 
             self._avc[mach] = cwdv(rc, ra, rb, tol=1e-12, betm=beta)
         return self._avc[mach]
@@ -206,9 +206,9 @@ class LatticeSystem():
             from .. import USE_CUPY
 
             if USE_CUPY:
-                from pyvlm.tools.cupy import cupy_cwdv as cwdv
+                from ..tools.cupy import cupy_cwdv as cwdv
             else:
-                from pyvlm.tools.numpy import numpy_cwdv as cwdv
+                from ..tools.numpy import numpy_cwdv as cwdv
 
 
             self._avg[mach] = cwdv(rg, ra, rb, tol=1e-12, betm=beta)
@@ -403,9 +403,9 @@ class LatticeSystem():
         from .. import USE_CUPY
 
         if USE_CUPY:
-            from pyvlm.tools.cupy import cupy_cwdv as cwdv
+            from ..tools.cupy import cupy_cwdv as cwdv
         else:
-            from pyvlm.tools.numpy import numpy_cwdv as cwdv
+            from ..tools.numpy import numpy_cwdv as cwdv
 
         return cwdv(rc, ra, rb, tol=1e-12)
 

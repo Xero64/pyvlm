@@ -2,7 +2,7 @@ from json import dump
 
 from numpy.matlib import zeros
 
-from pyvlm.classes import LatticeSystem
+from ..classes import LatticeSystem
 
 
 def latticeresult_to_prf(lsys: LatticeSystem, prffilepath: str):

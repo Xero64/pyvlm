@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, Any
 
 from matplotlib.pyplot import figure
-from mpl_toolkits.mplot3d.axes3d import Axes3D
 from numexpr import evaluate
 from numpy import arccos, asarray, concatenate, pi, ptp, round, zeros
 from pygeom.geom1d import CubicSpline1D, LinearSpline1D
@@ -17,6 +16,7 @@ from .latticesection import LatticeSection
 from .latticesheet import LatticeSheet
 
 if TYPE_CHECKING:
+    from mpl_toolkits.mplot3d.axes3d import Axes3D
     from numpy.typing import NDArray
 
     from .latticestrip import LatticeStrip
@@ -209,10 +209,10 @@ class LatticeSurface():
                 pnls.append(self.pnls[i][j])
         return pnls
 
-    def plot_surface(self, ax: Axes3D = None) -> Axes3D:
+    def plot_surface(self, ax: 'Axes3D' = None) -> 'Axes3D':
         if ax is None:
             fig = figure(figsize=(12, 8))
-            ax = Axes3D(fig)
+            ax = fig.gca(projection='3d')
             fig.add_axes(ax)
             ax.grid(True)
         x, y, z = self.point_xyz()
@@ -220,7 +220,7 @@ class LatticeSurface():
         ax.plot_surface(x, y, z, label=self.name)
         return ax
 
-    def plot_twist(self, ax: Axes3D = None) -> Axes3D:
+    def plot_twist(self, ax: 'Axes3D' = None) -> 'Axes3D':
         if ax is None:
             fig = figure(figsize=(12, 8))
             ax = fig.gca()
