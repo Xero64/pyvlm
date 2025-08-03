@@ -14,6 +14,10 @@ classifiers = [
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
 dependencies = [
+    "matplotlib>=3.10.5",
+    "numexpr>=2.11.0",
+    "py2md>=0.1.3",
+    "pygeom>=0.0.14",
 ]
 
 [project.urls]
