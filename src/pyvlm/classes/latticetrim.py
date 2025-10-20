@@ -287,8 +287,9 @@ class LatticeTrim(Result):
         speed = resdict.get('speed', 1.0)
         trim_condition.set_speed(speed)
 
-        gravacc = resdict.get('gravacc', GRAVACC)
-        trim_condition.set_gravitational_acceleration(gravacc)
+        if hasattr(trim_condition, 'set_gravitational_acceleration'):
+            gravacc = resdict.get('gravacc', GRAVACC)
+            trim_condition.set_gravitational_acceleration(gravacc)
 
         initstate = {}
         initstate['alpha'] = resdict.get('alpha', 0.0)
@@ -315,7 +316,9 @@ class LatticeTrim(Result):
             else:
                 mass = Mass(trim_condition.name, mass = 1.0, xcm = system.rref.x,
                             ycm = system.rref.y, zcm = system.rref.z)
-        trim_condition.set_mass(mass)
+
+        if hasattr(trim_condition, 'set_mass'):
+            trim_condition.set_mass(mass)
 
         trim_result = trim_condition.create_trim_result()
 
