@@ -1035,7 +1035,7 @@ class LatticeResult():
         else:
             result = cls(name, sys)
         # Density
-        rho = resdict.get('density', 1.0)
+        rho = resdict.get('density', result.rho)
         result.set_density(rho=rho)
         # State
         mach = resdict.get('mach', None)
